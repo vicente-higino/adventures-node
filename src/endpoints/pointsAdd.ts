@@ -26,8 +26,7 @@ export class PointAdd extends OpenAPIRoute {
     async handle(c: Context<Env>) {
         // Get validated data
         const data = await this.getValidatedData<typeof this.schema>();
-        const adapter = new PrismaD1(c.env.DB);
-        const prisma = new PrismaClient({ adapter });
+        const prisma = c.get("prisma");
         const channelLogin = data.headers["x-fossabot-channellogin"];
         const channelProviderId = data.headers["x-fossabot-channelproviderid"];
         const userProviderId = data.params.userId ?? data.headers["x-fossabot-message-userproviderid"];

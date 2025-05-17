@@ -5,7 +5,7 @@ import { increaseBalanceWithChannelID, updateUserAdventureStats } from "db";
 import { runGroupAdventure } from "adventures";
 import { formatSilver, limitMessageLength, limitAdvMessage } from "../utils/misc";
 import { Mutex } from "async-mutex";
-const mutex = new Mutex()
+const mutex = new Mutex();
 export class AdventureEnd extends OpenAPIRoute {
     schema = { request: { headers: FossaHeaders }, responses: {} };
 
@@ -37,7 +37,7 @@ export class AdventureEnd extends OpenAPIRoute {
         if (locked) {
             return c.text("");
         }
-        await mutex.acquire()
+        await mutex.acquire();
         const players = await prisma.player.findMany({
             where: { adventureId: adv.id },
             include: { user: { select: { displayName: true, providerId: true, balances: true } } },
@@ -126,7 +126,7 @@ export class AdventureEnd extends OpenAPIRoute {
         ];
 
         await Promise.all(promises);
-        mutex.release()
+        mutex.release();
         // Compose the message and limit advResults.message
         const base = " The adventure ended! No survivors. All players lost their silver.";
         let advMsg = limitAdvMessage(base, advResults.message);

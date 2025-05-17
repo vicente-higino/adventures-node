@@ -2,7 +2,7 @@ import { Context } from "hono";
 import { Env } from "../types";
 import { PrismaClient } from "@prisma/client"; // Import PrismaClient and User
 import { ApiClient } from "@twurple/api";
-import { AppTokenAuthProviderWithStore } from "./auth";
+// import { AppTokenAuthProviderWithStore } from "./auth";
 import { AppTokenAuthProvider } from "@twurple/auth";
 import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from "env";
 
@@ -22,7 +22,6 @@ type DbUser = {
 };
 
 const authProvider = new AppTokenAuthProvider(TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET);
-
 
 async function handleApiRequest<T>(apiCall: () => Promise<T>, authProvider: AppTokenAuthProvider): Promise<T | null> {
     try {

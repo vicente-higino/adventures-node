@@ -109,12 +109,12 @@ export class AdventureJoin extends OpenAPIRoute {
             if (newBuyin <= 0) {
                 return c.text(`@${userDisplayName} you need at least 1 silver to start an adventure.`);
             }
-            const locked = mutex.isLocked()
+            const locked = mutex.isLocked();
             // const lockRes = await lock.lock(lockName);
             if (locked) {
                 return c.text(`${userDisplayName}, there is already a adventure running. Try joining again.`);
             }
-            await mutex.acquire()
+            await mutex.acquire();
             // Generate payout rate for new adventure
             const payoutRate = roundToDecimalPlaces(generatePayoutRate(), 2);
             const formattedPayoutRate = payoutRate.toFixed(2);
@@ -132,9 +132,8 @@ export class AdventureJoin extends OpenAPIRoute {
                         players: { create: { buyin: newBuyin, userId: userProviderId } },
                     },
                 }),
-
             ]);
-            mutex.release()
+            mutex.release();
             return c.text(
                 `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "!adventure|adv [silver(K/M/B)|%|all|+/-delta]" to join in! Then use "!adventureend|advend" to end the adventure and get your rewards!
                 This adventure offers a ${formattedPayoutRate}x payout rate! GAMBA

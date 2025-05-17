@@ -78,24 +78,3 @@ export function runGroupAdventure(players: string[]) {
         ${adventure.endLose ? adventure.endLose(loserplayers) : ""} ${adventure.endWin ? adventure.endWin(winnerplayers) : ""}`,
     };
 }
-
-async function generateAiAdventure(c: Context<Env>, adventure: Adventure, players: { name: string; outcome: AdventureOutcome }[]) {
-    const adventureDescription = adventure.description();
-    const winnerplayers = players.filter(player => player.outcome === "win").map(player => player.name);
-    const loserplayers = players.filter(player => player.outcome === "lose").map(player => player.name);
-    const winnersAdv = winnerplayers.map(player => pickRandom(adventure.winMessages)(player)).join(", ");
-    const losersAdv = loserplayers.map(player => pickRandom(adventure.loseMessages)(player)).join(", ");
-    const advMessage = "" + adventureDescription + "\n" + winnersAdv + " win the adventure!\n" + losersAdv + " lose the adventure!";
-    const aiRes = await c.env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
-        messages: [
-            {
-                role: "system",
-                content:
-                    "You are a role-playing dungeon master, give some details to world building, expand players' story, always include the players names, DO NOT make new players, limit to 1 paragraph and 100 words",
-            },
-            { role: "user", content: JSON.stringify(advMessage) },
-        ],
-    });
-    const { response } = ParseAiResponse.parse(aiRes);
-    return { response };
-}

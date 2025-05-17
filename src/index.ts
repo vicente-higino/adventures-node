@@ -22,7 +22,7 @@ import { Env } from "types";
 import { env } from "hono/adapter";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { authMiddleware } from "./middleware/authMiddleware";
-// import { LastFish } from "endpoints/lastFish";
+import { LastFish } from "endpoints/lastFish";
 
 // Start a Hono app
 const hono = new Hono<Env>();
@@ -37,7 +37,7 @@ app.use(logger());
 
 app.use("*", timeout(9500, new HTTPException(408, { message: "oopsie Something went wrong. Please try again in a few seconds." })));
 
-// app.use("/api/*", authMiddleware);
+app.use("/api/*", authMiddleware);
 
 app.use("*", (c, next) => {
     c.env = env(c);
@@ -54,22 +54,13 @@ app.get("/api/adventures/end", AdventureEnd);
 app.get("/api/adventures/stats/:userId", AdventureStats);
 app.get("/api/fish", Fish);
 app.get("/api/fish/count/:userId", FishCount);
-// openapi.get("/api/fish/last/", LastFish);
-// openapi.get("/api/fish/last/:query", LastFish);
+app.get("/api/fish/last/", LastFish);
+app.get("/api/fish/last/:query", LastFish);
 app.get("/api/duel/create/:challengedId/:wagerAmount", DuelCreate);
 app.get("/api/duel/accept/:challengerId", DuelAccept);
 app.get("/api/duel/cancel/:challengedId", DuelCancel);
 
-// openapi.get(
-// 	"/*",
-// 	cache({
-// 		cacheName: "my-app",
-// 		cacheControl: "max-age=3600",
-// 	}),
-// );
-// openapi.get("/api/points/leaderboard/:amount/:sortBy", PointLeaderboard);
-// openapi.get("/api/fish/leaderboard/:amount/:sortBy", FishLeaderboard);
-// openapi.get("/api/adventures/leaderboard/:amount/:sortBy", ConsolidatedLeaderboard);
+
 app.get("/api/leaderboard/:amount/:sortBy", ConsolidatedLeaderboard);
 
 // Add the last fish endpoint

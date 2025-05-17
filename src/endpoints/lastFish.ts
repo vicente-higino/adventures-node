@@ -28,8 +28,7 @@ export class LastFish extends OpenAPIRoute {
 
     async handle(c: Context<Env>) {
         const data = await this.getValidatedData<typeof this.schema>();
-        const adapter = new PrismaD1(c.env.DB);
-        const prisma = new PrismaClient({ adapter });
+        const prisma = c.get("prisma");
         let channelProviderId = data.headers["x-fossabot-channelproviderid"];
         let channelName = data.headers["x-fossabot-channellogin"]; // Get channel name from headers for default messages
         // Decode the query from URL-encoded form
