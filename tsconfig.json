@@ -1,0 +1,40 @@
+{
+	"compilerOptions": {
+		"allowJs": true,
+		"allowSyntheticDefaultImports": true,
+		"baseUrl": "src",
+		"declaration": true,
+		"sourceMap": true,
+		"esModuleInterop": true,
+		"inlineSourceMap": false,
+		"lib": [
+			"esnext",
+			"DOM",
+		],
+		"listEmittedFiles": false,
+		"listFiles": false,
+		"moduleResolution": "node10",
+		"noFallthroughCasesInSwitch": true,
+		"pretty": true,
+		"resolveJsonModule": true,
+		"rootDir": ".",
+		"skipLibCheck": true,
+		"strict": true,
+		"traceResolution": false,
+		"outDir": "",
+		"target": "esnext",
+		"module": "esnext",
+		"types": [
+			"@types/node",
+		]
+	},
+	"exclude": [
+		"node_modules",
+		"dist",
+		"tests"
+	],
+	"include": [
+		"src",
+		"scripts"
+	]
+}

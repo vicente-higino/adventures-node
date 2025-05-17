@@ -1,0 +1,191 @@
+generator client {
+    provider        = "prisma-client-js"
+    previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum UnitSystem {
+    imperial
+    metric
+}
+
+model User {
+    id             Int         @id() @default(autoincrement())
+    providerId     String      @unique
+    login          String      @unique
+    displayName    String      @unique
+    createdAt      DateTime    @default(now())
+    updatedAt      DateTime    @updatedAt
+    balances       Balance[]
+    Player         Player[]
+    Fish           Fish[]
+    UserStats      UserStats[]
+    FishStats      FishStats[]
+    DuelChallenger Duel[]      @relation("Challenger")
+    DuelChallenged Duel[]      @relation("Challenged")
+    unitSystem     UnitSystem  @default(metric)
+}
+
+model Balance {
+    id                Int      @id() @default(autoincrement())
+    channel           String
+    channelProviderId String
+    value             Int      @default(500)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    user              User     @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
+    userId            String
+
+    @@unique([channelProviderId, userId])
+}
+
+model Player {
+    id          Int       @id() @default(autoincrement())
+    user        User      @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
+    userId      String
+    buyin       Int       @default(0)
+    adventure   Adventure @relation(fields: [adventureId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    adventureId Int
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+}
+
+model Adventure {
+    id                Int      @id @default(autoincrement())
+    name              String
+    channel           String
+    channelProviderId String
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    players           Player[]
+    payoutRate        Float    @default(1.3)
+
+    @@index([channelProviderId])
+}
+
+enum Rarity {
+    Trash
+    Common
+    Uncommon
+    Fine
+    Rare
+    Epic
+    Legendary
+}
+
+model Fish {
+    id                Int          @id @default(autoincrement())
+    channelProviderId String
+    channel           String
+    user              User         @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
+    userId            String
+    createdAt         DateTime     @default(now())
+    updatedAt         DateTime     @updatedAt
+    name              String
+    size              String
+    weight            String
+    rarity            Rarity
+    value             Int
+    prefix            String
+    LargestRecords    FishRecord[] @relation("LargestFish")
+    SmallestRecords   FishRecord[] @relation("SmallestFish")
+    HeaviestRecords   FishRecord[] @relation("HeaviestFish")
+    LightestRecords   FishRecord[] @relation("LightestFish")
+
+    @@index([channelProviderId, userId])
+}
+
+model UserStats {
+    id                Int      @id @default(autoincrement())
+    user              User     @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
+    userId            String
+    channelProviderId String
+    channel           String
+    // General game stats (example, adjust as needed)
+    gamesPlayed       Int      @default(0)
+    gamesWon          Int      @default(0)
+    totalWagers       Int      @default(0) // Consider if this should include duel wagers or be separate
+    totalWinnings     Int      @default(0) // Consider if this should include duel winnings or be separate
+    // Duel specific stats
+    duelsPlayed       Int      @default(0)
+    duelsWon          Int      @default(0)
+    duelsWagered      Int      @default(0)
+    duelsWonAmount    Int      @default(0)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+
+    fishFines Int @default(0) // Total fines for fish caught
+
+    @@unique([channelProviderId, userId])
+    @@index([channelProviderId, userId])
+}
+
+model FishStats {
+    id                 Int      @id @default(autoincrement())
+    user               User     @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
+    userId             String
+    channelProviderId  String
+    channel            String
+    trashFishCount     Int      @default(0)
+    commonFishCount    Int      @default(0)
+    uncommonFishCount  Int      @default(0)
+    fineFishCount      Int      @default(0)
+    rareFishCount      Int      @default(0)
+    epicFishCount      Int      @default(0)
+    legendaryFishCount Int      @default(0)
+    fishFines          Int      @default(0) // Total fines accumulated by the user for fish
+    totalSilverWorth   Int      @default(0) // Added field for total silver worth of fish caught
+    createdAt          DateTime @default(now())
+    updatedAt          DateTime @updatedAt
+
+    @@unique([channelProviderId, userId])
+    @@index([channelProviderId, userId])
+}
+
+model FishRecord {
+    id                Int      @id @default(autoincrement())
+    channelProviderId String
+    channel           String
+    fishName          String
+    largestFish       Fish     @relation("LargestFish", fields: [largestFishId], references: [id])
+    smallestFish      Fish     @relation("SmallestFish", fields: [smallestFishId], references: [id])
+    heaviestFish      Fish     @relation("HeaviestFish", fields: [heaviestFishId], references: [id])
+    lightestFish      Fish     @relation("LightestFish", fields: [lightestFishId], references: [id])
+    largestFishId     Int
+    smallestFishId    Int
+    heaviestFishId    Int
+    lightestFishId    Int
+    updatedAt         DateTime @updatedAt
+    createdAt         DateTime @default(now())
+
+    @@unique([channelProviderId, fishName])
+    @@index([channelProviderId])
+}
+
+model Duel {
+    id                Int        @id @default(autoincrement())
+    challenger        User       @relation("Challenger", fields: [challengerId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
+    challengerId      String
+    challenged        User       @relation("Challenged", fields: [challengedId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
+    challengedId      String
+    channelProviderId String
+    channel           String
+    wagerAmount       Int
+    status            DuelStatus @default(Pending)
+    createdAt         DateTime   @default(now())
+    updatedAt         DateTime   @updatedAt
+
+    @@unique([channelProviderId, challengerId, challengedId])
+    @@index([channelProviderId, challengerId, challengedId])
+}
+
+enum DuelStatus {
+    Pending
+    Accepted
+    Declined
+    Completed
+}
