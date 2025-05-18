@@ -7,5 +7,6 @@ COPY package.json package-lock.json ./
 COPY . .
 
 RUN npm ci
-
-CMD ["sh", "-c", "npm run db:deploy && npm run dev"]
+RUN npm run prisma:generate
+RUN npm run build
+CMD ["sh", "-c", "npm run db:deploy && npm run start"]

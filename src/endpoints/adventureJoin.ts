@@ -13,6 +13,7 @@ import { formatTimeToWithSeconds } from "utils/time";
 // Add import for emotes
 import { ADVENTURE_COOLDOWN_EMOTES } from "../emotes";
 import { Mutex } from "async-mutex";
+import { advEndMutex } from "./adventureEnd";
 dayjs.extend(relativeTime);
 
 const coolDownMinutes = (c: Context<Env>) => 60 * c.env.COOLDOWN_ADVENTURE_IN_HOURS;
@@ -77,6 +78,7 @@ export class AdventureJoin extends OpenAPIRoute {
         const userLogin = data.headers["x-fossabot-message-userlogin"];
         const userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
         const lockName = `AdventureJoinLock-${channelProviderId}`;
+        if (advEndMutex.isLocked()) return c.text(`@${userDisplayName}, the adventure has ended.`)
         const advDone = await prisma.adventure.findFirst({
             where: { channelProviderId: channelProviderId, name: "DONE" },
             orderBy: { createdAt: "desc" },

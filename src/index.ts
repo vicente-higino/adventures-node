@@ -19,17 +19,17 @@ import { DuelCancel } from "endpoints/duelsCancel";
 import { PrismaClient } from "@prisma/client"; // Import PrismaClient
 import { Point } from "./endpoints/points";
 import { Env } from "types";
-import { env } from "hono/adapter";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { authMiddleware } from "./middleware/authMiddleware";
 import { LastFish } from "endpoints/lastFish";
+import env from "env";
 
 // Start a Hono app
 const hono = new Hono<Env>();
 
 // Setup OpenAPI registry
 const app = fromHono(hono);
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg({ connectionString: env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 app.use(logger());
 
@@ -40,10 +40,11 @@ app.use("*", timeout(9500, new HTTPException(408, { message: "oopsie Something w
 app.use("/api/*", authMiddleware);
 
 app.use("*", (c, next) => {
-    c.env = env(c);
+    c.env = env
     c.set("prisma", prisma);
     return next();
 });
+
 // Register OpenAPI endpoints
 app.get("/api/points/:userId", Point);
 app.get("/api/points/update/:userId/:newBalance", PointUpdate);

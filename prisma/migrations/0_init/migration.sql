@@ -226,3 +226,4 @@ ALTER TABLE "Duel" ADD CONSTRAINT "Duel_challengerId_fkey" FOREIGN KEY ("challen
 
 -- AddForeignKey
 ALTER TABLE "Duel" ADD CONSTRAINT "Duel_challengedId_fkey" FOREIGN KEY ("challengedId") REFERENCES "User"("providerId") ON DELETE CASCADE ON UPDATE CASCADE;
+

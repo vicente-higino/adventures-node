@@ -4,6 +4,8 @@ services:
     hostname: postgres_db
     container_name: postgres_db
     restart: always
+    volumes:
+      - ./data:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres

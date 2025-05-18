@@ -4,8 +4,8 @@ import { PrismaClient } from "@prisma/client"; // Import PrismaClient and User
 import { ApiClient } from "@twurple/api";
 // import { AppTokenAuthProviderWithStore } from "./auth";
 import { AppTokenAuthProvider } from "@twurple/auth";
-import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from "env";
-
+import env from "env";
+const { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = env;
 export function buildUrl(baseUrl: string, params: Record<string, string>): string {
     const url = new URL(baseUrl);
     Object.entries(params).forEach(([key, value]) => {

@@ -1,7 +1,6 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { type Env, FossaHeaders } from "../types";
-import { PrismaD1 } from "@prisma/adapter-d1";
 import { PrismaClient, Rarity } from "@prisma/client";
 import type { Context } from "hono";
 import { getUserById } from "twitch/api";
@@ -37,18 +36,18 @@ export class FishCount extends OpenAPIRoute {
                 where: {
                     channelProviderId: channelProviderId,
                     OR: [
-                        { largestFish: { userId: userProviderId, rarity: { not: "Trash" } } },
-                        { smallestFish: { userId: userProviderId, rarity: { not: "Trash" } } },
-                        { heaviestFish: { userId: userProviderId, rarity: { not: "Trash" } } },
-                        { lightestFish: { userId: userProviderId, rarity: { not: "Trash" } } },
+                        { largestFish: { userId: userProviderId, rarity: { not: Rarity.Trash } } },
+                        { smallestFish: { userId: userProviderId, rarity: { not: Rarity.Trash } } },
+                        { heaviestFish: { userId: userProviderId, rarity: { not: Rarity.Trash } } },
+                        { lightestFish: { userId: userProviderId, rarity: { not: Rarity.Trash } } },
                     ],
                 },
                 select: {
                     fishName: true,
-                    largestFish: { select: { userId: true, size: true } },
-                    smallestFish: { select: { userId: true, size: true } },
-                    heaviestFish: { select: { userId: true, weight: true } },
-                    lightestFish: { select: { userId: true, weight: true } },
+                    largestFish: { select: { userId: true, size: true, rarity: true } },
+                    smallestFish: { select: { userId: true, size: true, rarity: true } },
+                    heaviestFish: { select: { userId: true, weight: true, rarity: true } },
+                    lightestFish: { select: { userId: true, weight: true, rarity: true } },
                 },
             }),
         ]);
@@ -105,9 +104,9 @@ export class FishCount extends OpenAPIRoute {
 
         const recordsText = Object.entries(records).some(([_, items]) => items.length > 0)
             ? `They hold the record for: ${Object.entries(records)
-                  .filter(([_, items]) => items.length > 0)
-                  .map(([type, items]) => `${type.charAt(0).toUpperCase() + type.slice(1)}: ${items.map(i => i.text).join(", ")}`)
-                  .join("; ")}!`
+                .filter(([_, items]) => items.length > 0)
+                .map(([type, items]) => `${type.charAt(0).toUpperCase() + type.slice(1)}: ${items.map(i => i.text).join(", ")}`)
+                .join("; ")}!`
             : "";
 
         const fishCountsByRarity = [
