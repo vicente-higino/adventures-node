@@ -11,7 +11,7 @@ export const formatTimeToWithSeconds = (date: Date, hourWithSeconds = false): st
     const absDiff = Math.abs(diff);
 
     if (absDiff < 60) {
-        return `${Math.abs(diff)} seconds`;
+        return `${Math.abs(diff)} second${absDiff !== 1 ? "s" : ""}`;
     }
 
     const minutes = Math.round(absDiff / 60);
