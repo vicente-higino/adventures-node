@@ -13,6 +13,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Move code to /root/adventures-node
+        run: |
+          cp -r . /root/adventures-node/
+
       - name: Build and restart server service with Docker Compose
         run: |
           cd /root/adventures-node
