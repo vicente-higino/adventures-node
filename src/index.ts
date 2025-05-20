@@ -39,6 +39,15 @@ app.use(logger());
 app.use("*", timeout(9500, new HTTPException(408, { message: "oopsie Something went wrong. Please try again in a few seconds." })));
 
 app.use("/api/*", authMiddleware);
+// Add health endpoint
+app.get("/health", async (c) => {
+    try {
+        await prisma.$queryRaw`SELECT 1`;
+        return c.text("ok");
+    } catch (e) {
+        return c.text("db error", 500);
+    }
+});
 
 app.use("*", (c, next) => {
     c.env = env
@@ -67,5 +76,6 @@ app.get("/api/duel/cancel/:challengedId", DuelCancel);
 app.get("/api/leaderboard/:amount/:sortBy", ConsolidatedLeaderboard);
 
 // Add the last fish endpoint
+
 
 serve({ fetch: app.fetch, port: 8000 });
