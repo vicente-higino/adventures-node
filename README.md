@@ -1,25 +1,56 @@
-# Cloudflare Workers OpenAPI 3.1
+# Adventures Bot
 
-This is a Cloudflare Worker with OpenAPI 3.1 using [chanfana](https://github.com/cloudflare/chanfana) and [Hono](https://github.com/honojs/hono).
+A Twitch/Discord/YouTube adventure and fishing game bot built with Node.js,
+Hono, Prisma, and Twurple.
 
-This is an example project made to be used as a quick start into building OpenAPI compliant Workers that generates the
-`openapi.json` schema automatically from code and validates the incoming request to the defined parameters or request body.
+## Features
 
-## Get started
+- Adventure and fishing minigames with leaderboards
+- Silver (points) system with duels, giving, and stats
+- Multi-provider support (Twitch, Discord, YouTube)
+- Persistent storage with PostgreSQL (via Prisma)
+- Extensible adventure scenarios
 
-1. Sign up for [Cloudflare Workers](https://workers.dev). The free tier is more than enough for most use cases.
-2. Clone this project and install dependencies with `npm install`
-3. Run `wrangler login` to login to your Cloudflare account in wrangler
-4. Run `wrangler deploy` to publish the API to Cloudflare Workers
+## Setup
 
-## Project structure
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-1. Your main router is defined in `src/index.ts`.
-2. Each endpoint has its own file in `src/endpoints/`.
-3. For more information read the [chanfana documentation](https://chanfana.pages.dev/) and [Hono documentation](https://hono.dev/docs).
+2. **Configure environment variables:**
+   - Copy `.env.example` to `.env` and fill in required values:
+     ```
+     TWITCH_CLIENT_ID=your_client_id
+     TWITCH_CLIENT_SECRET=your_client_secret
+     DATABASE_URL=postgresql://user:pass@host:port/db
+     COOLDOWN_FISHING_IN_HOURS=1
+     COOLDOWN_ADVENTURE_IN_HOURS=1
+     ```
 
-## Development
+3. **Run database migrations:**
+   ```bash
+   npm run db:deploy
+   ```
 
-1. Run `wrangler dev` to start a local instance of the API.
-2. Open `http://localhost:8787/` in your browser to see the Swagger interface where you can try the endpoints.
-3. Changes made in the `src/` folder will automatically trigger the server to reload, you only need to refresh the Swagger interface.
+4. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+
+## Usage
+
+- The bot exposes HTTP endpoints for adventure, fishing, points, duels, and
+  stats.
+- Integrate with chat platforms using webhooks or custom integrations.
+
+## Scripts
+
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build for production
+- `npm run start` - Run built server
+- `npm run test` - Run tests
+
+## License
+
+MIT
