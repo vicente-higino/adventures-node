@@ -1,13 +1,13 @@
 # Adventures Bot
 
-A Twitch/Discord/YouTube adventure and fishing game bot built with Node.js,
+A Twitch adventure and fishing game bot built with Node.js,
 Hono, Prisma, and Twurple.
 
 ## Features
 
 - Adventure and fishing minigames with leaderboards
 - Silver (points) system with duels, giving, and stats
-- Multi-provider support (Twitch, Discord, YouTube)
+- Provider support (Twitch)
 - Persistent storage with PostgreSQL (via Prisma)
 - Extensible adventure scenarios
 
