@@ -4,7 +4,7 @@ import { PrismaD1 } from "@prisma/adapter-d1";
 import { PrismaClient, Prisma } from "@prisma/client"; // Import Prisma namespace for types
 import type { Context } from "hono";
 import { z } from "zod";
-import { formatSilver } from "../utils/misc"; // Ensure utils/misc path is correct
+import { formatSilver, roundToDecimalPlaces } from "../utils/misc"; // Ensure utils/misc path is correct
 
 // Define a union type for leaderboard types
 // Note: "Silver" is removed as it's now handled via "fish-silver"
@@ -230,7 +230,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                 const value = fs.totalSilverWorth;
                 const fines = fs.fishFines;
                 // Calculate avg value per fish, avoid division by zero
-                const avg = totalCount > 0 ? value / totalCount : 0;
+                const avg = totalCount > 0 ? roundToDecimalPlaces(value / totalCount, 2) : 0;
                 return {
                     name,
                     value,
