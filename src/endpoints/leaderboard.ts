@@ -11,8 +11,9 @@ import { formatSilver } from "../utils/misc"; // Ensure utils/misc path is corre
 // Rename "Points" to "Silver"
 type LeaderboardType = "Adventure" | "Duel" | "Fish" | "Silver"; // Renamed Points to Silver
 
+// Add "avg" to FishMetric
 // Define internal metrics for Fish leaderboard
-type FishMetric = "count" | "silver" | "fines" | "trash" | "common" | "uncommon" | "fine" | "rare" | "epic" | "legendary";
+type FishMetric = "count" | "silver" | "fines" | "avg" | "trash" | "common" | "uncommon" | "fine" | "rare" | "epic" | "legendary";
 
 type LeaderboardResult = { formattedLeaderboard: string[]; metricDisplay: string };
 
@@ -27,12 +28,12 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                     .string({
                         description: "Sort criteria",
                         invalid_type_error:
-                            "Sort by must be [adventure-|duel-][wins|played|wagered|profit][-asc|-bottom], fish[-silver|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary][-asc|-bottom], or silver[-asc|-bottom]. Default: silver.", // Updated description
+                            "Sort by must be [adventure-|duel-][wins|played|wagered|profit][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary][-asc|-bottom], or silver[-asc|-bottom]. Default: silver.", // Added avg
                     })
                     .regex(
-                        // Updated regex: Added fish rarities
-                        /^(?:(adventure|duel)-)?(wins|played|wagered|profit|fish(?:-(?:silver|fines|trash|common|uncommon|fine|rare|epic|legendary))?|silver)(-(?:asc|bottom))?$/i, // Updated regex to include fish rarities
-                        "Sort by: [adventure-|duel-][wins|played|wagered|profit][-asc|-bottom], fish[-silver|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary][-asc|-bottom], or silver[-asc|-bottom].", // Updated description
+                        // Add avg to regex
+                        /^(?:(adventure|duel)-)?(wins|played|wagered|profit|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary))?|silver)(-(?:asc|bottom))?$/i,
+                        "Sort by: [adventure-|duel-][wins|played|wagered|profit][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary][-asc|-bottom], or silver[-asc|-bottom].", // Added avg
                     )
                     .default("silver"), // Default to silver
             }),
@@ -43,7 +44,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
     handleValidationError(errors: z.ZodIssue[]): Response {
         // Updated usage message for consolidated command, adding default info and alias
         const msg =
-            "Usage: !leaderboard [adventure-|duel-][wins|played|wagered|profit][-asc|-bottom] | fish[-silver|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary][-asc|-bottom] | silver[-asc|-bottom] (default: silver) [amount] (default: 5)"; // Added fish rarities
+            "Usage: !leaderboard [adventure-|duel-][wins|played|wagered|profit][-asc|-bottom] | fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary][-asc|-bottom] | silver[-asc|-bottom] (default: silver) [amount] (default: 5)"; // Added avg
         return new Response(msg, { status: 400 });
     }
 
@@ -199,7 +200,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
         return { formattedLeaderboard, metricDisplay: metric };
     }
 
-    // Helper function for Fish Leaderboards (handles count, silver value, fines, and rarities)
+    // Helper function for Fish Leaderboards (handles count, silver value, fines, avg, and rarities)
     // Renamed from _handleFishSilver
     private async _handleFish(
         prisma: PrismaClient<{ adapter: PrismaD1 }>,
@@ -228,11 +229,14 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                     fs.legendaryFishCount;
                 const value = fs.totalSilverWorth;
                 const fines = fs.fishFines;
+                // Calculate avg value per fish, avoid division by zero
+                const avg = totalCount > 0 ? value / totalCount : 0;
                 return {
                     name,
                     value,
                     count: totalCount,
                     fines,
+                    avg,
                     trash: fs.trashFishCount,
                     common: fs.commonFishCount,
                     uncommon: fs.uncommonFishCount,
@@ -248,6 +252,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                     if (metric === "count") return entry.count > 0;
                     if (metric === "silver") return entry.value > 0;
                     if (metric === "fines") return entry.fines > 0;
+                    if (metric === "avg") return entry.count > 0;
                     if (metric === "trash") return entry.trash > 0;
                     if (metric === "common") return entry.common > 0;
                     if (metric === "uncommon") return entry.uncommon > 0;
@@ -281,13 +286,15 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                         compareB = b.value;
                         break;
                     case "fines":
-                        // For fines, primary sort is fines itself.
-                        // Tie-breakers are different: 1. value (desc), 2. count (desc)
                         compareA = a.fines;
                         compareB = b.fines;
                         if (compareA !== compareB) return (compareA - compareB) * multiplier;
-                        if (tieBreakerValue !== 0) return tieBreakerValue; // Higher value better
-                        return tieBreakerCount; // Higher count better
+                        if (tieBreakerValue !== 0) return tieBreakerValue;
+                        return tieBreakerCount;
+                    case "avg":
+                        compareA = a.avg;
+                        compareB = b.avg;
+                        break;
                     case "trash":
                         compareA = a.trash;
                         compareB = b.trash;
@@ -334,6 +341,8 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                     case "count":
                     case "silver":
                         return `${index}. ${entry.name}: ${entry.count} Fish (${formatSilver(entry.value)} Silver)`;
+                    case "avg":
+                        return `${index}. ${entry.name}: ${entry.count > 0 ? formatSilver(entry.avg) : "0"} avg Silver per fish`;
                     case "fines":
                         return `${index}. ${entry.name}: ${formatSilver(entry.fines)} Silver in fines`;
                     case "trash":
@@ -350,7 +359,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                         return `${index}. ${entry.name}: ${entry.epic} Epic Fish`;
                     case "legendary":
                         return `${index}. ${entry.name}: ${entry.legendary} Legendary Fish`;
-                    default: // Should not happen
+                    default:
                         return "";
                 }
             });
@@ -363,6 +372,9 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                 break;
             case "silver":
                 metricDisplay = "silver value";
+                break;
+            case "avg":
+                metricDisplay = "average fish value";
                 break;
             case "fines":
                 metricDisplay = "fines";
@@ -432,7 +444,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
         const sortParts = sortBy
             .toLowerCase()
             .match(
-                /^(?:(adventure|duel)-)?(wins|played|wagered|profit|fish(?:-(?:silver|fines|trash|common|uncommon|fine|rare|epic|legendary))?|silver)(-(?:asc|bottom))?$/i,
+                /^(?:(adventure|duel)-)?(wins|played|wagered|profit|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary))?|silver)(-(?:asc|bottom))?$/i,
             ); // Use updated regex
         if (!sortParts) {
             // This should ideally not happen due to Zod validation, but good practice to keep.
