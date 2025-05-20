@@ -1,7 +1,7 @@
-import { FishStats, PrismaClient } from "@prisma/client";
+import { FishStats, Prisma, PrismaClient } from "@prisma/client";
 
 export async function findOrCreateBalance(
-    db: PrismaClient,
+    db: dbClient,
     channelLogin: string,
     channelProviderId: string,
     userProviderId: string,
@@ -35,11 +35,11 @@ export async function findOrCreateBalance(
     }
     return balance;
 }
-export async function setBalance(db: PrismaClient, id: number, newValue: number) {
+export async function setBalance(db: dbClient, id: number, newValue: number) {
     let balance = await db.balance.update({ where: { id }, data: { value: newValue } });
     return balance;
 }
-export async function increaseBalanceWithChannelID(db: PrismaClient, channelProviderId: string, userProviderId: string, amountToIncrease: number) {
+export async function increaseBalanceWithChannelID(db: dbClient, channelProviderId: string, userProviderId: string, amountToIncrease: number) {
     let balance = await db.balance.findFirst({ where: { channelProviderId, userId: userProviderId } });
     if (!balance) {
         throw new Error("Balance not found");
@@ -47,7 +47,7 @@ export async function increaseBalanceWithChannelID(db: PrismaClient, channelProv
     balance = await increaseBalance(db, balance.id, amountToIncrease);
     return balance;
 }
-export async function increaseBalance(db: PrismaClient, id: number, amountToIncrease: number) {
+export async function increaseBalance(db: any, id: number, amountToIncrease: number) {
     let oldBalance = await db.balance.findUniqueOrThrow({ where: { id } });
     const isBalanceNegative = oldBalance.value + amountToIncrease < 0;
     let balance = await db.balance.update({
@@ -57,7 +57,7 @@ export async function increaseBalance(db: PrismaClient, id: number, amountToIncr
     return balance;
 }
 
-export async function findOrCreateUserStats(db: PrismaClient, channelLogin: string, channelProviderId: string, userProviderId: string) {
+export async function findOrCreateUserStats(db: dbClient, channelLogin: string, channelProviderId: string, userProviderId: string) {
     let userStats = await db.userStats.findFirst({ where: { userId: userProviderId, channelProviderId: channelProviderId } });
     if (!userStats) {
         userStats = await db.userStats.create({
@@ -69,7 +69,7 @@ export async function findOrCreateUserStats(db: PrismaClient, channelLogin: stri
 }
 
 export async function updateUserAdventureStats(
-    db: PrismaClient,
+    db: dbClient,
     channel: string,
     channelProviderId: string,
     userProviderId: string,
@@ -90,7 +90,7 @@ export async function updateUserAdventureStats(
 }
 
 export async function updateUseDuelsStats(
-    db: PrismaClient,
+    db: dbClient,
     channel: string,
     channelProviderId: string,
     userProviderId: string,
@@ -109,11 +109,11 @@ export async function updateUseDuelsStats(
     return updatedUserStats;
 }
 
-export async function updateUserDetails(prisma: PrismaClient, userId: string, newLogin: string, newDisplayName: string): Promise<void> {
+export async function updateUserDetails(prisma: dbClient, userId: string, newLogin: string, newDisplayName: string): Promise<void> {
     await prisma.user.update({ where: { providerId: userId }, data: { login: newLogin, displayName: newDisplayName } });
 }
 
-export async function cancelExpiredDuels(prisma: PrismaClient): Promise<void> {
+export async function cancelExpiredDuels(prisma: dbClient): Promise<void> {
     const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000); // Calculate timestamp for 10 min ago
 
     // Find pending duels older than one hour
@@ -164,20 +164,22 @@ export async function cancelExpiredDuels(prisma: PrismaClient): Promise<void> {
 /**
  * Finds an existing FishStats record for a user in a specific channel or creates a new one if it doesn't exist.
  *
- * @param prisma The PrismaClient instance.
+ * @param prisma The dbClient instance.
  * @param channelLogin The login name of the channel.
  * @param channelProviderId The provider ID of the channel.
  * @param userProviderId The provider ID of the user.
  * @returns A Promise that resolves to the found or created FishStats record.
  */
+
 export async function findOrCreateFishStats(
-    prisma: PrismaClient,
+    prisma: dbClient,
     channelLogin: string,
     channelProviderId: string,
     userProviderId: string,
     userLogin: string,
     userDisplayName: string,
 ): Promise<FishStats> {
+
     let fishStats = await prisma.fishStats.findUnique({
         where: { channelProviderId_userId: { channelProviderId, userId: userProviderId } },
         include: { user: true },
@@ -204,3 +206,6 @@ export async function findOrCreateFishStats(
 
     return fishStats;
 }
+
+
+type dbClient = PrismaClient | Prisma.TransactionClient

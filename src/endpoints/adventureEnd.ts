@@ -1,8 +1,8 @@
 import { OpenAPIRoute } from "chanfana";
 import { Env, FossaHeaders } from "../types";
 import { Context } from "hono";
-import { increaseBalanceWithChannelID, updateUserAdventureStats } from "db";
-import { runGroupAdventure } from "adventures";
+import { increaseBalanceWithChannelID, updateUserAdventureStats } from "../db";
+import { runGroupAdventure } from "../adventures";
 import { formatSilver, limitMessageLength, limitAdvMessage } from "../utils/misc";
 import { Mutex } from "async-mutex";
 export const advEndMutex = new Mutex();

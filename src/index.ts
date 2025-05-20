@@ -27,6 +27,8 @@ import env from "env";
 // Start a Hono app
 const hono = new Hono<Env>();
 
+// Error handling middleware
+
 // Setup OpenAPI registry
 const app = fromHono(hono);
 const adapter = new PrismaPg({ connectionString: env.DATABASE_URL });
@@ -34,7 +36,6 @@ const prisma = new PrismaClient({ adapter });
 app.use(logger());
 
 // Add validation middleware before routes
-
 app.use("*", timeout(9500, new HTTPException(408, { message: "oopsie Something went wrong. Please try again in a few seconds." })));
 
 app.use("/api/*", authMiddleware);
@@ -44,6 +45,7 @@ app.use("*", (c, next) => {
     c.set("prisma", prisma);
     return next();
 });
+
 
 // Register OpenAPI endpoints
 app.get("/api/points/:userId", Point);

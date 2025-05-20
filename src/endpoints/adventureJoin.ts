@@ -1,8 +1,6 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { Env, FossaHeaders } from "../types";
-import { PrismaD1 } from "@prisma/adapter-d1";
-import { PrismaClient } from "@prisma/client";
 import { Context } from "hono";
 import { findOrCreateBalance, setBalance } from "../db";
 import dayjs from "dayjs";

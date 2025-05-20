@@ -93,7 +93,6 @@ web_modules/
 .yarn-integrity
 
 # dotenv environment variable files
-data
 .env
 .env.development.local
 .env.test.local
@@ -173,3 +172,6 @@ dist
 
 .wrangler
 test.sql
+
+data/
+db_backups/

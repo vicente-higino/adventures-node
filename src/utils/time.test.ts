@@ -24,12 +24,12 @@ describe("formatTimeToWithSeconds", () => {
 
     test("formats minutes and seconds correctly for time between 1 and 60 minutes in the future", () => {
         const date = new Date("2025-04-20T12:05:15.000Z"); // 5 minutes 15 seconds in the future
-        expect(formatTimeToWithSeconds(date)).toBe("5 minutes 15 seconds");
+        expect(formatTimeToWithSeconds(date, true)).toBe("5 minutes 15 seconds");
     });
 
     test("formats singular minute and seconds correctly", () => {
         const date = new Date("2025-04-20T12:01:01.000Z"); // 1 minute 1 second in the future
-        expect(formatTimeToWithSeconds(date)).toBe("1 minute 1 second");
+        expect(formatTimeToWithSeconds(date, true)).toBe("1 minute 1 second");
     });
 
     test("formats minutes with zero seconds correctly", () => {
