@@ -4,7 +4,7 @@ import { type Env, FossaHeaders } from "../types";
 import { PrismaClient, Rarity } from "@prisma/client";
 import type { Context } from "hono";
 import { getUserById } from "twitch/api";
-import { formatSize, formatWeight } from "utils/misc";
+import { formatSize, formatWeight, roundToDecimalPlaces } from "utils/misc";
 import { formatSilver } from "../utils/misc";
 import { createUserIdParam } from "../utils/params";
 import { findOrCreateFishStats } from "db";
@@ -122,6 +122,9 @@ export class FishCount extends OpenAPIRoute {
         const totalCount = fishCountsByRarity.reduce((acc, curr) => acc + curr.count, 0);
         const totalValue = fishStats.totalSilverWorth;
 
+        // Calculate average silver per fish
+        const avgSilverPerFish = totalCount > 0 ? roundToDecimalPlaces(totalValue / totalCount, 2) : 0;
+
         const rarityBreakdown = fishCountsByRarity
             .filter(r => r.count > 0)
             .sort((a, b) => b.count - a.count)
@@ -132,7 +135,7 @@ export class FishCount extends OpenAPIRoute {
 
         return c.text(
             totalCount > 0
-                ? `@${userDisplayName} has caught ${totalCount} fish worth ${formatSilver(totalValue)} silver in total! ${rarityBreakdown.length > 0 ? `(${rarityBreakdown})` : ""}. ${recordsText} ${finesText}`
+                ? `@${userDisplayName} has caught ${totalCount} fish worth ${formatSilver(totalValue)} silver in total! (avg ${formatSilver(avgSilverPerFish)} silver/fish)${rarityBreakdown.length > 0 ? ` (${rarityBreakdown})` : ""}. ${recordsText} ${finesText}`
                 : `@${userDisplayName} has not caught any fish yet!${finesText}`,
         );
     }
