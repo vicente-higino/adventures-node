@@ -38,7 +38,7 @@ app.use(logger());
 // Add validation middleware before routes
 app.use("*", timeout(9500, new HTTPException(408, { message: "oopsie Something went wrong. Please try again in a few seconds." })));
 
-app.use("/api/*", authMiddleware);
+// app.use("/api/*", authMiddleware);
 // Add health endpoint
 app.get("/health", async (c) => {
     try {
