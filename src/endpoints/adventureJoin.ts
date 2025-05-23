@@ -1,17 +1,18 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
-import { Env, FossaHeaders } from "../types";
+import { Env, FossaHeaders } from "@/types";
 import { Context } from "hono";
-import { findOrCreateBalance, setBalance } from "../db";
+import { findOrCreateBalance, setBalance } from "@/db";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 // Import calculateAmount instead of having it locally
-import { pickRandom, roundToDecimalPlaces, calculateAmount, delay } from "utils/misc";
-import { formatTimeToWithSeconds } from "utils/time";
+import { pickRandom, roundToDecimalPlaces, calculateAmount, delay } from "@/utils/misc";
+import { formatTimeToWithSeconds } from "@/utils/time";
 // Add import for emotes
-import { ADVENTURE_COOLDOWN_EMOTES } from "../emotes";
+import { ADVENTURE_COOLDOWN_EMOTES } from "@/emotes";
 import { Mutex } from "async-mutex";
 import { advEndMutex } from "./adventureEnd";
+import { sendMessageToChannel } from "@/utils/misc"; // <-- Add this import (implement if needed)
 dayjs.extend(relativeTime);
 
 const coolDownMinutes = (c: Context<Env>) => 60 * c.env.COOLDOWN_ADVENTURE_IN_HOURS;
@@ -41,6 +42,8 @@ export function generatePayoutRate(): number {
     }
 }
 const mutex = new Mutex();
+// Store timers per channel to avoid multiple warnings for the same adventure
+const adventureWarningTimers: Record<string, NodeJS.Timeout> = {};
 export class AdventureJoin extends OpenAPIRoute {
     schema = {
         request: {
@@ -119,7 +122,7 @@ export class AdventureJoin extends OpenAPIRoute {
             const payoutRate = roundToDecimalPlaces(generatePayoutRate(), 2);
             const formattedPayoutRate = payoutRate.toFixed(2);
 
-            await Promise.all([
+            const [_, adventureId] = await Promise.all([
                 // Use newBalanceValue and newBuyin
                 setBalance(prisma, balance.id, newBalanceValue),
                 prisma.adventure.create({
@@ -134,6 +137,22 @@ export class AdventureJoin extends OpenAPIRoute {
                 }),
             ]);
             mutex.release();
+
+            // --- TIMER LOGIC START ---
+
+            // Set a new timer for 30 minutes (1800000 ms)
+            adventureWarningTimers[channelProviderId] = setTimeout(async () => {
+                // Send a warning message to the chatroom
+                const adv = await prisma.adventure.findUnique({ where: { id: adventureId.id } });
+                if (!adv) return;
+                if (adv.name === "DONE") return;
+                await sendMessageToChannel(channelLogin, `⚠️ 30 minutes have passed since the adventure started! Don't forget to end the adventure with !adventureend or !advend to claim your rewards!`);
+                // await sendMessageToChannel(channelLogin, `!adventureend`);
+                // Optionally, clear the timer reference
+                delete adventureWarningTimers[channelProviderId];
+            }, 30 * 60 * 1000).unref();
+            // --- TIMER LOGIC END ---
+
             return c.text(
                 `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "!adventure|adv [silver(K/M/B)|%|all|+/-delta]" to join in! Then use "!adventureend|advend" to end the adventure and get your rewards!
                 This adventure offers a ${formattedPayoutRate}x payout rate! GAMBA

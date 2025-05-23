@@ -1,10 +1,10 @@
 import { OpenAPIRoute } from "chanfana";
-import { type Env, FossaHeaders } from "../types";
+import { type Env, FossaHeaders } from "@/types";
 import { PrismaD1 } from "@prisma/adapter-d1";
 import { PrismaClient, Prisma } from "@prisma/client"; // Import Prisma namespace for types
 import type { Context } from "hono";
 import { z } from "zod";
-import { formatSilver, roundToDecimalPlaces } from "../utils/misc"; // Ensure utils/misc path is correct
+import { formatSilver, roundToDecimalPlaces } from "@/utils/misc"; // Ensure utils/misc path is correct
 
 // Define a union type for leaderboard types
 // Note: "Silver" is removed as it's now handled via "fish-silver"

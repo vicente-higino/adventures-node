@@ -1,10 +1,10 @@
 import { Context } from "hono";
-import { Env } from "../types";
+import { Env } from "@/types";
 import { PrismaClient } from "@prisma/client"; // Import PrismaClient and User
 import { ApiClient } from "@twurple/api";
 // import { AppTokenAuthProviderWithStore } from "./auth";
 import { AppTokenAuthProvider } from "@twurple/auth";
-import env from "env";
+import env from "@/env";
 const { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = env;
 export function buildUrl(baseUrl: string, params: Record<string, string>): string {
     const url = new URL(baseUrl);
@@ -22,13 +22,14 @@ type DbUser = {
 };
 
 const authProvider = new AppTokenAuthProvider(TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET);
+const apiClient = new ApiClient({ authProvider });
 
 async function handleApiRequest<T>(apiCall: () => Promise<T>, authProvider: AppTokenAuthProvider): Promise<T | null> {
     try {
         return await apiCall();
     } catch (error: any) {
         if (error.statusCode === 401) {
-            console.error("401 Unauthorized. Fetching new token...");
+            console.error("401 Unauthorized. Fetching new token@.");
             await authProvider.getAppAccessToken(true);
             return await apiCall(); // Retry the API call
         }
@@ -38,7 +39,6 @@ async function handleApiRequest<T>(apiCall: () => Promise<T>, authProvider: AppT
 }
 
 export const getUserByUsername = async (
-    c: Context<Env>,
     prisma: PrismaClient, // Add prisma client
     username: string,
 ): Promise<DbUser | null> => {
@@ -51,7 +51,6 @@ export const getUserByUsername = async (
     }
 
     // If not in DB, fetch from Twitch API
-    const apiClient = new ApiClient({ authProvider });
     const apiUser = await handleApiRequest(() => apiClient.users.getUserByName(username), authProvider);
     if (!apiUser) {
         return null;
@@ -87,7 +86,7 @@ export const getUserById = async (
     }
 
     // If not in DB, fetch from Twitch API
-    const apiClient = new ApiClient({ authProvider });
+
     const apiUser = await handleApiRequest(() => apiClient.users.getUserById(id), authProvider);
     if (!apiUser) {
         return null;

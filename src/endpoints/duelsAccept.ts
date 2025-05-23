@@ -1,16 +1,14 @@
 import { Context } from "hono";
-import { PrismaClient } from "@prisma/client";
-import { FossaHeaders, Env } from "types"; // Import Env
+import { FossaHeaders, Env } from "@/types"; // Import Env
 import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
-import { PrismaD1 } from "@prisma/adapter-d1";
-import { getUserById } from "twitch/api"; // Import getUserById
 // Import findOrCreateUserStats
-import { findOrCreateBalance, increaseBalanceWithChannelID, findOrCreateUserStats, updateUseDuelsStats } from "db";
-import { pickRandom } from "utils/misc";
-import { createUserIdParam } from "utils/params";
+import { findOrCreateBalance, increaseBalanceWithChannelID, updateUseDuelsStats } from "@/db";
+import { pickRandom } from "@/utils/misc";
+import { createUserIdParam } from "@/utils/params";
 // Add import for duel win emotes
-import { DUEL_WIN_EMOTES } from "../emotes";
+import { DUEL_WIN_EMOTES } from "@/emotes";
+import { getUserById } from "@/twitch/api";
 
 export class DuelAccept extends OpenAPIRoute {
     schema = {

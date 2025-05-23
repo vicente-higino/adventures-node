@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"allowJs": true,
 		"allowSyntheticDefaultImports": true,
-		"baseUrl": "src",
+		"baseUrl": ".",
 		"declaration": true,
 		"sourceMap": true,
 		"esModuleInterop": true,
@@ -26,7 +26,12 @@
 		"module": "esnext",
 		"types": [
 			"@types/node",
-		]
+		],
+		"paths": {
+			"@/*": [
+				"./src/*"
+			],
+		}
 	},
 	"exclude": [
 		"node_modules",

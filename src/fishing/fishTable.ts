@@ -1,5 +1,5 @@
 import { CatchDetails, RARITY_POINTS } from "./constants"; // Import from constants
-import { pickRandom } from "utils/misc";
+import { pickRandom } from "@/utils/misc";
 
 export const fishTable: CatchDetails[] = [
     // Legendary fish - massive sizes

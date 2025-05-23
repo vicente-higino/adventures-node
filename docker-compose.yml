@@ -39,6 +39,9 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
       # Add other variables as needed
+    volumes:
+      - ./secrets:/usr/src/app/secrets
+      - ./config:/usr/src/app/config
     networks:
       - prisma-network
 

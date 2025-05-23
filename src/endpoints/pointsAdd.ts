@@ -1,12 +1,10 @@
 import { Bool, Num, OpenAPIRoute, Str } from "chanfana";
 import { z } from "zod";
-import { Env, FossaHeaders } from "../types";
-import { PrismaD1 } from "@prisma/adapter-d1";
-import { PrismaClient } from "@prisma/client";
+import { Env, FossaHeaders } from "@/types";
 import { Context } from "hono";
-import { getUserById } from "twitch/api";
-import { findOrCreateBalance } from "db";
-import { createUserIdParam } from "utils/params";
+import { getUserById } from "@/twitch/api";
+import { findOrCreateBalance } from "@/db";
+import { createUserIdParam } from "@/utils/params";
 
 export class PointAdd extends OpenAPIRoute {
     schema = {

@@ -1,13 +1,11 @@
 import { Context } from "hono";
-import { PrismaClient } from "@prisma/client";
-import { FossaHeaders, Env } from "types"; // Import Env
+import { FossaHeaders, Env } from "@/types"; // Import Env
 import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
-import { PrismaD1 } from "@prisma/adapter-d1";
-import { getUserById } from "twitch/api"; // Ensure getUserById is imported
-import { createUserIdParam } from "utils/params"; // Ensure createUserIdParam is imported
-import { formatSilver } from "utils/misc";
-import { findOrCreateBalance } from "db"; // Import findOrCreateBalance
+import { getUserById } from "@/twitch/api"; // Ensure getUserById is imported
+import { createUserIdParam } from "@/utils/params"; // Ensure createUserIdParam is imported
+import { formatSilver } from "@/utils/misc";
+import { findOrCreateBalance } from "@/db"; // Import findOrCreateBalance
 
 export class AdventureStats extends OpenAPIRoute {
     schema = { request: { headers: FossaHeaders, params: z.object({ userId: createUserIdParam() }) }, responses: {} };

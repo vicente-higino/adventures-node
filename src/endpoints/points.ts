@@ -1,14 +1,11 @@
 import { Context } from "hono";
-import { PrismaClient } from "@prisma/client";
-import { FossaHeaders, Env } from "../types"; // Import Env
+import { FossaHeaders, Env } from "@/types"; // Import Env
 import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
-import { getUserById } from "../twitch/api"; // Ensure getUserById is imported
-import { findOrCreateBalance } from "../db"; // Ensure findOrCreateBalance is imported
-import { formatSilver } from "../utils/misc"; // Ensure formatSilver is imported
-import { createUserIdParam } from "../utils/params"; // Ensure createUserIdParam is imported
-import { env } from "hono/adapter";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { getUserById } from "@/twitch/api"; // Ensure getUserById is imported
+import { findOrCreateBalance } from "@/db"; // Ensure findOrCreateBalance is imported
+import { getUserSilverString } from "@/common/userSilver";
+import { createUserIdParam } from "@/utils/params";
 export class Point extends OpenAPIRoute {
     override schema = { request: { headers: FossaHeaders, params: z.object({ userId: createUserIdParam() }) }, responses: {} };
     override handleValidationError(errors: z.ZodIssue[]): Response {
@@ -31,7 +28,14 @@ export class Point extends OpenAPIRoute {
             userLogin = user?.login ?? data.headers["x-fossabot-message-userlogin"];
             userDisplayName = user?.displayName ?? data.headers["x-fossabot-message-userdisplayname"];
         }
-        const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);
-        return c.text(`@${userDisplayName} has ${formatSilver(balance.value)} silver.`);
+        const result = await getUserSilverString({
+            prisma,
+            channelLogin,
+            channelProviderId,
+            userProviderId,
+            userLogin,
+            userDisplayName
+        });
+        return c.text(result);
     }
 }

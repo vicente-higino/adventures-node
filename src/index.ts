@@ -1,28 +1,28 @@
 import { fromHono } from "chanfana";
 import { Context, Hono } from "hono";
 import { serve } from "@hono/node-server";
-import { PointUpdate } from "endpoints/pointsUpdate";
+import { PointUpdate } from "@/endpoints/pointsUpdate";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
 import { timeout } from "hono/timeout";
-import { AdventureJoin } from "endpoints/adventureJoin";
-import { AdventureEnd } from "endpoints/adventureEnd";
-import { PointAdd } from "endpoints/pointsAdd";
-import { PointGive } from "endpoints/pointsGive";
-import { Fish } from "endpoints/fish";
-import { FishCount } from "endpoints/fishCount";
-import { AdventureStats } from "endpoints/adventureStats";
-import { ConsolidatedLeaderboard } from "endpoints/leaderboard";
-import { DuelCreate } from "endpoints/duelsCreate";
-import { DuelAccept } from "endpoints/duelsAccept";
-import { DuelCancel } from "endpoints/duelsCancel";
-import { PrismaClient } from "@prisma/client"; // Import PrismaClient
-import { Point } from "./endpoints/points";
-import { Env } from "types";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { authMiddleware } from "./middleware/authMiddleware";
-import { LastFish } from "endpoints/lastFish";
-import env from "env";
+import { AdventureJoin } from "@/endpoints/adventureJoin";
+import { AdventureEnd } from "@/endpoints/adventureEnd";
+import { PointAdd } from "@/endpoints/pointsAdd";
+import { PointGive } from "@/endpoints/pointsGive";
+import { Fish } from "@/endpoints/fish";
+import { FishCount } from "@/endpoints/fishCount";
+import { AdventureStats } from "@/endpoints/adventureStats";
+import { ConsolidatedLeaderboard } from "@/endpoints/leaderboard";
+import { DuelCreate } from "@/endpoints/duelsCreate";
+import { DuelAccept } from "@/endpoints/duelsAccept";
+import { DuelCancel } from "@/endpoints/duelsCancel";
+import { Point } from "@/endpoints/points";
+import { Env } from "@/types";
+import { LastFish } from "@/endpoints/lastFish";
+import env from "@/env";
+import { createBot } from "@/bot";
+import { prisma } from "@/prisma";
+import { AuthTwitch, AuthTwitchRedirect } from "./endpoints/authTwitch";
 
 // Start a Hono app
 const hono = new Hono<Env>();
@@ -31,8 +31,8 @@ const hono = new Hono<Env>();
 
 // Setup OpenAPI registry
 const app = fromHono(hono);
-const adapter = new PrismaPg({ connectionString: env.DATABASE_URL });
-const prisma = new PrismaClient({ adapter });
+
+createBot(env.TWTICH_BOT_USER_ID);
 app.use(logger());
 
 // Add validation middleware before routes
@@ -55,6 +55,22 @@ app.use("*", (c, next) => {
     return next();
 });
 
+// Remove this block:
+// app.get("/auth/twitch", async (c: Context<Env>) => {
+//     const { code } = c.req.query();
+//     const redirectUri = 'http://localhost:8000/auth/twitch';
+//     const tokenData = await exchangeCode(c.env.TWITCH_CLIENT_ID, c.env.TWITCH_CLIENT_SECRET, code, redirectUri);
+//     const userId = await authProvider.addUserForToken(tokenData);
+//     // For example, using fs to save to a file:
+//     await fs.writeFile(`./tokens.${userId}.json`, JSON.stringify(tokenData, null, 4), 'utf-8');
+//     return c.json({ message: "Token added successfully" });
+// })
+
+// Add import for the new endpoint
+
+// Register the new endpoint
+app.get("/auth/twitch", AuthTwitch);
+app.get("/auth/twitch/login", AuthTwitchRedirect);
 
 // Register OpenAPI endpoints
 app.get("/api/points/:userId", Point);

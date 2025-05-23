@@ -1,3 +1,4 @@
+import { GetBot } from "@/bot";
 import Qty from "js-quantities";
 
 export function pickRandom<T>(arr: T[]): T {
@@ -221,4 +222,14 @@ export function limitAdvMessage(base: string, advMsg: string): string {
         return advMsg.slice(0, Math.max(0, maxLen - suffix.length)) + suffix;
     }
     return advMsg;
+}
+
+export async function sendMessageToChannel(channel: string, message: string) {
+    // Placeholder function to send a message to a channel
+    // Replace with actual implementation
+    console.log(`Sending message to ${channel}: ${message}`);
+    GetBot()?.say(channel, message).catch(err => {
+        console.error(`Error sending message to ${channel}:`, err);
+    }
+    );
 }

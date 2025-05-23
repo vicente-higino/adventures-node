@@ -1,13 +1,13 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
-import { type Env, FossaHeaders } from "../types";
+import { type Env, FossaHeaders } from "@/types";
 import { PrismaClient, Rarity } from "@prisma/client";
 import type { Context } from "hono";
-import { getUserById } from "twitch/api";
-import { formatSize, formatWeight, roundToDecimalPlaces } from "utils/misc";
-import { formatSilver } from "../utils/misc";
-import { createUserIdParam } from "../utils/params";
-import { findOrCreateFishStats } from "db";
+import { getUserById } from "@/twitch/api";
+import { formatSize, formatWeight, roundToDecimalPlaces } from "@/utils/misc";
+import { formatSilver } from "@/utils/misc";
+import { createUserIdParam } from "@/utils/params";
+import { findOrCreateFishStats } from "@/db";
 
 export class FishCount extends OpenAPIRoute {
     schema = { request: { headers: FossaHeaders, params: z.object({ userId: createUserIdParam() }) }, responses: {} };

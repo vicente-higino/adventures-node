@@ -1,4 +1,4 @@
-import { boxMullerTransform, formatSize, formatWeight, pickRandom, roundToDecimalPlaces, UnitSystem } from "utils/misc";
+import { boxMullerTransform, formatSize, formatWeight, pickRandom, roundToDecimalPlaces, UnitSystem } from "@/utils/misc";
 import { fishTable } from "./fishTable";
 import { Rarity, CatchDetails, RARITY_WEIGHTS, SELL_MULTIPLIERS, SIZE_PREFIXES, VALUE_EMOTES } from "./constants";
 

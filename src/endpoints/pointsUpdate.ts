@@ -1,12 +1,10 @@
 import { Context } from "hono";
-import { PrismaClient } from "@prisma/client";
-import { FossaHeaders, Env } from "types"; // Import Env
+import { FossaHeaders, Env } from "@/types"; // Import Env
 import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
-import { PrismaD1 } from "@prisma/adapter-d1";
-import { getUserById } from "twitch/api"; // Ensure getUserById is imported
-import { findOrCreateBalance } from "db"; // Ensure findOrCreateBalance is imported
-import { createUserIdParam } from "utils/params"; // Ensure createUserIdParam is imported
+import { getUserById } from "@/twitch/api"; // Ensure getUserById is imported
+import { findOrCreateBalance } from "@/db"; // Ensure findOrCreateBalance is imported
+import { createUserIdParam } from "@/utils/params"; // Ensure createUserIdParam is imported
 
 export class PointUpdate extends OpenAPIRoute {
     schema = {

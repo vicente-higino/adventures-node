@@ -1,13 +1,12 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
-import { type Env, FossaHeaders } from "../types";
-import { PrismaD1 } from "@prisma/adapter-d1";
-import { Prisma, PrismaClient, Rarity } from "@prisma/client";
+import { type Env, FossaHeaders } from "@/types";
+import { Prisma, Rarity } from "@prisma/client";
 import type { Context } from "hono";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { formatSize, formatWeight } from "utils/misc";
-import { getUserByUsername } from "../twitch/api"; // Import getUserByUsername
+import { formatSize, formatWeight } from "@/utils/misc";
+import { getUserByUsername } from "@/twitch/api"; // Import getUserByUsername
 
 dayjs.extend(relativeTime);
 
@@ -55,7 +54,7 @@ export class LastFish extends OpenAPIRoute {
 
         // Handle target channel if specified
         if (parsedArgs.channel) {
-            const channelUser = await getUserByUsername(c, prisma, parsedArgs.channel);
+            const channelUser = await getUserByUsername(prisma, parsedArgs.channel);
             if (!channelUser) {
                 return c.text(`Channel "${parsedArgs.channel}" not found.`);
             }
