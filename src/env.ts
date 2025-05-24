@@ -11,6 +11,15 @@ const envSchema = z.object({
     TWTICH_BOT_USER_ID: z.string({
         required_error: "Missing environment variable: TWTICH_BOT_USER_ID"
     }),
+    TWTICH_EVENTSUB_PROXY_HOST: z.string({
+        required_error: "Missing environment variable: TWTICH_EVENTSUB_PROXY_HOST"
+    }),
+    TWTICH_EVENTSUB_PROXY_PORT: z.coerce.number({
+        required_error: "Missing environment variable: TWTICH_EVENTSUB_PROXY_PORT"
+    }),
+    TWTICH_EVENTSUB_SECRET: z.string({
+        required_error: "Missing environment variable: TWTICH_EVENTSUB_SECRET"
+    }),
     DATABASE_URL: z.string({
         required_error: "Missing environment variable: DATABASE_URL"
     }),

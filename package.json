@@ -21,6 +21,7 @@
 		"@twurple/api": "^7.3.0",
 		"@twurple/auth": "^7.3.0",
 		"@twurple/easy-bot": "^7.3.0",
+		"@twurple/eventsub-http": "^7.3.0",
 		"async-mutex": "^0.5.0",
 		"chanfana": "^2.0.2",
 		"dayjs": "^1.11.13",

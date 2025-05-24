@@ -2,7 +2,7 @@ import { OpenAPIRoute } from "chanfana";
 import { Context } from "hono";
 import { Env } from "@/types";
 import { exchangeCode } from "@twurple/auth";
-import { authProvider, createBot } from "@/bot";
+import { refreshingAuthProvider, createBot } from "@/bot";
 import fs from "fs/promises";
 import { z } from "zod";
 
@@ -31,7 +31,7 @@ export class AuthTwitch extends OpenAPIRoute {
 
         try {
             const tokenData = await exchangeCode(c.env.TWITCH_CLIENT_ID, c.env.TWITCH_CLIENT_SECRET, code, redirectUri);
-            const userId = await authProvider.addUserForToken(tokenData);
+            const userId = await refreshingAuthProvider.addUserForToken(tokenData);
             await fs.writeFile(`./secrets/tokens.${userId}.json`, JSON.stringify(tokenData, null, 4), 'utf-8');
             createBot(userId);
             return c.json({ message: "Token added successfully" });

@@ -22,7 +22,7 @@ type DbUser = {
 };
 
 const authProvider = new AppTokenAuthProvider(TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET);
-const apiClient = new ApiClient({ authProvider });
+export const apiClient = new ApiClient({ authProvider });
 
 async function handleApiRequest<T>(apiCall: () => Promise<T>, authProvider: AppTokenAuthProvider): Promise<T | null> {
     try {

@@ -1,5 +1,5 @@
 import { Context, Next } from "hono";
-import { Env } from "types";
+import { Env } from "@/types";
 
 export const authMiddleware = async (c: Context<Env>, next: Next) => {
     const provider = c.req.header("x-fossabot-channelprovider");
