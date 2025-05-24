@@ -22,13 +22,17 @@ export class AuthTwitch extends OpenAPIRoute {
         const data = await this.getValidatedData<typeof this.schema>();
         const prisma = c.get("prisma");
         const { code, scope, state } = data.query;
-        const url = new URL(c.req.url);
-        const redirectUri = url.origin + url.pathname;
+
+        // Get protocol and host from proxy headers if present
+        const proto = c.req.header("x-forwarded-proto") || new URL(c.req.url).protocol.replace(":", "");
+        const host = c.req.header("x-forwarded-host") || new URL(c.req.url).host;
+        const pathname = new URL(c.req.url).pathname;
+        const redirectUri = `${proto}://${host}${pathname}`;
 
         try {
             const tokenData = await exchangeCode(c.env.TWITCH_CLIENT_ID, c.env.TWITCH_CLIENT_SECRET, code, redirectUri);
             const userId = await authProvider.addUserForToken(tokenData);
-            await fs.writeFile(`./tokens.${userId}.json`, JSON.stringify(tokenData, null, 4), 'utf-8');
+            await fs.writeFile(`./secrets/tokens.${userId}.json`, JSON.stringify(tokenData, null, 4), 'utf-8');
             createBot(userId);
             return c.json({ message: "Token added successfully" });
         } catch (error) {
@@ -53,8 +57,10 @@ export class AuthTwitchRedirect extends OpenAPIRoute {
     async handle(c: Context<Env>) {
         const data = await this.getValidatedData<typeof this.schema>();
         const clientId = c.env.TWITCH_CLIENT_ID;
-        const url = new URL(c.req.url);
-        const redirectUri = data.query.redirect_uri ?? url.origin + "/auth/twitch";
+        const proto = c.req.header("x-forwarded-proto") || new URL(c.req.url).protocol.replace(":", "");
+        const host = c.req.header("x-forwarded-host") || new URL(c.req.url).host;
+        const pathname = "/auth/twitch";
+        const redirectUri = `${proto}://${host}${pathname}`;
         console.log("Redirect URI:", redirectUri);
         const scope = data.query.scope ?? "chat:read chat:edit user:write:chat user:bot user:read:chat user:manage:chat_color";
         const state = data.query.state ?? "";
