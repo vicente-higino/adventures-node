@@ -14,6 +14,7 @@ const clientSecret = env.TWITCH_CLIENT_SECRET;
 const BotConfigSchema = z.object({
     channels: z.array(z.string().min(3)).min(1),
     prefix: z.string(),
+    userId: z.string(),
     debug: z.boolean(),
     isAlwaysMod: z.boolean()
 });
@@ -45,7 +46,6 @@ async function fetchLiveChannels() {
 }
 
 async function createEventsubListeners(users: string[]) {
-
     await apiClient.eventSub.deleteAllSubscriptions();
     const userIds = await apiClient.users.getUsersByNames(users);
     for (const user of userIds) {
@@ -60,7 +60,6 @@ async function createEventsubListeners(users: string[]) {
             console.log('Live channels:', Array.from(liveChannels));
         });
     }
-    listener.start();
 
 }
 
@@ -69,15 +68,15 @@ let currentBotUserId: string | null = null; // Track the userId for the singleto
 
 export const GetBot = () => bot;
 
-export const createBot = (async (userId: string) => {
-    if (bot && currentBotUserId === userId) {
+export const createBot = (async () => {
+    await loadBotConfig();
+    if (bot && currentBotUserId === botConfig.userId) {
         return bot; // Return existing bot if userId matches
     }
-    await loadBotConfig();
     fetchLiveChannels();
     await createEventsubListeners(botConfig.channels);
 
-    const tokenFile = `./secrets/tokens.${userId}.json`;
+    const tokenFile = `./secrets/tokens.${botConfig.userId}.json`;
     bot?.chat.quit();
     try {
         await fs.access(tokenFile);
@@ -120,6 +119,20 @@ async function loadBotConfig() {
     } catch (e) {
         throw new Error('Failed to load or validate bot-config.json');
     }
+}
+
+// Save the current botConfig to file
+export async function saveBotConfig() {
+    if (!botConfig) throw new Error('botConfig is not loaded');
+    await fs.writeFile('./config/bot-config.json', JSON.stringify(botConfig, null, 4), 'utf-8');
+}
+
+// Update botConfig with new options, validate, and save
+export async function updateBotConfig(updates: Partial<z.infer<typeof BotConfigSchema>>) {
+    if (!botConfig) throw new Error('botConfig is not loaded');
+    const newConfig = { ...botConfig, ...updates };
+    botConfig = BotConfigSchema.parse(newConfig);
+    await saveBotConfig();
 }
 
 

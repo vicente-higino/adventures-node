@@ -8,9 +8,6 @@ const envSchema = z.object({
     TWITCH_CLIENT_SECRET: z.string({
         required_error: "Missing environment variable: TWITCH_CLIENT_SECRET"
     }),
-    TWTICH_BOT_USER_ID: z.string({
-        required_error: "Missing environment variable: TWTICH_BOT_USER_ID"
-    }),
     TWTICH_EVENTSUB_PROXY_HOST: z.string({
         required_error: "Missing environment variable: TWTICH_EVENTSUB_PROXY_HOST"
     }),

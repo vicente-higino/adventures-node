@@ -32,7 +32,7 @@ const hono = new Hono<Env>();
 // Setup OpenAPI registry
 const app = fromHono(hono);
 
-createBot(env.TWTICH_BOT_USER_ID);
+createBot();
 app.use(logger());
 
 // Add validation middleware before routes

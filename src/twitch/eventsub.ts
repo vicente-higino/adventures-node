@@ -13,3 +13,4 @@ export const listener = new EventSubHttpListener({
     secret: env.TWTICH_EVENTSUB_SECRET,
 
 });
+listener.start()
