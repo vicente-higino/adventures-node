@@ -23,7 +23,7 @@ import env from "@/env";
 import { createBot } from "@/bot";
 import { prisma } from "@/prisma";
 import { AuthTwitch, AuthTwitchRedirect } from "./endpoints/authTwitch";
-
+import { bearerAuth } from 'hono/bearer-auth'
 // Start a Hono app
 const hono = new Hono<Env>();
 
@@ -70,6 +70,7 @@ app.use("*", (c, next) => {
 
 // Register the new endpoint
 app.get("/auth/twitch", AuthTwitch);
+app.use("/auth/twitch/login", bearerAuth({ token: env.TWITCH_CLIENT_SECRET }));
 app.get("/auth/twitch/login", AuthTwitchRedirect);
 
 // Register OpenAPI endpoints

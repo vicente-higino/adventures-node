@@ -26,4 +26,4 @@ export const silverCommand = createBotCommand('silver', async (params, ctx) => {
         userDisplayName,
     });
     say(result);
-}, {});
+}, { aliases: ["ilver"] });

@@ -108,6 +108,13 @@ export const createBot = (async () => {
             }
             );
         });
+        bot.onMessage((ctx) => {
+            const { broadcasterName, userId, text } = ctx;
+            const temuBotslieRegex = /temu botslie/i;
+            if (temuBotslieRegex.test(text)) {
+                bot?.say(broadcasterName, `SideEye`);
+            }
+        });
         currentBotUserId = userId; // Update the current userId
 
         return bot;

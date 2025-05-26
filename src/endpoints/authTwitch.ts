@@ -6,6 +6,15 @@ import { refreshingAuthProvider, createBot, updateBotConfig } from "@/bot";
 import fs from "fs/promises";
 import { z } from "zod";
 
+// Global set to store valid OAuth states
+const validOAuthStates = new Set<string>();
+
+function generateRandomState(length = 32) {
+    return Array.from(crypto.getRandomValues(new Uint8Array(length)))
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
+}
+
 export class AuthTwitch extends OpenAPIRoute {
     schema = {
         request: {
@@ -22,6 +31,12 @@ export class AuthTwitch extends OpenAPIRoute {
         const data = await this.getValidatedData<typeof this.schema>();
         const prisma = c.get("prisma");
         const { code, scope, state } = data.query;
+        // Validate state
+        if (!state || !validOAuthStates.has(state)) {
+            return c.json({ error: "Invalid or missing OAuth state" }, 400);
+        }
+        // Remove state after use to prevent replay
+        validOAuthStates.delete(state);
 
         // Get protocol and host from proxy headers if present
         const proto = c.req.header("x-forwarded-proto") || new URL(c.req.url).protocol.replace(":", "");
@@ -64,7 +79,12 @@ export class AuthTwitchRedirect extends OpenAPIRoute {
         const redirectUri = `${proto}://${host}${pathname}`;
         console.log("Redirect URI:", redirectUri);
         const scope = data.query.scope ?? "chat:read chat:edit user:write:chat user:bot user:read:chat user:manage:chat_color";
-        const state = data.query.state ?? "";
+        // Generate random state if not provided
+        let state = data.query.state;
+        if (!state) {
+            state = generateRandomState(24);
+        }
+        validOAuthStates.add(state);
         const params = new URLSearchParams({
             response_type: "code",
             client_id: clientId,
@@ -75,6 +95,6 @@ export class AuthTwitchRedirect extends OpenAPIRoute {
 
         const twitchAuthUrl = `https://id.twitch.tv/oauth2/authorize?${params.toString()}`;
         console.log("Twitch Auth URL:", twitchAuthUrl);
-        return c.redirect(twitchAuthUrl, 302);
+        return c.text(twitchAuthUrl);
     }
 }
