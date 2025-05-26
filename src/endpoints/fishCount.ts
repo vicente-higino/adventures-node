@@ -1,6 +1,6 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
-import { type Env, FossaHeaders } from "@/types";
+import { type HonoEnv, FossaHeaders } from "@/types";
 import { PrismaClient, Rarity } from "@prisma/client";
 import type { Context } from "hono";
 import { getUserById } from "@/twitch/api";
@@ -15,7 +15,7 @@ export class FishCount extends OpenAPIRoute {
         const msg = "Usage: !fishcount [username]";
         return new Response(msg, { status: 400 });
     }
-    async handle(c: Context<Env>) {
+    async handle(c: Context<HonoEnv>) {
         const data = await this.getValidatedData<typeof this.schema>();
         const prisma = c.get("prisma");
         const channelLogin = data.headers["x-fossabot-channellogin"];

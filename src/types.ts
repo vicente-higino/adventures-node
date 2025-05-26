@@ -2,6 +2,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import { DateTime, Str } from "chanfana";
 import { z } from "zod";
+import { Env } from "./env";
 
 export const ParseAiResponse = z.object({
     response: Str(),
@@ -44,8 +45,8 @@ export type Bindings = {
     COOLDOWN_FISHING_IN_HOURS: number;
 };
 
-export interface Env {
-    Bindings: Bindings;
+export interface HonoEnv {
+    Bindings: Env;
     Variables: { prisma: PrismaClient };
 }
 

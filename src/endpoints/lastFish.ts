@@ -1,6 +1,6 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
-import { type Env, FossaHeaders } from "@/types";
+import { type HonoEnv, FossaHeaders } from "@/types";
 import { Prisma, Rarity } from "@prisma/client";
 import type { Context } from "hono";
 import dayjs from "dayjs";
@@ -25,7 +25,7 @@ export class LastFish extends OpenAPIRoute {
         return new Response(msg, { status: 400 });
     }
 
-    async handle(c: Context<Env>) {
+    async handle(c: Context<HonoEnv>) {
         const data = await this.getValidatedData<typeof this.schema>();
         const prisma = c.get("prisma");
         let channelProviderId = data.headers["x-fossabot-channelproviderid"];

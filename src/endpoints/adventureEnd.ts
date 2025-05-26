@@ -1,5 +1,5 @@
 import { OpenAPIRoute } from "chanfana";
-import { Env, FossaHeaders } from "@/types";
+import { HonoEnv, FossaHeaders } from "@/types";
 import { Context } from "hono";
 import { increaseBalanceWithChannelID, updateUserAdventureStats } from "@/db";
 import { runGroupAdventure } from "@/adventures";
@@ -9,7 +9,7 @@ export const advEndMutex = new Mutex();
 export class AdventureEnd extends OpenAPIRoute {
     schema = { request: { headers: FossaHeaders }, responses: {} };
 
-    async handle(c: Context<Env>) {
+    async handle(c: Context<HonoEnv>) {
         // Get validated data
         const data = await this.getValidatedData<typeof this.schema>();
         const prisma = c.get("prisma");

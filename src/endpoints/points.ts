@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { FossaHeaders, Env } from "@/types"; // Import Env
+import { FossaHeaders, HonoEnv } from "@/types"; // Import Env
 import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
 import { getUserById } from "@/twitch/api"; // Ensure getUserById is imported
@@ -12,7 +12,7 @@ export class Point extends OpenAPIRoute {
         const msg = "Usage: !silver [username]";
         return new Response(msg, { status: 400 });
     }
-    override async handle(c: Context<Env>) {
+    override async handle(c: Context<HonoEnv>) {
         // Get validated data
         const data = await this.getValidatedData<typeof this.schema>();
         const prisma = c.get("prisma");

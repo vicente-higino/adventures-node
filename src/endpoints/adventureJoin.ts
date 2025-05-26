@@ -1,6 +1,6 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
-import { Env, FossaHeaders } from "@/types";
+import { HonoEnv, FossaHeaders } from "@/types";
 import { Context } from "hono";
 import { findOrCreateBalance, setBalance } from "@/db";
 import dayjs from "dayjs";
@@ -15,8 +15,8 @@ import { advEndMutex } from "./adventureEnd";
 import { sendMessageToChannel } from "@/utils/misc"; // <-- Add this import (implement if needed)
 dayjs.extend(relativeTime);
 
-const coolDownMinutes = (c: Context<Env>) => 60 * c.env.COOLDOWN_ADVENTURE_IN_HOURS;
-const cooldown = (c: Context<Env>) => new Date(Date.now() - 1000 * 60 * coolDownMinutes(c));
+const coolDownMinutes = (c: Context<HonoEnv>) => 60 * c.env.COOLDOWN_ADVENTURE_IN_HOURS;
+const cooldown = (c: Context<HonoEnv>) => new Date(Date.now() - 1000 * 60 * coolDownMinutes(c));
 
 /**
  * Generates a payout rate for the adventure, with 1.3x being most common
@@ -69,7 +69,7 @@ export class AdventureJoin extends OpenAPIRoute {
         const msg = "Usage: !adventure|adv [silver(K/M/B)|%|all|+/-delta]";
         return new Response(msg, { status: 400 });
     }
-    async handle(c: Context<Env>) {
+    async handle(c: Context<HonoEnv>) {
         // Get validated data
         const data = await this.getValidatedData<typeof this.schema>();
         const prisma = c.get("prisma");

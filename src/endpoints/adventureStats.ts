@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { FossaHeaders, Env } from "@/types"; // Import Env
+import { FossaHeaders, HonoEnv } from "@/types"; // Import Env
 import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
 import { getUserById } from "@/twitch/api"; // Ensure getUserById is imported
@@ -15,7 +15,7 @@ export class AdventureStats extends OpenAPIRoute {
         return new Response(msg, { status: 400 });
     }
 
-    async handle(c: Context<Env>) {
+    async handle(c: Context<HonoEnv>) {
         const data = await this.getValidatedData<typeof this.schema>();
         const prisma = c.get("prisma");
         const channelProviderId = data.headers["x-fossabot-channelproviderid"];

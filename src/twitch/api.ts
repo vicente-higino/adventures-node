@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { Env } from "@/types";
+import { HonoEnv } from "@/types";
 import { PrismaClient } from "@prisma/client"; // Import PrismaClient and User
 import { ApiClient } from "@twurple/api";
 // import { AppTokenAuthProviderWithStore } from "./auth";
@@ -72,7 +72,7 @@ export const getUserByUsername = async (
 };
 
 export const getUserById = async (
-    c: Context<Env>,
+    c: Context<HonoEnv>,
     prisma: PrismaClient, // Add prisma client
     id: string,
 ): Promise<DbUser | null> => {

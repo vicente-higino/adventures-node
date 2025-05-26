@@ -6,7 +6,7 @@ import { getUserById } from "@/twitch/api";
 import { findOrCreateBalance, increaseBalanceWithChannelID } from "@/db";
 // Import calculateAmount
 import { pickRandom, calculateAmount } from "@/utils/misc";
-import { Env } from "@/types"; // Import Env if not already present
+import { HonoEnv } from "@/types"; // Import Env if not already present
 // Add import for duel create emotes
 import { DUEL_CREATE_EMOTES } from "@/emotes";
 
@@ -38,7 +38,7 @@ export class DuelCreate extends OpenAPIRoute {
         const msg = "Usage: !duel username [silver|K/M/B|%|all]";
         return new Response(msg, { status: 400 });
     }
-    async handle(c: Context<Env>) {
+    async handle(c: Context<HonoEnv>) {
         // Ensure Context uses Env
         const data = await this.getValidatedData<typeof this.schema>();
         const prisma = c.get("prisma");

@@ -17,6 +17,9 @@ const envSchema = z.object({
     TWTICH_EVENTSUB_SECRET: z.string({
         required_error: "Missing environment variable: TWTICH_EVENTSUB_SECRET"
     }),
+    TWTICH_REDIRECT_URI: z.string({
+        required_error: "Missing environment variable: TWTICH_REDIRECT_URI"
+    }),
     DATABASE_URL: z.string({
         required_error: "Missing environment variable: DATABASE_URL"
     }),
@@ -28,7 +31,7 @@ const envSchema = z.object({
     }),
 
 });
-
+export type Env = z.infer<typeof envSchema>;
 // Parse and validate environment variables
 const env = envSchema.safeParse(process.env);
 

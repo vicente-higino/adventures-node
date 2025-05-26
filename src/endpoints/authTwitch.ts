@@ -1,6 +1,6 @@
 import { OpenAPIRoute } from "chanfana";
 import { Context } from "hono";
-import { Env } from "@/types";
+import { HonoEnv } from "@/types";
 import { exchangeCode } from "@twurple/auth";
 import { refreshingAuthProvider, createBot, updateBotConfig } from "@/bot";
 import fs from "fs/promises";
@@ -27,7 +27,7 @@ export class AuthTwitch extends OpenAPIRoute {
         }, responses: {}
     };
 
-    async handle(c: Context<Env>) {
+    async handle(c: Context<HonoEnv>) {
         const data = await this.getValidatedData<typeof this.schema>();
         const prisma = c.get("prisma");
         const { code, scope, state } = data.query;
@@ -38,11 +38,11 @@ export class AuthTwitch extends OpenAPIRoute {
         // Remove state after use to prevent replay
         validOAuthStates.delete(state);
 
-        // Get protocol and host from proxy headers if present
-        const proto = c.req.header("x-forwarded-proto") || new URL(c.req.url).protocol.replace(":", "");
-        const host = c.req.header("x-forwarded-host") || new URL(c.req.url).host;
-        const pathname = new URL(c.req.url).pathname;
-        const redirectUri = `${proto}://${host}${pathname}`;
+
+        const redirectUri = c.env.TWTICH_REDIRECT_URI;
+        if (!redirectUri) {
+            return c.json({ error: "Redirect URI is not configured" }, 500);
+        }
 
         try {
             const tokenData = await exchangeCode(c.env.TWITCH_CLIENT_ID, c.env.TWITCH_CLIENT_SECRET, code, redirectUri);
@@ -70,14 +70,14 @@ export class AuthTwitchRedirect extends OpenAPIRoute {
         responses: {}
     };
 
-    async handle(c: Context<Env>) {
+    async handle(c: Context<HonoEnv>) {
         const data = await this.getValidatedData<typeof this.schema>();
         const clientId = c.env.TWITCH_CLIENT_ID;
-        const proto = c.req.header("x-forwarded-proto") || new URL(c.req.url).protocol.replace(":", "");
-        const host = c.req.header("x-forwarded-host") || new URL(c.req.url).host;
-        const pathname = "/auth/twitch";
-        const redirectUri = `${proto}://${host}${pathname}`;
-        console.log("Redirect URI:", redirectUri);
+
+        const redirectUri = c.env.TWTICH_REDIRECT_URI;
+        if (!redirectUri) {
+            return c.json({ error: "Redirect URI is not configured" }, 500);
+        }
         const scope = data.query.scope ?? "chat:read chat:edit user:write:chat user:bot user:read:chat user:manage:chat_color";
         // Generate random state if not provided
         let state = data.query.state;

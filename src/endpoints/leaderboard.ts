@@ -1,5 +1,5 @@
 import { OpenAPIRoute } from "chanfana";
-import { type Env, FossaHeaders } from "@/types";
+import { type HonoEnv, FossaHeaders } from "@/types";
 import { PrismaD1 } from "@prisma/adapter-d1";
 import { PrismaClient, Prisma } from "@prisma/client"; // Import Prisma namespace for types
 import type { Context } from "hono";
@@ -434,7 +434,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
         return { formattedLeaderboard, metricDisplay: "silver" }; // Changed metricDisplay from "points" to "silver"
     }
 
-    async handle(c: Context<Env>) {
+    async handle(c: Context<HonoEnv>) {
         const data = await this.getValidatedData<typeof this.schema>();
         const prisma = c.get("prisma");
         const channelProviderId = data.headers["x-fossabot-channelproviderid"];

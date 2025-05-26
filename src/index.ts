@@ -17,7 +17,7 @@ import { DuelCreate } from "@/endpoints/duelsCreate";
 import { DuelAccept } from "@/endpoints/duelsAccept";
 import { DuelCancel } from "@/endpoints/duelsCancel";
 import { Point } from "@/endpoints/points";
-import { Env } from "@/types";
+import { HonoEnv } from "@/types";
 import { LastFish } from "@/endpoints/lastFish";
 import env from "@/env";
 import { createBot } from "@/bot";
@@ -25,7 +25,7 @@ import { prisma } from "@/prisma";
 import { AuthTwitch, AuthTwitchRedirect } from "./endpoints/authTwitch";
 import { bearerAuth } from 'hono/bearer-auth'
 // Start a Hono app
-const hono = new Hono<Env>();
+const hono = new Hono<HonoEnv>();
 
 // Error handling middleware
 

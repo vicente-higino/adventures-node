@@ -1,11 +1,11 @@
 import { OpenAPIRoute } from "chanfana";
-import { type Env, FossaHeaders } from "../types";
+import { type HonoEnv, FossaHeaders } from "../types";
 import { fishForUser } from "../common/fishForUser";
 import type { Context } from "hono";
 
 export class Fish extends OpenAPIRoute {
     schema = { request: { headers: FossaHeaders }, responses: {} };
-    async handle(c: Context<Env>) {
+    async handle(c: Context<HonoEnv>) {
         // Get validated data
         const data = await this.getValidatedData<typeof this.schema>();
         const prisma = c.get("prisma");

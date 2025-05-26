@@ -1,6 +1,6 @@
 import { Bool, Num, OpenAPIRoute, Str } from "chanfana";
 import { z } from "zod";
-import { Env, FossaHeaders } from "@/types";
+import { HonoEnv, FossaHeaders } from "@/types";
 import { Context } from "hono";
 import { getUserById } from "@/twitch/api";
 import { findOrCreateBalance } from "@/db";
@@ -21,7 +21,7 @@ export class PointAdd extends OpenAPIRoute {
         const msg = "Usage: !addsilver <username> <amount>";
         return new Response(msg, { status: 400 });
     }
-    async handle(c: Context<Env>) {
+    async handle(c: Context<HonoEnv>) {
         // Get validated data
         const data = await this.getValidatedData<typeof this.schema>();
         const prisma = c.get("prisma");

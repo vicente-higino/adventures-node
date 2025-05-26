@@ -1,7 +1,7 @@
 import { Context, Next } from "hono";
-import { Env } from "@/types";
+import { HonoEnv } from "@/types";
 
-export const authMiddleware = async (c: Context<Env>, next: Next) => {
+export const authMiddleware = async (c: Context<HonoEnv>, next: Next) => {
     const provider = c.req.header("x-fossabot-channelprovider");
     if (provider !== "twitch") {
         return c.text("This is only available in twitch chat.");
