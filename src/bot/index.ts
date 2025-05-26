@@ -45,10 +45,16 @@ async function fetchLiveChannels() {
     console.log('Live channels:', Array.from(liveChannels));
 }
 
+// Track which userIds have listeners to avoid duplicate listeners
+const eventsubListeners = new Set<string>();
+
 async function createEventsubListeners(users: string[]) {
-    await apiClient.eventSub.deleteAllSubscriptions();
+    await apiClient.eventSub.deleteBrokenSubscriptions();
     const userIds = await apiClient.users.getUsersByNames(users);
     for (const user of userIds) {
+        if (eventsubListeners.has(user.id)) {
+            continue; // Skip if listener already exists for this userId
+        }
         listener.onStreamOnline(user, e => {
             liveChannels.add(e.broadcasterId);
             console.log(`${e.broadcasterDisplayName} just went live!`);
@@ -59,8 +65,8 @@ async function createEventsubListeners(users: string[]) {
             console.log(`${e.broadcasterDisplayName} just went offline`);
             console.log('Live channels:', Array.from(liveChannels));
         });
+        eventsubListeners.add(user.id);
     }
-
 }
 
 let bot: Bot | null = null;
