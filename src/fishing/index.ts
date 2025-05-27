@@ -160,7 +160,7 @@ export function resetRarityWeights() {
     setRarityWeights(RARITY_WEIGHTS_DEFAULT);
 }
 
-function weightToChance(weight: number, totalWeight: number = getTotalWeight(rarityWeights)): number {
+export function weightToChance(weight: number, totalWeight: number = getTotalWeight(rarityWeights)): number {
     return (weight / totalWeight) * 100; // Convert to percentage
 }
 function chanceToWeight(chance: number, totalWeight: number = getTotalWeight(rarityWeights)): number {
@@ -169,7 +169,7 @@ function chanceToWeight(chance: number, totalWeight: number = getTotalWeight(rar
 function getTotalWeight(weights: Record<Rarity, number> = rarityWeights): number {
     return Object.values(weights).reduce((total, weight) => total + weight, 0);
 }
-function getChanceByRarity(rarity: Rarity, weights: Record<Rarity, number> = rarityWeights): number {
+export function getChanceByRarity(rarity: Rarity, weights: Record<Rarity, number> = rarityWeights): number {
     const totalWeight = getTotalWeight(weights);
     return weightToChance(weights[rarity], totalWeight);
 }

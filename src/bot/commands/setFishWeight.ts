@@ -1,5 +1,5 @@
 import { createAdminBotCommand } from '../BotCommandWithKeywords';
-import { modifyRarityWeights } from '@/fishing';
+import { getChanceByRarity, modifyRarityWeights, weightToChance } from '@/fishing';
 import { z } from "zod";
 import { Rarity } from '@prisma/client';
 
@@ -31,5 +31,5 @@ export const setRarityWeightCommand = createAdminBotCommand('setweight', async (
     // You can now use newWeights with getFish or randomFish
     // Example: const fish = getFish({ rarityWeights: newWeights });
 
-    say(`Rarity weight for ${rarityKey} set to ${value}.`);
+    say(`Rarity weight for ${rarityKey} set to ${value} (${getChanceByRarity(rarityKey as Rarity).toPrecision(2)}%).`)
 }, { ignoreCase: true });
