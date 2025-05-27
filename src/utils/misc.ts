@@ -1,4 +1,4 @@
-import { GetBot } from "@/bot";
+import { GetBot, getBotConfig } from "@/bot";
 import Qty from "js-quantities";
 
 export function pickRandom<T>(arr: T[]): T {
@@ -232,4 +232,38 @@ export async function sendMessageToChannel(channel: string, message: string) {
         console.error(`Error sending message to ${channel}:`, err);
     }
     );
+}
+export async function sendActionToChannel(channel: string, message: string) {
+    // Placeholder function to send a message to a channel
+    // Replace with actual implementation
+    console.log(`Sending message to ${channel}: ${message}`);
+    GetBot()?.action(channel, message).catch(err => {
+        console.error(`Error sending message to ${channel}:`, err);
+    }
+    );
+}
+
+export async function sendMessageToAllChannel(message: string) {
+    // Placeholder function to send a message to a channel
+    // Replace with actual implementation
+    const { channels } = getBotConfig();
+    for (const channel of channels) {
+        console.log(`Sending message to ${channel}: ${message}`);
+        GetBot()?.say(channel, message)
+            .catch(err => {
+                console.error(`Error sending message to ${channel}:`, err);
+            });
+    }
+}
+export async function sendActionToAllChannel(message: string) {
+    // Placeholder function to send a message to a channel
+    // Replace with actual implementation
+    const { channels } = getBotConfig();
+    for (const channel of channels) {
+        console.log(`Sending message to ${channel}: ${message}`);
+        GetBot()?.action(channel, message)
+            .catch(err => {
+                console.error(`Error sending message to ${channel}:`, err);
+            });
+    }
 }

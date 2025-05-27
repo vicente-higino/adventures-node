@@ -7,6 +7,10 @@ import { silverCommand } from './commands/silver';
 import { z } from 'zod';
 import { apiClient } from '@/twitch/api';
 import { listener } from '@/twitch/eventsub';
+import { setRarityWeightCommand } from './commands/setFishWeight';
+import { resetRarityWeightCommand } from './commands/resetFishWeight';
+import config from "config/bot-config.json"
+import { fishOddsCommand } from './commands/fishOdds';
 const clientId = env.TWITCH_CLIENT_ID;
 const clientSecret = env.TWITCH_CLIENT_SECRET;
 
@@ -16,13 +20,16 @@ const BotConfigSchema = z.object({
     prefix: z.string(),
     userId: z.string(),
     debug: z.boolean(),
-    isAlwaysMod: z.boolean()
+    isAlwaysMod: z.boolean(),
+    superUserId: z.string()
 });
 
 // Load bot config
-let botConfig: z.infer<typeof BotConfigSchema>;
+let botConfig = BotConfigSchema.parse(config);
 
-
+export function getBotConfig() {
+    return botConfig;
+}
 export const refreshingAuthProvider = new RefreshingAuthProvider(
     {
         clientId,
@@ -76,6 +83,7 @@ export const GetBot = () => bot;
 
 export const createBot = (async () => {
     await loadBotConfig();
+
     if (bot && currentBotUserId === botConfig.userId) {
         return bot; // Return existing bot if userId matches
     }
@@ -97,6 +105,9 @@ export const createBot = (async () => {
             commands: [
                 fishCommand,
                 silverCommand,
+                setRarityWeightCommand,
+                resetRarityWeightCommand,
+                fishOddsCommand
             ]
         });
         bot.onAuthenticationSuccess(() => {

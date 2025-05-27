@@ -24,6 +24,7 @@ import { createBot } from "@/bot";
 import { prisma } from "@/prisma";
 import { AuthTwitch, AuthTwitchRedirect } from "./endpoints/authTwitch";
 import { bearerAuth } from 'hono/bearer-auth'
+import { startCron } from "./cron";
 // Start a Hono app
 const hono = new Hono<HonoEnv>();
 
@@ -55,19 +56,6 @@ app.use("*", (c, next) => {
     return next();
 });
 
-// Remove this block:
-// app.get("/auth/twitch", async (c: Context<Env>) => {
-//     const { code } = c.req.query();
-//     const redirectUri = 'http://localhost:8000/auth/twitch';
-//     const tokenData = await exchangeCode(c.env.TWITCH_CLIENT_ID, c.env.TWITCH_CLIENT_SECRET, code, redirectUri);
-//     const userId = await authProvider.addUserForToken(tokenData);
-//     // For example, using fs to save to a file:
-//     await fs.writeFile(`./tokens.${userId}.json`, JSON.stringify(tokenData, null, 4), 'utf-8');
-//     return c.json({ message: "Token added successfully" });
-// })
-
-// Add import for the new endpoint
-
 // Register the new endpoint
 app.get("/auth/twitch", AuthTwitch);
 app.use("/auth/twitch/login", bearerAuth({ token: env.TWITCH_CLIENT_SECRET }));
@@ -93,6 +81,6 @@ app.get("/api/duel/cancel/:challengedId", DuelCancel);
 app.get("/api/leaderboard/:amount/:sortBy", ConsolidatedLeaderboard);
 
 // Add the last fish endpoint
-
+startCron();
 
 serve({ fetch: app.fetch, port: 8000 });

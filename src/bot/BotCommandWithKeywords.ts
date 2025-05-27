@@ -1,5 +1,5 @@
 import { BotCommand, BotCommandContext, CreateBotCommandOptions } from "@twurple/easy-bot";
-import { isChannelLive } from "@/bot";
+import { getBotConfig, isChannelLive } from "@/bot";
 
 interface KeywordCommand {
     name: string;
@@ -64,7 +64,6 @@ export function createBotCommand(
 ): BotCommand {
     return new (class extends BotCommandWithKeywords {
 
-
         constructor(private readonly _options: CreateBotCommandOptions) {
             super({
                 name: commandName,
@@ -91,6 +90,46 @@ export function createBotCommand(
 
         canExecute(channelId: string, userId: string): boolean {
             return !isChannelLive(channelId);
+        }
+
+        async execute(params: string[], context: BotCommandContext) {
+            await handler(params, context);
+        }
+    })(options);
+}
+export function createAdminBotCommand(
+    commandName: string,
+    handler: (params: string[], context: BotCommandContext) => void | Promise<void>,
+    options: CreateBotCommandOptions & { keywords?: string[] } = {},
+): BotCommand {
+    return new (class extends BotCommandWithKeywords {
+
+        constructor(private readonly _options: CreateBotCommandOptions) {
+            super({
+                name: commandName,
+                keywords: options.keywords ?? [],
+                action: handler,
+                ignoreCase: options.ignoreCase ?? false
+            });
+
+        }
+
+        get aliases() {
+            return options.aliases ?? [];
+        }
+
+        match(line: string, prefix: string): string[] | null {
+            if (!this._options.ignoreCase) {
+                return super.match(line, prefix);
+            }
+
+            const [command, ...params] = line.split(' ');
+            const transformedLine = [command.toLowerCase(), ...params].join(' ');
+            return super.match(transformedLine, prefix);
+        }
+
+        canExecute(channelId: string, userId: string): boolean {
+            return userId == getBotConfig().superUserId;
         }
 
         async execute(params: string[], context: BotCommandContext) {

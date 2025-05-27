@@ -25,7 +25,7 @@ export const VALUE_EMOTES: { threshold: number; emote: string }[] = [
 ];
 
 // Define rarity weights
-export const RARITY_WEIGHTS: Record<Rarity, number> = {
+export const RARITY_WEIGHTS_DEFAULT: Record<Rarity, number> = {
     Legendary: 1, // 0.1% chance each
     Trash: 15, // 1.5%
     Epic: 35, // 3.5% chance
