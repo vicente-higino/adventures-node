@@ -56,7 +56,7 @@ async function fetchLiveChannels() {
 const eventsubListeners = new Set<string>();
 
 async function createEventsubListeners(users: string[]) {
-    await apiClient.eventSub.deleteBrokenSubscriptions();
+    await apiClient.eventSub.deleteAllSubscriptions();
     const userIds = await apiClient.users.getUsersByNames(users);
     for (const user of userIds) {
         if (eventsubListeners.has(user.id)) {
