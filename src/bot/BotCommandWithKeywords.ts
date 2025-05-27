@@ -1,4 +1,5 @@
 import { BotCommand, BotCommandContext, CreateBotCommandOptions } from "@twurple/easy-bot";
+import { isChannelLive } from "@/bot";
 
 interface KeywordCommand {
     name: string;
@@ -89,8 +90,7 @@ export function createBotCommand(
         }
 
         canExecute(channelId: string, userId: string): boolean {
-
-            return true;
+            return !isChannelLive(channelId);
         }
 
         async execute(params: string[], context: BotCommandContext) {

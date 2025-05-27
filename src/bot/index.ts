@@ -33,8 +33,8 @@ refreshingAuthProvider.onRefresh(async (userId, newTokenData) => await fs.writeF
 
 // Track which channels are live
 const liveChannels = new Set<string>();
-export function isChannelLive(channel: string) {
-    return liveChannels.has(channel);
+export function isChannelLive(channelId: string) {
+    return liveChannels.has(channelId);
 }
 
 async function fetchLiveChannels() {

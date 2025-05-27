@@ -2,13 +2,9 @@ import { createBotCommand } from '../BotCommandWithKeywords';
 import { getUserSilverString } from '@/common/userSilver';
 import { getUserByUsername } from '@/twitch/api';
 import { prisma } from '@/prisma';
-import { isChannelLive } from '@/bot';
 
 export const silverCommand = createBotCommand('silver', async (params, ctx) => {
     let { broadcasterId, broadcasterName, userDisplayName, userId, userName, say } = ctx;
-    if (isChannelLive(broadcasterId)) {
-        return;
-    }
     let usernameArg = params.shift();
     if (usernameArg) {
         usernameArg = usernameArg.replaceAll("@", "")
