@@ -6,7 +6,7 @@ import { findOrCreateBalance, setBalance } from "@/db";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 // Import calculateAmount instead of having it locally
-import { pickRandom, roundToDecimalPlaces, calculateAmount, delay } from "@/utils/misc";
+import { pickRandom, roundToDecimalPlaces, calculateAmount, delay, sendActionToChannel } from "@/utils/misc";
 import { formatTimeToWithSeconds } from "@/utils/time";
 // Add import for emotes
 import { ADVENTURE_COOLDOWN_EMOTES } from "@/emotes";
@@ -244,7 +244,7 @@ function scheduleAdventureWarnings(prisma: PrismaClient, channelLogin: string, a
                 }
                 return;
             }
-            await sendMessageToChannel(channelLogin, message);
+            await sendActionToChannel(channelLogin, message);
         }, delay);
         timer.unref();
         adventureWarningTimers[adventureId].push(timer);
