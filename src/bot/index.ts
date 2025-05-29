@@ -26,7 +26,7 @@ const BotConfigSchema = z.object({
 
 // Load bot config
 const config = readFileSync("./config/bot-config.json", "utf-8");
-let botConfig = BotConfigSchema.parse(config);
+let botConfig = BotConfigSchema.parse(JSON.parse(config));
 
 export function getBotConfig() {
     return botConfig;
