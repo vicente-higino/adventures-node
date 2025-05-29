@@ -200,12 +200,13 @@ export const legendaryEventTaskPerChannel = (channel: string) => cron.createTask
         const legendaryChanceBefore = getChanceByRarity("Legendary");
         modifyRarityWeights({ Legendary: Math.round(boxMullerTransform(25, 10, 20)) });
         const legendaryChanceAfter = getChanceByRarity("Legendary");
-        const chanceStr = `${legendaryChanceBefore.toPrecision(2)}% -> ${legendaryChanceAfter.toPrecision(2)}%`
+        const chanceStr = `${legendaryChanceBefore.toFixed(2)}% -> ${legendaryChanceAfter.toFixed(2)}%`
         sendActionToAllChannel(`🌟 A Legendary Fishing Event has started! Legendary fish are much more likely for the next hour! ${chanceStr} 🎣`);
         c.task?.stop()
         setTimeout(() => {
             resetRarityWeights();
-            sendActionToAllChannel("⏰ The Legendary Fishing Event has ended. Legendary fish odds are back to normal.");
+            if (!isChannelLive(channel))
+                sendActionToAllChannel("⏰ The Legendary Fishing Event has ended. Legendary fish odds are back to normal.");
             c.task?.start()
         }, 60 * 60 * 1000);
     }
