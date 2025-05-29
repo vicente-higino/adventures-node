@@ -14,6 +14,7 @@ import { Mutex } from "async-mutex";
 import { advEndMutex } from "./adventureEnd";
 import { sendMessageToChannel } from "@/utils/misc"; // <-- Add this import (implement if needed)
 import { PrismaClient } from "@prisma/client";
+import { isChannelLive } from "@/bot";
 dayjs.extend(relativeTime);
 
 const coolDownMinutes = (c: Context<HonoEnv>) => 60 * c.env.COOLDOWN_ADVENTURE_IN_HOURS;
@@ -236,7 +237,7 @@ function scheduleAdventureWarnings(prisma: PrismaClient, channelLogin: string, a
     for (const { delay, message } of warnings) {
         const timer = setTimeout(async () => {
             const adv = await prisma.adventure.findUnique({ where: { id: adventureId } });
-            if (!adv || adv.name === "DONE") {
+            if (!adv || adv.name === "DONE" || isChannelLive(channelLogin)) {
                 // Adventure ended, clear all remaining timers for this adventure
                 if (adventureWarningTimers[adventureId]) {
                     for (const t of adventureWarningTimers[adventureId]) clearTimeout(t);
