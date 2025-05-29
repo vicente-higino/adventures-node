@@ -1,5 +1,5 @@
 import { RefreshingAuthProvider } from '@twurple/auth';
-import { promises as fs } from 'fs';
+import { promises as fs, readFileSync } from 'fs';
 import env from '@/env';
 import { Bot } from '@twurple/easy-bot';
 import { fishCommand } from './commands/fish';
@@ -9,14 +9,14 @@ import { apiClient } from '@/twitch/api';
 import { listener } from '@/twitch/eventsub';
 import { setRarityWeightCommand } from './commands/setFishWeight';
 import { resetRarityWeightCommand } from './commands/resetFishWeight';
-import config from "config/bot-config.json"
+
 import { fishOddsCommand } from './commands/fishOdds';
 const clientId = env.TWITCH_CLIENT_ID;
 const clientSecret = env.TWITCH_CLIENT_SECRET;
 
 // Validate bot config
 const BotConfigSchema = z.object({
-    channels: z.array(z.string().min(3)).min(1),
+    channels: z.array(z.string().min(3).toLowerCase()).min(1),
     prefix: z.string(),
     userId: z.string(),
     debug: z.boolean(),
@@ -25,6 +25,7 @@ const BotConfigSchema = z.object({
 });
 
 // Load bot config
+const config = readFileSync("./config/bot-config.json", "utf-8");
 let botConfig = BotConfigSchema.parse(config);
 
 export function getBotConfig() {
@@ -40,8 +41,8 @@ refreshingAuthProvider.onRefresh(async (userId, newTokenData) => await fs.writeF
 
 // Track which channels are live
 const liveChannels = new Set<string>();
-export function isChannelLive(channelId: string) {
-    return liveChannels.has(channelId);
+export function isChannelLive(channelName: string) {
+    return liveChannels.has(channelName);
 }
 
 async function fetchLiveChannels() {
@@ -63,12 +64,12 @@ async function createEventsubListeners(users: string[]) {
             continue; // Skip if listener already exists for this userId
         }
         listener.onStreamOnline(user, e => {
-            liveChannels.add(e.broadcasterId);
+            liveChannels.add(e.broadcasterName);
             console.log(`${e.broadcasterDisplayName} just went live!`);
             console.log('Live channels:', Array.from(liveChannels));
         });
         listener.onStreamOffline(user, e => {
-            liveChannels.delete(e.broadcasterId);
+            liveChannels.delete(e.broadcasterName);
             console.log(`${e.broadcasterDisplayName} just went offline`);
             console.log('Live channels:', Array.from(liveChannels));
         });
