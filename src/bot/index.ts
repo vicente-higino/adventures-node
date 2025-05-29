@@ -39,18 +39,30 @@ export const refreshingAuthProvider = new RefreshingAuthProvider(
 );
 refreshingAuthProvider.onRefresh(async (userId, newTokenData) => await fs.writeFile(`./secrets/tokens.${userId}.json`, JSON.stringify(newTokenData, null, 4), 'utf-8'));
 
-// Track which channels are live
-const liveChannels = new Set<string>();
-export function isChannelLive(channelName: string) {
-    return liveChannels.has(channelName);
+// Track which channels are live using LiveChannel objects
+class LiveChannel {
+    constructor(public userId: string, public userName: string) { }
+
+    matches(channel: string) {
+        return this.userId === channel || this.userName.toLowerCase() === channel.toLowerCase();
+    }
+}
+const liveChannels = new Set<LiveChannel>();
+
+export function isChannelLive(channel: string) {
+    for (const live of liveChannels) {
+        return live.matches(channel);
+    }
+    return false;
 }
 
 async function fetchLiveChannels() {
     const streams = await apiClient.streams.getStreamsByUserNames(botConfig.channels);
+    liveChannels.clear();
     for (const stream of streams) {
-        liveChannels.add(stream.userId);
+        liveChannels.add(new LiveChannel(stream.userId, stream.userName));
     }
-    console.log('Live channels:', Array.from(liveChannels));
+    console.log('Live channels:', Array.from(liveChannels).map(lc => ({ id: lc.userId, name: lc.userName })));
 }
 
 // Track which userIds have listeners to avoid duplicate listeners
@@ -64,14 +76,19 @@ async function createEventsubListeners(users: string[]) {
             continue; // Skip if listener already exists for this userId
         }
         listener.onStreamOnline(user, e => {
-            liveChannels.add(e.broadcasterName);
+            liveChannels.add(new LiveChannel(e.broadcasterId, e.broadcasterName));
             console.log(`${e.broadcasterDisplayName} just went live!`);
-            console.log('Live channels:', Array.from(liveChannels));
+            console.log('Live channels:', Array.from(liveChannels).map(lc => ({ id: lc.userId, name: lc.userName })));
         });
         listener.onStreamOffline(user, e => {
-            liveChannels.delete(e.broadcasterName);
+            // Remove by id or name
+            for (const lc of Array.from(liveChannels)) {
+                if (lc.userId === e.broadcasterId || lc.userName.toLowerCase() === e.broadcasterName.toLowerCase()) {
+                    liveChannels.delete(lc);
+                }
+            }
             console.log(`${e.broadcasterDisplayName} just went offline`);
-            console.log('Live channels:', Array.from(liveChannels));
+            console.log('Live channels:', Array.from(liveChannels).map(lc => ({ id: lc.userId, name: lc.userName })));
         });
         eventsubListeners.add(user.id);
     }
