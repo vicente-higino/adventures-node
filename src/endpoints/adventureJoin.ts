@@ -13,6 +13,7 @@ import { ADVENTURE_COOLDOWN_EMOTES } from "@/emotes";
 import { Mutex } from "async-mutex";
 import { advEndMutex } from "./adventureEnd";
 import { sendMessageToChannel } from "@/utils/misc"; // <-- Add this import (implement if needed)
+import { PrismaClient } from "@prisma/client";
 dayjs.extend(relativeTime);
 
 const coolDownMinutes = (c: Context<HonoEnv>) => 60 * c.env.COOLDOWN_ADVENTURE_IN_HOURS;
@@ -42,8 +43,8 @@ export function generatePayoutRate(): number {
     }
 }
 const mutex = new Mutex();
-// Store timers per channel to avoid multiple warnings for the same adventure
-const adventureWarningTimers: Record<string, NodeJS.Timeout> = {};
+// Store timers per adventure to allow clearing if adventure ends early
+const adventureWarningTimers: Record<string, NodeJS.Timeout[]> = {};
 export class AdventureJoin extends OpenAPIRoute {
     schema = {
         request: {
@@ -122,7 +123,7 @@ export class AdventureJoin extends OpenAPIRoute {
             const payoutRate = roundToDecimalPlaces(generatePayoutRate(), 2);
             const formattedPayoutRate = payoutRate.toFixed(2);
 
-            const [_, adventureId] = await Promise.all([
+            const [_, adventure] = await Promise.all([
                 // Use newBalanceValue and newBuyin
                 setBalance(prisma, balance.id, newBalanceValue),
                 prisma.adventure.create({
@@ -138,20 +139,7 @@ export class AdventureJoin extends OpenAPIRoute {
             ]);
             mutex.release();
 
-            // --- TIMER LOGIC START ---
-
-            // Set a new timer for 30 minutes (1800000 ms)
-            adventureWarningTimers[channelProviderId] = setTimeout(async () => {
-                // Send a warning message to the chatroom
-                const adv = await prisma.adventure.findUnique({ where: { id: adventureId.id } });
-                if (!adv) return;
-                if (adv.name === "DONE") return;
-                await sendMessageToChannel(channelLogin, `⚠️ 30 minutes have passed since the adventure started! Don't forget to end the adventure with !adventureend or !advend to claim your rewards!`);
-                // await sendMessageToChannel(channelLogin, `!adventureend`);
-                // Optionally, clear the timer reference
-                delete adventureWarningTimers[channelProviderId];
-            }, 30 * 60 * 1000).unref();
-            // --- TIMER LOGIC END ---
+            scheduleAdventureWarnings(prisma, channelLogin, adventure.id);
 
             return c.text(
                 `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "!adventure|adv [silver(K/M/B)|%|all|+/-delta]" to join in! Then use "!adventureend|advend" to end the adventure and get your rewards!
@@ -213,5 +201,52 @@ export class AdventureJoin extends OpenAPIRoute {
             );
         }
         return c.text(`@${userDisplayName} already joined the adventure with ${player.buyin} silver.`);
+    }
+}
+
+// Helper to schedule adventure warning messages with timer clearing
+function scheduleAdventureWarnings(prisma: PrismaClient, channelLogin: string, adventureId: number) {
+    // Clear any previous timers for this adventure
+    if (adventureWarningTimers[adventureId]) {
+        for (const timer of adventureWarningTimers[adventureId]) {
+            clearTimeout(timer);
+        }
+    }
+    adventureWarningTimers[adventureId] = [];
+
+    const warnings = [
+        {
+            delay: 30 * 15 * 1000,
+            message: `⚠️ 30 minutes have passed since the adventure started! Don't forget to end the adventure with !adventureend or !advend to claim your rewards!`
+        },
+        {
+            delay: 40 * 20 * 1000,
+            message: `⚠️ Ending the adventure in 5 minutes! Join now or update your silver with !adventure|adv to participate! dinkDonk`
+        },
+        {
+            delay: 43 * 25 * 1000,
+            message: `⚠️ Ending the adventure in 2 minutes! Join now or update your silver with !adventure|adv to participate! dinkDonk`
+        },
+        {
+            delay: 45 * 30 * 1000,
+            message: `!adventureend`
+        }
+    ];
+
+    for (const { delay, message } of warnings) {
+        const timer = setTimeout(async () => {
+            const adv = await prisma.adventure.findUnique({ where: { id: adventureId } });
+            if (!adv || adv.name === "DONE") {
+                // Adventure ended, clear all remaining timers for this adventure
+                if (adventureWarningTimers[adventureId]) {
+                    for (const t of adventureWarningTimers[adventureId]) clearTimeout(t);
+                    delete adventureWarningTimers[adventureId];
+                }
+                return;
+            }
+            await sendMessageToChannel(channelLogin, message);
+        }, delay);
+        timer.unref();
+        adventureWarningTimers[adventureId].push(timer);
     }
 }

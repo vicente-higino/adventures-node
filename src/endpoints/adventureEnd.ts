@@ -27,11 +27,10 @@ export class AdventureEnd extends OpenAPIRoute {
             return c.text("No adventure found, try starting one first.");
         }
         const timeDiff = Date.now() - adv.createdAt.getTime();
-        const timeLimit = 1000 * 60 * 2; // 2 minutes
-        // const canEndAdv =
-        // 	players.find((p) => p.user.providerId === userProviderId) ?? false;
+        const timeLimit = 1000 * 60 * 10;
+
         if (timeDiff < timeLimit && adv.name !== userProviderId) {
-            return c.text(`@${userDisplayName}, only the owner can end the adventure in the first 2 minutes.`);
+            return c.text(`@${userDisplayName}, only the owner can end the adventure in the first 10 minutes.`);
         }
         const locked = advEndMutex.isLocked();
         if (locked) {
