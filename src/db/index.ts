@@ -114,14 +114,14 @@ export async function updateUserDetails(prisma: dbClient, userId: string, newLog
 }
 
 export async function cancelExpiredDuels(prisma: dbClient): Promise<void> {
-    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000); // Calculate timestamp for 10 min ago
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     // Find pending duels older than one hour
     const expiredDuels = await prisma.duel.findMany({
         where: {
             status: "Pending",
             createdAt: {
-                lt: tenMinAgo, // Less than 10 min ago (older)
+                lt: oneHourAgo,
             },
         },
     });
