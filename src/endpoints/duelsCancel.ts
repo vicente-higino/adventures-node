@@ -112,13 +112,12 @@ export class DuelCancel extends OpenAPIRoute {
         if (currentUserId === duel.challengerId) {
             // User cancelled a duel they initiated
             return c.text(
-                `${userDisplayName} cancelled their duel challenge to ${otherUserName}! ${duel.challenger.displayName} ${duel.wagerAmount} silver was returned.`,
+                `${userDisplayName} cancelled their duel challenge to ${otherUserName}!`,
             );
         } else {
             // User denied a duel they were challenged to
             return c.text(
-                `${userDisplayName} declined the duel challenge from ${otherUserName}! ${pickRandom(DUEL_DENY_EMOTES)}
-                $(newline)${duel.challenger.displayName} ${duel.wagerAmount} silver was returned.`,
+                `${userDisplayName} declined the duel challenge from ${otherUserName}! ${pickRandom(DUEL_DENY_EMOTES)}`,
             );
         }
     }

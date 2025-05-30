@@ -70,8 +70,8 @@ export class DuelCreate extends OpenAPIRoute {
         if (existingDuel) {
             return c.text(
                 `@${userDisplayName}, this duel already exists with a ${existingDuel.wagerAmount} silver bet. 
-                use "!cancelduel ${challenged.displayName}" to cancel this duel.
-                @${existingDuel.challenged.displayName} you can use "!accept|deny ${userDisplayName}".`,
+                Use "!cancelduel" to cancel this duel.
+                $(newline)@${existingDuel.challenged.displayName} you can use "!accept|deny".`,
                 { status: 400 },
             );
         }
@@ -94,7 +94,7 @@ export class DuelCreate extends OpenAPIRoute {
         if (reverseDuel) {
             return c.text(
                 `@${userDisplayName}, ${challenged.displayName} has already challenged you for a duel with a ${reverseDuel.wagerAmount} silver bet! 
-                You can use "!accept|deny ${challenged.displayName}" to respond.`,
+                You can use "!accept|deny" to respond.`,
                 { status: 400 },
             );
         }
@@ -137,10 +137,8 @@ export class DuelCreate extends OpenAPIRoute {
 
         // Return response immediately, using the actual wager amount
         return c.text(
-            `@${userDisplayName} challenged ${challenged.displayName} for a duel with a ${actualWagerAmount} silver bet!
-            use "!cancelduel ${challenged.displayName}" to get your silver back.
-             @${challenged.displayName} you can use "!accept|deny ${userDisplayName}".
-             ${pickRandom(DUEL_CREATE_EMOTES)}`,
+            `@${userDisplayName} challenged ${challenged.displayName} for a duel with a ${actualWagerAmount} silver bet! ${pickRandom(DUEL_CREATE_EMOTES)}
+             $(newline)@${challenged.displayName} you can use "!accept|deny".`,
         );
     }
 }
