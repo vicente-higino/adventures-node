@@ -5,14 +5,11 @@ import { Context } from "hono";
 import { findOrCreateBalance, setBalance } from "@/db";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-// Import calculateAmount instead of having it locally
 import { pickRandom, roundToDecimalPlaces, calculateAmount, delay, sendActionToChannel } from "@/utils/misc";
 import { formatTimeToWithSeconds } from "@/utils/time";
-// Add import for emotes
 import { ADVENTURE_COOLDOWN_EMOTES } from "@/emotes";
 import { Mutex } from "async-mutex";
 import { advEndMutex } from "./adventureEnd";
-import { sendMessageToChannel } from "@/utils/misc"; // <-- Add this import (implement if needed)
 import { PrismaClient } from "@prisma/client";
 import { isChannelLive } from "@/bot";
 dayjs.extend(relativeTime);
@@ -53,22 +50,22 @@ export class AdventureJoin extends OpenAPIRoute {
             params: z.object({
                 amount: z
                     .string({
-                        description: "Silver amount (number, K/M/B, percentage, 'all', or +/-delta)",
+                        description: "Silver amount (number, K/M/B, percentage, 'all', 'to:X', or +/-delta)",
                         invalid_type_error:
-                            "Silver amount must be a number, K/M/B (e.g., 5k), percentage (e.g., 50%), 'all', or a delta (e.g., +1k, -50%)",
+                            "Silver amount must be a number, K/M/B (e.g., 5k), percentage (e.g., 50%), 'all', 'to:X', or a delta (e.g., +1k, -50%)",
                         required_error: "Silver amount is required",
                     })
-                    // Updated regex to allow optional +/- prefix and K/M/B suffixes (case-insensitive)
-                    .regex(/^[+-]?(all|\d+(\.\d+)?%|\d+(\.\d+)?[kmb]?|\d+)$/i, {
+                    // Updated regex to allow optional +/- prefix, K/M/B suffixes, and to:X (case-insensitive)
+                    .regex(/^([+-]?(all|\d+(\.\d+)?%|\d+(\.\d+)?[kmb]?|\d+)|to:\d+(\.\d+)?[kmb]?)$/i, {
                         message:
-                            "Amount must be a positive whole number, K/M/B (e.g., 5k), percentage (e.g., 50%), 'all', or a delta (e.g., +1k, -50%)",
+                            "Amount must be a positive whole number, K/M/B (e.g., 5k), percentage (e.g., 50%), 'all', 'to:X', or a delta (e.g., +1k, -50%)",
                     }),
             }),
         },
         responses: {},
     };
     handleValidationError(errors: z.ZodIssue[]) {
-        const msg = "Usage: !adventure|adv [silver(K/M/B)|%|all|+/-delta]";
+        const msg = "Usage: !adventure|adv [silver(K/M/B)|%|all|+/-delta|to:X]";
         return new Response(msg, { status: 400 });
     }
     async handle(c: Context<HonoEnv>) {
@@ -104,7 +101,9 @@ export class AdventureJoin extends OpenAPIRoute {
 
         if (!adv) {
             // First join: treat as absolute or delta (delta is just the value itself)
-            const buyin = calculateAmount(amountParam, balance.value);
+            const payoutRate = roundToDecimalPlaces(generatePayoutRate(), 2);
+            const formattedPayoutRate = payoutRate.toFixed(2);
+            const buyin = calculateAmount(amountParam, balance.value, undefined, true, payoutRate);
             const newBuyin = Math.min(buyin, balance.value);
             const newBalanceValue = Math.max(balance.value - newBuyin, 0);
             // Use newBuyin which is capped at balance.value
@@ -120,12 +119,8 @@ export class AdventureJoin extends OpenAPIRoute {
                 return c.text(`${userDisplayName}, there is already a adventure running. Try joining again.`);
             }
             await mutex.acquire();
-            // Generate payout rate for new adventure
-            const payoutRate = roundToDecimalPlaces(generatePayoutRate(), 2);
-            const formattedPayoutRate = payoutRate.toFixed(2);
 
             const [_, adventure] = await Promise.all([
-                // Use newBalanceValue and newBuyin
                 setBalance(prisma, balance.id, newBalanceValue),
                 prisma.adventure.create({
                     data: {
@@ -133,7 +128,6 @@ export class AdventureJoin extends OpenAPIRoute {
                         channel: channelLogin,
                         channelProviderId: channelProviderId,
                         payoutRate: payoutRate, // Store the payout rate in the database
-                        // Use newBuyin
                         players: { create: { buyin: newBuyin, userId: userProviderId } },
                     },
                 }),
@@ -143,7 +137,7 @@ export class AdventureJoin extends OpenAPIRoute {
             scheduleAdventureWarnings(prisma, channelLogin, adventure.id);
 
             return c.text(
-                `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "!adventure|adv [silver(K/M/B)|%|all|+/-delta]" to join in! Then use "!adventureend|advend" to end the adventure and get your rewards!
+                `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "!adventure|adv [silver(K/M/B)|%|all|+/-delta|to:X]" to join in! Then use "!adventureend|advend" to end the adventure and get your rewards!
                 This adventure offers a ${formattedPayoutRate}x payout rate! GAMBA
                 $(newline)@${userDisplayName} joined the adventure with ${newBuyin} silver.`,
             );
@@ -155,7 +149,8 @@ export class AdventureJoin extends OpenAPIRoute {
         const player = adv.players.find(player => player.userId === userProviderId);
         if (!player) {
             // Not joined yet: treat as absolute or delta (delta is just the value itself)
-            const buyin = calculateAmount(amountParam, balance.value);
+            // Pass adv.payoutRate for "to:X" support
+            const buyin = calculateAmount(amountParam, balance.value, undefined, true, adv.payoutRate);
             const newBuyin = Math.min(buyin, balance.value);
             const newBalanceValue = Math.max(balance.value - newBuyin, 0);
             // Use newBuyin which is capped at balance.value
@@ -180,7 +175,8 @@ export class AdventureJoin extends OpenAPIRoute {
         // Allow adjusting silver amount up or down
         const totalAvailable = balance.value + player.buyin;
         // Use calculateAmount for adjustment calculation, passing current buyin for delta support
-        const requestedBuyin = calculateAmount(amountParam, totalAvailable, player.buyin);
+        // Pass adv.payoutRate for "to:X" support
+        const requestedBuyin = calculateAmount(amountParam, totalAvailable, player.buyin, true, adv.payoutRate);
 
         // Ensure requestedBuyin is at least 1
         if (requestedBuyin < 1) {

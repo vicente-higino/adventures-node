@@ -97,18 +97,53 @@ export function formatSilver(silver: number): string {
  * - Numeric values with optional suffixes: "k", "m", "b".
  * - Plain numeric values.
  * - Delta values (e.g., "+100", "-50") if allowDelta is true.
+ * - "to:X" (e.g., "to:1000"): Calculates the required buy-in to reach X silver after payout.
  *
  * @param amountStr - The input string representing the desired amount.
  * @param availableAmount - The maximum available amount to calculate against.
  * @param currentAmount - The current amount (for delta calculations).
  * @param allowDelta - Whether to allow "+amount" or "-amount" syntax.
+ * @param payoutRate - The payout rate for "to:X" calculations.
  * @returns The calculated amount as a number, clamped between 0 and availableAmount.
  */
-export function calculateAmount(amountStr: string, availableAmount: number, currentAmount?: number, allowDelta: boolean = true): number {
+export function calculateAmount(
+    amountStr: string,
+    availableAmount: number,
+    currentAmount?: number,
+    allowDelta: boolean = true,
+    payoutRate?: number
+): number {
     const cleanedAmountStr = amountStr.trim().toLowerCase();
     let isDelta = false;
     let sign = 1;
     let amountPart = cleanedAmountStr;
+
+    // Handle "to:X" syntax
+    if (cleanedAmountStr.startsWith("to:")) {
+        if (!payoutRate || payoutRate <= 1) return 0;
+        // Parse the target value (support K/M/B suffixes)
+        const targetStr = cleanedAmountStr.slice(3);
+        const match = targetStr.match(/^(\d+(\.\d+)?)([kmb])?$/);
+        if (match) {
+            let target = parseFloat(match[1]);
+            const suffix = match[3];
+            if (suffix === "k") target *= 1_000;
+            else if (suffix === "m") target *= 1_000_000;
+            else if (suffix === "b") target *= 1_000_000_000;
+            // Use currentAmount if provided (for update), otherwise 0 (for new join)
+            const base = typeof currentAmount === "number" ? currentAmount : 0;
+            const totalAvailable = availableAmount; // this is balance+buyin for update, or just balance for new join
+            // The user wants: (buyin * payoutRate) + (totalAvailable - buyin) = target
+            // => buyin * (payoutRate - 1) = target - totalAvailable
+            // => buyin = (target - totalAvailable) / (payoutRate - 1)
+            let requiredBuyin = Math.floor((target - totalAvailable) / (payoutRate - 1));
+            // Clamp between 0 and totalAvailable
+            if (requiredBuyin < 0) requiredBuyin = 0;
+            if (requiredBuyin > totalAvailable) requiredBuyin = totalAvailable;
+            return requiredBuyin;
+        }
+        return 0;
+    }
 
     // If allowDelta is false, reject any string starting with + or -
     if (!allowDelta && (cleanedAmountStr.startsWith("+") || cleanedAmountStr.startsWith("-"))) {
@@ -153,9 +188,6 @@ export function calculateAmount(amountStr: string, availableAmount: number, curr
         } else {
             // If regex doesn't match, it's invalid (don't fallback to parseInt)
             calculatedValue = 0;
-            // // fallback to parseInt if no suffix/match
-            // const parsedInt = parseInt(amountPart, 10);
-            // calculatedValue = isNaN(parsedInt) ? 0 : parsedInt;
         }
     }
 
@@ -166,7 +198,6 @@ export function calculateAmount(amountStr: string, availableAmount: number, curr
         return Math.max(0, Math.min(Math.round(result), availableAmount));
     } else {
         // Treat as absolute value or delta without currentAmount
-        // calculatedValue holds the parsed magnitude (e.g., 100 for "-100", 500 for "-50%", available for "-all")
         // Clamp the absolute magnitude
         return Math.max(0, Math.min(calculatedValue, availableAmount));
     }
