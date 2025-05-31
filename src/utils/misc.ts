@@ -130,8 +130,6 @@ export function calculateAmount(
             if (suffix === "k") target *= 1_000;
             else if (suffix === "m") target *= 1_000_000;
             else if (suffix === "b") target *= 1_000_000_000;
-            // Use currentAmount if provided (for update), otherwise 0 (for new join)
-            const base = typeof currentAmount === "number" ? currentAmount : 0;
             const totalAvailable = availableAmount; // this is balance+buyin for update, or just balance for new join
             // The user wants: (buyin * payoutRate) + (totalAvailable - buyin) = target
             // => buyin * (payoutRate - 1) = target - totalAvailable
