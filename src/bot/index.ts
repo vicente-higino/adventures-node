@@ -11,6 +11,9 @@ import { setRarityWeightCommand } from './commands/setFishWeight';
 import { resetRarityWeightCommand } from './commands/resetFishWeight';
 
 import { fishOddsCommand } from './commands/fishOdds';
+import { flexFishCommand } from './commands/flexFish';
+import { fishGalleryCommand } from './commands/fishGallery';
+import { fishDexCommand } from './commands/fishDex'; // <-- add this import
 const clientId = env.TWITCH_CLIENT_ID;
 const clientSecret = env.TWITCH_CLIENT_SECRET;
 
@@ -125,7 +128,10 @@ export const createBot = (async () => {
                 silverCommand,
                 setRarityWeightCommand,
                 resetRarityWeightCommand,
-                fishOddsCommand
+                fishOddsCommand,
+                flexFishCommand,
+                fishGalleryCommand,
+                fishDexCommand, // <-- add this line
             ]
         });
         bot.onAuthenticationSuccess(() => {
