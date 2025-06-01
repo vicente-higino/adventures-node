@@ -109,7 +109,7 @@ export const createBot = (async () => {
         return bot; // Return existing bot if userId matches
     }
     fetchLiveChannels();
-    await createEventsubListeners(botConfig.channels);
+    createEventsubListeners(botConfig.channels);
 
     const tokenFile = `./secrets/tokens.${botConfig.userId}.json`;
     bot?.chat.quit();
