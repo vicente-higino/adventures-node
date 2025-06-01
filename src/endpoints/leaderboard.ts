@@ -42,9 +42,9 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
     };
 
     handleValidationError(errors: z.ZodIssue[]): Response {
-        // Updated usage message for consolidated command, adding default info and alias
+        // Concise usage message
         const msg =
-            "Usage: !leaderboard [adventure-|duel-][wins|played|wagered|profit][-asc|-bottom] | fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary][-asc|-bottom] | silver[-asc|-bottom] (default: silver) [amount] (default: 5)"; // Added avg
+            "Usage: !leaderboard [duel-][wins|played|wagered|profit] | fish[-silver|-avg|-fines|-rarity] | silver [-asc|-bottom] [amount] (default: silver, 5)";
         return new Response(msg, { status: 400 });
     }
 
