@@ -13,7 +13,7 @@ type LeaderboardType = "Adventure" | "Duel" | "Fish" | "Silver"; // Renamed Poin
 
 // Add "avg" to FishMetric
 // Define internal metrics for Fish leaderboard
-type FishMetric = "count" | "silver" | "fines" | "avg" | "trash" | "common" | "uncommon" | "fine" | "rare" | "epic" | "legendary";
+type FishMetric = "count" | "silver" | "fines" | "avg" | "trash" | "common" | "uncommon" | "fine" | "rare" | "epic" | "legendary" | "top";
 
 type LeaderboardResult = { formattedLeaderboard: string[]; metricDisplay: string };
 
@@ -28,12 +28,12 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                     .string({
                         description: "Sort criteria",
                         invalid_type_error:
-                            "Sort by must be [adventure-|duel-][wins|played|wagered|profit][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary][-asc|-bottom], or silver[-asc|-bottom]. Default: silver.", // Added avg
+                            "Sort by must be [adventure-|duel-][wins|played|wagered|profit][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary|-top][-asc|-bottom], or silver[-asc|-bottom]. Default: silver.", // Added top
                     })
                     .regex(
-                        // Add avg to regex
-                        /^(?:(adventure|duel)-)?(wins|played|wagered|profit|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary))?|silver)(-(?:asc|bottom))?$/i,
-                        "Sort by: [adventure-|duel-][wins|played|wagered|profit][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary][-asc|-bottom], or silver[-asc|-bottom].", // Added avg
+                        // Add top to regex
+                        /^(?:(adventure|duel)-)?(wins|played|wagered|profit|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top))?|silver)(-(?:asc|bottom))?$/i,
+                        "Sort by: [adventure-|duel-][wins|played|wagered|profit][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary|-top][-asc|-bottom], or silver[-asc|-bottom].", // Added top
                     )
                     .default("silver"), // Default to silver
             }),
@@ -44,7 +44,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
     handleValidationError(errors: z.ZodIssue[]): Response {
         // Concise usage message
         const msg =
-            "Usage: !leaderboard [duel-][wins|played|wagered|profit] | fish[-silver|-avg|-fines|-rarity] | silver [-asc|-bottom] [amount] (default: silver, 5)";
+            "Usage: !leaderboard [duel-][wins|played|wagered|profit] | fish[-silver|-avg|-fines|-rarity|-top] | silver [-asc|-bottom] [amount] (default: silver, 5)";
         return new Response(msg, { status: 400 });
     }
 
@@ -200,8 +200,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
         return { formattedLeaderboard, metricDisplay: metric };
     }
 
-    // Helper function for Fish Leaderboards (handles count, silver value, fines, avg, and rarities)
-    // Renamed from _handleFishSilver
+    // Helper function for Fish Leaderboards (handles count, silver value, fines, avg, rarities, and top fish)
     private async _handleFish(
         prisma: PrismaClient<{ adapter: PrismaD1 }>,
         channelProviderId: string,
@@ -209,6 +208,24 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
         order: "asc" | "desc",
         amount: number,
     ): Promise<LeaderboardResult> {
+        if (metric === "top") {
+            // Fetch the most valuable individual fish caught in this channel
+            // Assumes a FishCatch table with value, species, userId, and user relation
+            const topFish = await prisma.fish.findMany({
+                where: { channelProviderId },
+                include: { user: { select: { displayName: true } } },
+                orderBy: { value: order === "asc" ? "asc" : "desc" },
+                take: amount,
+            });
+            const totalEntries = await prisma.fish.count({ where: { channelProviderId } });
+            const formattedLeaderboard = topFish.map((entry, i) => {
+                const index = order === "asc" ? totalEntries - i : i + 1;
+                // Show fish species, value, and who caught it
+                return `${index}. ${entry.user.displayName}: ${formatSilver(entry.value)} Silver (${entry.name} - ${entry.rarity})`;
+            });
+            return { formattedLeaderboard, metricDisplay: "most valuable fish" };
+        }
+
         // 1. Fetch FishStats including User for displayName
         const fishStatsEntries = await prisma.fishStats.findMany({
             where: { channelProviderId: channelProviderId },
@@ -444,7 +461,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
         const sortParts = sortBy
             .toLowerCase()
             .match(
-                /^(?:(adventure|duel)-)?(wins|played|wagered|profit|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary))?|silver)(-(?:asc|bottom))?$/i,
+                /^(?:(adventure|duel)-)?(wins|played|wagered|profit|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top))?|silver)(-(?:asc|bottom))?$/i,
             ); // Use updated regex
         if (!sortParts) {
             // This should ideally not happen due to Zod validation, but good practice to keep.
