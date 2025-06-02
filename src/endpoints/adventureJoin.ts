@@ -50,22 +50,22 @@ export class AdventureJoin extends OpenAPIRoute {
             params: z.object({
                 amount: z
                     .string({
-                        description: "Silver amount (number, K/M/B, percentage, 'all', 'to:X', or +/-delta)",
+                        description: "Silver amount (number, K/M/B, percentage, 'all', 'to:X', 'k:X', or +/-delta)",
                         invalid_type_error:
-                            "Silver amount must be a number, K/M/B (e.g., 5k), percentage (e.g., 50%), 'all', 'to:X', or a delta (e.g., +1k, -50%)",
+                            "Silver amount must be a number, K/M/B (e.g., 5k), percentage (e.g., 50%), 'all', 'to:X', 'k:X', or a delta (e.g., +1k, -50%)",
                         required_error: "Silver amount is required",
                     })
-                    // Updated regex to allow optional +/- prefix, K/M/B suffixes, and to:X (case-insensitive)
-                    .regex(/^([+-]?(all|\d+(\.\d+)?%|\d+(\.\d+)?[kmb]?|\d+)|to:\d+(\.\d+)?[kmb]?)$/i, {
+                    // Updated regex to allow optional +/- prefix, K/M/B suffixes, to:X, and k:X (case-insensitive)
+                    .regex(/^([+-]?(all|\d+(\.\d+)?%|\d+(\.\d+)?[kmb]?|\d+)|to:\d+(\.\d+)?[kmb]?|k:\d+(\.\d+)?[kmb]?)$/i, {
                         message:
-                            "Amount must be a positive whole number, K/M/B (e.g., 5k), percentage (e.g., 50%), 'all', 'to:X', or a delta (e.g., +1k, -50%)",
+                            "Amount must be a positive whole number, K/M/B (e.g., 5k), percentage (e.g., 50%), 'all', 'to:X', 'k:X', or a delta (e.g., +1k, -50%)",
                     }),
             }),
         },
         responses: {},
     };
     handleValidationError(errors: z.ZodIssue[]) {
-        const msg = "Usage: !adventure|adv [silver(K/M/B)|%|all|+/-delta|to:X]";
+        const msg = "Usage: !adventure|adv [silver(K/M/B)|%|all|+/-delta|to:X|k:X]";
         return new Response(msg, { status: 400 });
     }
     async handle(c: Context<HonoEnv>) {
@@ -137,7 +137,7 @@ export class AdventureJoin extends OpenAPIRoute {
             scheduleAdventureWarnings(prisma, channelLogin, adventure.id);
 
             return c.text(
-                `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "!adventure|adv [silver(K/M/B)|%|all|+/-delta|to:X]" to join in! Then use "!adventureend|advend" to end the adventure and get your rewards!
+                `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "!adventure|adv [silver(K/M/B)|%|all|+/-delta|to:X|k:X]" to join in! Then use "!adventureend|advend" to end the adventure and get your rewards!
                 This adventure offers a ${formattedPayoutRate}x payout rate! GAMBA
                 $(newline)@${userDisplayName} joined the adventure with ${newBuyin} silver.`,
             );

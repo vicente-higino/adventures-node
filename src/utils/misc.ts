@@ -98,6 +98,7 @@ export function formatSilver(silver: number): string {
  * - Plain numeric values.
  * - Delta values (e.g., "+100", "-50") if allowDelta is true.
  * - "to:X" (e.g., "to:1000"): Calculates the required buy-in to reach X silver after payout.
+ * - "k:X" (e.g., "k:100"): Keeps X silver in balance and joins with the rest.
  *
  * @param amountStr - The input string representing the desired amount.
  * @param availableAmount - The maximum available amount to calculate against.
@@ -139,6 +140,25 @@ export function calculateAmount(
             if (requiredBuyin < 0) requiredBuyin = 0;
             if (requiredBuyin > totalAvailable) requiredBuyin = totalAvailable;
             return requiredBuyin;
+        }
+        return 0;
+    }
+
+    // Handle "k:X" syntax (keep X in balance, join with the rest)
+    if (cleanedAmountStr.startsWith("k:")) {
+        // Parse the keep value (support K/M/B suffixes)
+        const keepStr = cleanedAmountStr.slice(2);
+        const match = keepStr.match(/^(\d+(\.\d+)?)([kmb])?$/);
+        if (match) {
+            let keep = parseFloat(match[1]);
+            const suffix = match[3];
+            if (suffix === "k") keep *= 1_000;
+            else if (suffix === "m") keep *= 1_000_000;
+            else if (suffix === "b") keep *= 1_000_000_000;
+            let joinAmount = availableAmount - keep;
+            if (joinAmount < 0) joinAmount = 0;
+            if (joinAmount > availableAmount) joinAmount = availableAmount;
+            return Math.round(joinAmount);
         }
         return 0;
     }
