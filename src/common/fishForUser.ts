@@ -1,4 +1,4 @@
-import { Prisma, Rarity } from "@prisma/client";
+import { Prisma, PrismaClient, Rarity } from "@prisma/client";
 import dayjs from "dayjs";
 import { findOrCreateBalance, findOrCreateFishStats, increaseBalance } from "@/db";
 import { getFish, getValueEmote } from "@/fishing";
@@ -27,7 +27,7 @@ const wrongPlaces = [
 ];
 
 interface FishForUserParams {
-    prisma: any;
+    prisma: PrismaClient;
     channelLogin: string;
     channelProviderId: string;
     userProviderId: string;
@@ -212,6 +212,6 @@ export async function fishForUser({
 
     const totalValueMessage = bonus > 0 ? `${fish.sellValue} + ${bonus} (Record Bonus) = ${fish.sellValue + bonus}` : `${fish.sellValue}`;
     const valueEmote = bonus > 0 ? getValueEmote(fish.sellValue + bonus) : fish.rarityEmote;
-    const resText = `@${userDisplayName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} ${fish.formatedSize} ${fish.formatedWeight}! It sold for ${totalValueMessage} silver! ${recordMessage} ${valueEmote}`;
+    const resText = `@${userDisplayName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} #${createdFish.id} ${fish.formatedSize} ${fish.formatedWeight}! It sold for ${totalValueMessage} silver! ${recordMessage} ${valueEmote}`;
     return resText;
 }
