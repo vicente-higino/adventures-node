@@ -3,6 +3,10 @@ import { prisma } from "@/prisma"
 import { formatSize, formatWeight } from "@/utils/misc";
 import { z } from 'zod';
 import { getBotConfig } from '..';
+import { Fish } from '@prisma/client';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+dayjs.extend(relativeTime);
 
 const RARITY_ORDER = [
     "Legendary",
@@ -15,7 +19,7 @@ const RARITY_ORDER = [
 ];
 
 // Helper to sort by rarity and then value
-function sortFishByRarityAndValue(fishList: any[]) {
+function sortFishByRarityAndValue(fishList: Fish[]) {
     return fishList.sort((a, b) => {
         const rarityDiff = RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity);
         if (rarityDiff !== 0) return rarityDiff;
@@ -23,15 +27,16 @@ function sortFishByRarityAndValue(fishList: any[]) {
     });
 }
 
-function formatFishSummary(fish: any) {
+function formatFishSummary(fish: Fish) {
     const weightStr = formatWeight(parseFloat(fish.weight));
     const sizeStr = formatSize(parseFloat(fish.size));
-    return `[${fish.rarity}] ${fish.prefix} ${fish.name} (${weightStr}, ${sizeStr}) ${fish.value} silver`;
+    const howLongAgo = dayjs(fish.createdAt).fromNow();
+    return `[${fish.rarity}] ${fish.prefix} ${fish.name} #${fish.id} (${weightStr}, ${sizeStr}) ${fish.value} silver - ${howLongAgo}`;
 }
 
 export const fishGalleryCommand = createBotCommand('fishgallery', async (params, ctx) => {
     const { userId, userDisplayName, broadcasterId, say } = ctx;
-    const N = 5; // Items per page
+    const N = 2; // Items per page
     const [first] = params;
     let pageParsed = z.coerce.number().min(1).default(1).safeParse(first);
     let page = 1;
@@ -59,8 +64,7 @@ export const fishGalleryCommand = createBotCommand('fishgallery', async (params,
         take: N,
         skip,
         orderBy: [
-            { value: 'desc' },
-            { createdAt: 'desc' }
+            { createdAt: 'asc' }
         ],
     });
 
@@ -69,8 +73,8 @@ export const fishGalleryCommand = createBotCommand('fishgallery', async (params,
         return;
     }
 
-    const sorted = sortFishByRarityAndValue(fishList);
-    const summary = sorted.map(formatFishSummary).join(" | ");
+    // const sorted = sortFishByRarityAndValue(fishList);
+    const summary = fishList.map(formatFishSummary).join(" | ");
 
 
     say(`@${userDisplayName} Fish Gallery [${page}/${totalPages}]: ${summary}`);
