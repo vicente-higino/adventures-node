@@ -38,27 +38,32 @@ export const fishGalleryCommand = createBotCommand('fishgallery', async (params,
     const { userId, userDisplayName, broadcasterId, say } = ctx;
     const N = 2; // Items per page
     const [first] = params;
-    let pageParsed = z.coerce.number().min(1).default(1).safeParse(first);
+
+    // Accept negative numbers for page
+    let pageParsed = z.coerce.number().default(1).safeParse(first);
     let page = 1;
     if (!pageParsed.success) {
         say(`@${userDisplayName}, invalid page number. Usage: ${getBotConfig().prefix}fishgallery [page (int)]`);
         return;
     }
-    page = Math.max(1, pageParsed.data);
-    const skip = (page - 1) * N;
-
     // Get total count for pagination info
     const totalCount = await prisma.fish.count({ where: { userId, channelProviderId: broadcasterId } });
     const totalPages = Math.max(1, Math.ceil(totalCount / N));
 
-    if (page > totalPages) {
+    let inputPage = pageParsed.data;
+    if (inputPage === 0) inputPage = 1; // treat 0 as 1
+    if (inputPage < 0) {
+        page = Math.min(Math.abs(totalPages + inputPage) + 1, totalPages);
+
+    } else {
+        page = Math.min(inputPage, totalPages);;
+    }
+
+    if (page > totalPages || page < 1) {
         say(`@${userDisplayName}, page ${page} does not exist. There ${totalPages === 1 ? "is" : "are"} only ${totalPages} page${totalPages === 1 ? "" : "s"} in your gallery.`);
         return;
     }
-    if (page < 1) {
-        say(`@${userDisplayName}, page number must be at least 1.`);
-        return;
-    }
+    const skip = (page - 1) * N;
     const fishList = await prisma.fish.findMany({
         where: { userId, channelProviderId: broadcasterId },
         take: N,
