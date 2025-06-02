@@ -6,6 +6,8 @@ import utc from "dayjs/plugin/utc";
 import calendar from 'dayjs/plugin/calendar';
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Fish } from "@prisma/client"
+import z from 'zod';
+import { getBotConfig } from '..';
 dayjs.extend(relativeTime);
 dayjs.extend(utc);
 dayjs.extend(calendar)
@@ -40,11 +42,34 @@ function formatFishDisplay(fish: Fish) {
 
 export const flexFishCommand = createBotCommand('flexfish', async (params, ctx) => {
     const { userId, userDisplayName, broadcasterId, say } = ctx;
-    // Fetch the user's most valuable fish
-    const fish = await getUserMostValuableFish(userId, broadcasterId);
-    if (!fish) {
-        say(`${userDisplayName}, you don't have any fish to flex! Go fishing first.`);
-        return;
+    const [first] = params;
+
+    let fish;
+    let flexLabel = "most valuable fish";
+    if (first) {
+        // Use zod to validate and extract id with #
+        const idSchema = z.string().regex(/^#\d+$/, { message: "Must start with # followed by a number" });
+        const idParsed = idSchema.safeParse(first);
+        if (!idParsed.success) {
+            say(`${userDisplayName}, invalid fish id. Usage: ${getBotConfig().prefix}flexfish [#fishId]`);
+            return;
+        }
+        const fishId = Number(first.slice(1));
+        fish = await prisma.fish.findFirst({
+            where: { id: fishId, userId, channelProviderId: broadcasterId }
+        });
+        if (!fish) {
+            say(`${userDisplayName}, you don't own a fish with id ${fishId}.`);
+            return;
+        }
+        flexLabel = `fish #${fishId}`;
+    } else {
+        // Fetch the user's most valuable fish
+        fish = await getUserMostValuableFish(userId, broadcasterId);
+        if (!fish) {
+            say(`${userDisplayName}, you don't have any fish to flex! Go fishing first.`);
+            return;
+        }
     }
-    say(`${userDisplayName} most valuable fish: ${formatFishDisplay(fish)}. EZ`);
+    say(`${userDisplayName} ${flexLabel}: ${formatFishDisplay(fish)}. EZ`);
 }, { ignoreCase: true });
