@@ -89,6 +89,15 @@ export async function fishForUser({
     const unitSystem = balance.user.unitSystem ?? "metric";
     const fish = getFish({ unitSystem });
     let bonus = 0;
+    let treasureBonus = 0;
+    let treasureMessage = "";
+    if (fish.rarity === Rarity.Trash && Math.random() < 0.25) {
+        // Treasure chest logic: random bonus between 50 and 200 silver
+        const chestBonus = Math.floor(boxMullerTransform(1000, 500, 250));
+        treasureBonus += chestBonus;
+        treasureMessage = `🎁 You found a treasure chest hidden in the trash! (+${chestBonus} silver)`;
+    }
+
 
     const [createdFish, existingRecord] = await Promise.all([
         prisma.fish.create({
@@ -178,7 +187,7 @@ export async function fishForUser({
         const updateFishValue = prisma.fish.update({ where: { id: createdFish.id }, data: { value: { increment: bonus } } });
         promises.push(updateFishValue);
     }
-    promises.push(increaseBalance(prisma, balance.id, fish.sellValue + bonus));
+    promises.push(increaseBalance(prisma, balance.id, fish.sellValue + bonus + treasureBonus));
 
     let fishStatsUpdateData: Prisma.FishStatsUpdateInput = { totalSilverWorth: { increment: fish.sellValue + bonus } };
     switch (fish.rarity) {
@@ -210,8 +219,8 @@ export async function fishForUser({
 
     await Promise.all(promises);
 
-    const totalValueMessage = bonus > 0 ? `${fish.sellValue} + ${bonus} (Record Bonus) = ${fish.sellValue + bonus}` : `${fish.sellValue}`;
-    const valueEmote = bonus > 0 ? getValueEmote(fish.sellValue + bonus) : fish.rarityEmote;
-    const resText = `@${userDisplayName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} #${createdFish.id} ${fish.formatedSize} ${fish.formatedWeight}! It sold for ${totalValueMessage} silver! ${recordMessage} ${valueEmote}`;
+    const totalValueMessage = bonus > 0 ? `${fish.sellValue} + ${bonus} (Bonus) = ${fish.sellValue + bonus}` : `${fish.sellValue}`;
+    const valueEmote = bonus > 0 || treasureBonus > 0 ? getValueEmote(fish.sellValue + bonus + treasureBonus) : fish.rarityEmote;
+    const resText = `@${userDisplayName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} #${createdFish.id} ${fish.formatedSize} ${fish.formatedWeight}! It sold for ${totalValueMessage} silver! ${treasureMessage} ${recordMessage} ${valueEmote}`;
     return resText;
 }
