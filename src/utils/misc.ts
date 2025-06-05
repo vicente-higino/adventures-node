@@ -9,8 +9,8 @@ export const delay = (ms: number): Promise<void> => {
 };
 function configurableRoundingFormatter(maxDecimals: number): Qty.Formatter {
     return function (scalar, units) {
-        var pow = Math.pow(10, maxDecimals);
-        var rounded = Math.round(scalar * pow) / pow;
+        const pow = Math.pow(10, maxDecimals);
+        const rounded = Math.round(scalar * pow) / pow;
 
         return rounded + " " + units;
     };

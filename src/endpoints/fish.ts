@@ -12,9 +12,9 @@ export class Fish extends OpenAPIRoute {
 
         const channelLogin = data.headers["x-fossabot-channellogin"];
         const channelProviderId = data.headers["x-fossabot-channelproviderid"];
-        let userProviderId = data.headers["x-fossabot-message-userproviderid"];
-        let userLogin = data.headers["x-fossabot-message-userlogin"];
-        let userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
+        const userProviderId = data.headers["x-fossabot-message-userproviderid"];
+        const userLogin = data.headers["x-fossabot-message-userlogin"];
+        const userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
 
         // Call the decoupled fishing logic
         const result = await fishForUser({

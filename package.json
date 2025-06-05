@@ -4,6 +4,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "npx tsx --watch src/index.ts",
+		"type-check": "npx tsc --noEmit",
 		"build": "npx esbuild src/index.ts --platform=node --bundle --minify --outfile=build/main.min.js",
 		"start": "node build/main.min.js",
 		"db:deploy": "npx prisma migrate deploy",
@@ -11,7 +12,12 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
-		"prettier": "prettier --write ./src"
+		"prettier": "prettier --write ./src",
+		"prepare": "npx simple-git-hooks"
+	},
+	"simple-git-hooks": {
+		"pre-commit": "npm run type-check",
+		"pre-push": "npm run prettier"
 	},
 	"dependencies": {
 		"@hono/node-server": "^1.14.1",
@@ -32,15 +38,20 @@
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
+		"@eslint/js": "^9.28.0",
 		"@types/js-quantities": "^1.6.6",
 		"@types/node": "20.8.3",
 		"@vitest/coverage-v8": "^3.1.1",
 		"esbuild": "^0.25.4",
+		"eslint": "^9.28.0",
+		"globals": "^16.2.0",
 		"prettier": "3.5.3",
 		"prisma": "^6.5.0",
+		"simple-git-hooks": "^2.13.0",
 		"ts-node": "^10.9.2",
 		"tsx": "^4.19.4",
 		"typescript": "^5.8.3",
+		"typescript-eslint": "^8.33.1",
 		"vitest": "^3.1.1"
 	},
 	"prettier": {

@@ -61,7 +61,7 @@ export async function fishForUser({
         }
     }
 
-    let balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);
+    const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);
 
     // 1% chance to get caught
     if (fishStats.totalSilverWorth > 0 && Math.random() < 0.01) {

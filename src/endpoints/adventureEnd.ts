@@ -81,7 +81,7 @@ export class AdventureEnd extends OpenAPIRoute {
 
                 // Format the sorted results for display
                 const formattedResults = resultArr.map(r => `@${r.displayName} (+${formatSilver(r.profit)} silver)`);
-                let joinedResults = formattedResults.join(", ");
+                const joinedResults = formattedResults.join(", ");
 
                 // Add loser stat updates to promises
                 promises.push(
@@ -104,7 +104,7 @@ export class AdventureEnd extends OpenAPIRoute {
 
                 // Compose the message and limit advResults.message
                 const base = ` The adventure ended with a ${formattedPayoutRate}x payout rate! Survivors are: ${joinedResults}.`;
-                let advMsg = limitAdvMessage(base, advResults.message);
+                const advMsg = limitAdvMessage(base, advResults.message);
                 let message = `${advMsg}${base}`;
                 // Final fallback in case of edge case overflow
                 message = limitMessageLength(message);
@@ -128,7 +128,7 @@ export class AdventureEnd extends OpenAPIRoute {
             await Promise.all(promises);
             // Compose the message and limit advResults.message
             const base = " The adventure ended! No survivors. All players lost their silver.";
-            let advMsg = limitAdvMessage(base, advResults.message);
+            const advMsg = limitAdvMessage(base, advResults.message);
             let message = `${advMsg}${base}`;
             // Final fallback in case of edge case overflow
             message = limitMessageLength(message);

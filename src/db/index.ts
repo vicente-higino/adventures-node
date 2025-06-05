@@ -36,7 +36,7 @@ export async function findOrCreateBalance(
     return balance;
 }
 export async function setBalance(db: dbClient, id: number, newValue: number) {
-    let balance = await db.balance.update({ where: { id }, data: { value: newValue } });
+    const balance = await db.balance.update({ where: { id }, data: { value: newValue } });
     return balance;
 }
 export async function increaseBalanceWithChannelID(db: dbClient, channelProviderId: string, userProviderId: string, amountToIncrease: number) {
@@ -47,10 +47,10 @@ export async function increaseBalanceWithChannelID(db: dbClient, channelProvider
     balance = await increaseBalance(db, balance.id, amountToIncrease);
     return balance;
 }
-export async function increaseBalance(db: any, id: number, amountToIncrease: number) {
-    let oldBalance = await db.balance.findUniqueOrThrow({ where: { id } });
+export async function increaseBalance(db: dbClient, id: number, amountToIncrease: number) {
+    const oldBalance = await db.balance.findUniqueOrThrow({ where: { id } });
     const isBalanceNegative = oldBalance.value + amountToIncrease < 0;
-    let balance = await db.balance.update({
+    const balance = await db.balance.update({
         where: { id },
         data: { value: { increment: isBalanceNegative ? -oldBalance.value : amountToIncrease } },
     });
@@ -133,7 +133,7 @@ export async function cancelExpiredDuels(prisma: dbClient): Promise<void> {
 
     console.log(`Found ${expiredDuels.length} expired duels to cancel.`);
 
-    const tasks: Promise<any>[] = [];
+    const tasks: Promise<unknown>[] = [];
 
     for (const duel of expiredDuels) {
         console.log(
