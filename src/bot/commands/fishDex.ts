@@ -43,6 +43,23 @@ async function getUserFishNamesByRarity(userId: string, channelProviderId: strin
     return map;
 }
 
+// Returns a mapping: rarity -> Set of unique fish names caught by any user in the channel
+async function getChannelFishNamesByRarity(channelProviderId: string) {
+    const channelFish = await prisma.fish.findMany({
+        where: { channelProviderId },
+        select: { name: true, rarity: true },
+        distinct: ['name', 'rarity'],
+    });
+    const map = new Map<string, Set<string>>();
+    for (const rarity of RARITY_ORDER) {
+        map.set(rarity, new Set());
+    }
+    for (const fish of channelFish) {
+        map.get(fish.rarity)?.add(fish.name);
+    }
+    return map;
+}
+
 export const fishDexCommand = createBotCommand('fishdex', async (params, ctx) => {
     const { userId, userDisplayName, broadcasterId, say } = ctx;
 
@@ -75,4 +92,22 @@ export const fishDexCommand = createBotCommand('fishdex', async (params, ctx) =>
     }).join(" | ");
 
     say(`@${targetDisplayName} FishDex: ${summary}`);
+}, { ignoreCase: true });
+
+export const fishDexGlobalCommand = createBotCommand('fishdexglobal', async (params, ctx) => {
+    const { broadcasterId, say } = ctx;
+
+    // Get all unique fish names by rarity (from fishTable)
+    const allFishMap = getAllFishNamesByRarityFromTable();
+    // Get channel's unique fish names by rarity
+    const channelFishMap = await getChannelFishNamesByRarity(broadcasterId);
+
+    // Compose summary
+    const summary = RARITY_ORDER.map(rarity => {
+        const total = allFishMap.get(rarity)?.size ?? 0;
+        const caught = channelFishMap.get(rarity)?.size ?? 0;
+        return `${rarity}: ${caught}/${total}`;
+    }).join(" | ");
+
+    say(`Global FishDex: ${summary}`);
 }, { ignoreCase: true });
