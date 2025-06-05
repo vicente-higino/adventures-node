@@ -177,4 +177,4 @@ data/
 db_backups/
 secrets/
 *.sql
-*.sh
+scripts/generate_pg_dump.sh
