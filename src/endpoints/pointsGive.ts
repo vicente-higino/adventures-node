@@ -40,7 +40,7 @@ export class PointGive extends OpenAPIRoute {
         // giveAmountStr now comes directly from the validated string parameter
         const giveAmountStr = data.params.giveAmount;
         const toUserProviderId = data.params.userId ?? data.headers["x-fossabot-message-userproviderid"];
-        const toUser = await getUserById(c, prisma, toUserProviderId); // Pass prisma
+        const toUser = await getUserById(prisma, toUserProviderId); // Pass prisma
         if (!toUser) {
             return c.text("user not found", { status: 404 });
         }

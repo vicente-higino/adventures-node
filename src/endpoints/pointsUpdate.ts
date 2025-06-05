@@ -31,7 +31,7 @@ export class PointUpdate extends OpenAPIRoute {
         const channelLogin = data.headers["x-fossabot-channellogin"];
         const channelProviderId = data.headers["x-fossabot-channelproviderid"];
         const userProviderId = data.params.userId ?? data.headers["x-fossabot-message-userproviderid"];
-        const user = await getUserById(c, prisma, userProviderId); // Pass prisma
+        const user = await getUserById(prisma, userProviderId); // Pass prisma
         if (!user) {
             return c.text("user not found", { status: 404 });
         }

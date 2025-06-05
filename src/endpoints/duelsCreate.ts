@@ -54,7 +54,7 @@ export class DuelCreate extends OpenAPIRoute {
             return c.text("Missing username. Try !duel username silver", { status: 400 });
         }
 
-        const challenged = await getUserById(c, prisma, challengedId); // Pass prisma
+        const challenged = await getUserById(prisma, challengedId); // Pass prisma
         if (!challenged) {
             return c.text("user not found", { status: 404 });
         }

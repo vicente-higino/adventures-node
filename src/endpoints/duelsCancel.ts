@@ -55,7 +55,7 @@ export class DuelCancel extends OpenAPIRoute {
             });
             if (!duel) {
                 // Try to get the display name for the error message
-                const otherUserInfo = await getUserById(c, prisma, challengedId);
+                const otherUserInfo = await getUserById(prisma, challengedId);
                 otherUserName = otherUserInfo?.displayName ?? challengedId;
                 return c.text(`@${userDisplayName}, there is no pending duel between you and ${otherUserName}.`, { status: 404 });
             }

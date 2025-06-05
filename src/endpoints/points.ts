@@ -23,7 +23,7 @@ export class Point extends OpenAPIRoute {
         let userLogin = data.headers["x-fossabot-message-userlogin"];
         let userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
         if (data.params.userId && data.params.userId !== data.headers["x-fossabot-message-userproviderid"]) {
-            const user = await getUserById(c, prisma, data.params.userId); // Pass prisma
+            const user = await getUserById(prisma, data.params.userId); // Pass prisma
             userProviderId = user?.id ?? data.headers["x-fossabot-message-userproviderid"];
             userLogin = user?.login ?? data.headers["x-fossabot-message-userlogin"];
             userDisplayName = user?.displayName ?? data.headers["x-fossabot-message-userdisplayname"];

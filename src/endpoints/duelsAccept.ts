@@ -51,7 +51,7 @@ export class DuelAccept extends OpenAPIRoute {
 
             if (!duel) {
                 // Use challenger's display name if possible, otherwise ID
-                const challengerInfo = await getUserById(c, prisma, challengerId);
+                const challengerInfo = await getUserById(prisma, challengerId);
                 const challengerName = challengerInfo?.displayName ?? challengerId;
                 return c.text(`${userDisplayName}, you have no pending duels from ${challengerName}.`, { status: 404 });
             }
