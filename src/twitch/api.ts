@@ -72,7 +72,6 @@ export const getUserByUsername = async (
 };
 
 export const getUserById = async (
-    c: Context<HonoEnv>,
     prisma: PrismaClient, // Add prisma client
     id: string,
 ): Promise<DbUser | null> => {
