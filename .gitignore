@@ -176,5 +176,4 @@ test.sql
 data/
 db_backups/
 secrets/
-*.sql
 scripts/generate_pg_dump.sh
