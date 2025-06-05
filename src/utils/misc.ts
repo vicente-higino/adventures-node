@@ -112,7 +112,7 @@ export function calculateAmount(
     availableAmount: number,
     currentAmount?: number,
     allowDelta: boolean = true,
-    payoutRate?: number
+    payoutRate?: number,
 ): number {
     const cleanedAmountStr = amountStr.trim().toLowerCase();
     let isDelta = false;
@@ -277,19 +277,21 @@ export async function sendMessageToChannel(channel: string, message: string) {
     // Placeholder function to send a message to a channel
     // Replace with actual implementation
     console.log(`Sending message to ${channel}: ${message}`);
-    GetBot()?.say(channel, message).catch(err => {
-        console.error(`Error sending message to ${channel}:`, err);
-    }
-    );
+    GetBot()
+        ?.say(channel, message)
+        .catch(err => {
+            console.error(`Error sending message to ${channel}:`, err);
+        });
 }
 export async function sendActionToChannel(channel: string, message: string) {
     // Placeholder function to send a message to a channel
     // Replace with actual implementation
     console.log(`Sending message to ${channel}: ${message}`);
-    GetBot()?.action(channel, message).catch(err => {
-        console.error(`Error sending message to ${channel}:`, err);
-    }
-    );
+    GetBot()
+        ?.action(channel, message)
+        .catch(err => {
+            console.error(`Error sending message to ${channel}:`, err);
+        });
 }
 
 export async function sendMessageToAllChannel(message: string) {
@@ -298,7 +300,8 @@ export async function sendMessageToAllChannel(message: string) {
     const { channels } = getBotConfig();
     for (const channel of channels) {
         console.log(`Sending message to ${channel}: ${message}`);
-        GetBot()?.say(channel, message)
+        GetBot()
+            ?.say(channel, message)
             .catch(err => {
                 console.error(`Error sending message to ${channel}:`, err);
             });
@@ -310,7 +313,8 @@ export async function sendActionToAllChannel(message: string) {
     const { channels } = getBotConfig();
     for (const channel of channels) {
         console.log(`Sending message to ${channel}: ${message}`);
-        GetBot()?.action(channel, message)
+        GetBot()
+            ?.action(channel, message)
             .catch(err => {
                 console.error(`Error sending message to ${channel}:`, err);
             });

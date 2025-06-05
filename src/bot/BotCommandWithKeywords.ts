@@ -29,7 +29,7 @@ class BotCommandWithKeywords extends BotCommand {
         return this._keywords;
     }
     match(line: string, prefix: string): string[] | null {
-        let [command, ...params] = line.split(' ');
+        let [command, ...params] = line.split(" ");
         if (this.matchesKeyword(line, this._ignoreCase)) {
             return [];
         }
@@ -43,13 +43,11 @@ class BotCommandWithKeywords extends BotCommand {
         return null;
     }
     matchesKeyword(input: string, ignoreCase: boolean = false): boolean {
-        const inputWords = input.split(' ');
+        const inputWords = input.split(" ");
         if (!ignoreCase) {
             return this._keywords.some(keyword => inputWords.includes(keyword));
         }
-        return this._keywords.some(keyword =>
-            inputWords.map(w => w.toLowerCase()).includes(keyword.toLowerCase())
-        );
+        return this._keywords.some(keyword => inputWords.map(w => w.toLowerCase()).includes(keyword.toLowerCase()));
     }
 
     async execute(params: string[], context: BotCommandContext): Promise<void> {
@@ -63,15 +61,8 @@ export function createBotCommand(
     options: CreateBotCommandOptions & { keywords?: string[] } = {},
 ): BotCommand {
     return new (class extends BotCommandWithKeywords {
-
         constructor(private readonly _options: CreateBotCommandOptions) {
-            super({
-                name: commandName,
-                keywords: options.keywords ?? [],
-                action: handler,
-                ignoreCase: options.ignoreCase ?? false
-            });
-
+            super({ name: commandName, keywords: options.keywords ?? [], action: handler, ignoreCase: options.ignoreCase ?? false });
         }
 
         get aliases() {
@@ -83,8 +74,8 @@ export function createBotCommand(
                 return super.match(line, prefix);
             }
 
-            const [command, ...params] = line.split(' ');
-            const transformedLine = [command.toLowerCase(), ...params].join(' ');
+            const [command, ...params] = line.split(" ");
+            const transformedLine = [command.toLowerCase(), ...params].join(" ");
             return super.match(transformedLine, prefix);
         }
 
@@ -103,15 +94,8 @@ export function createAdminBotCommand(
     options: CreateBotCommandOptions & { keywords?: string[] } = {},
 ): BotCommand {
     return new (class extends BotCommandWithKeywords {
-
         constructor(private readonly _options: CreateBotCommandOptions) {
-            super({
-                name: commandName,
-                keywords: options.keywords ?? [],
-                action: handler,
-                ignoreCase: options.ignoreCase ?? false
-            });
-
+            super({ name: commandName, keywords: options.keywords ?? [], action: handler, ignoreCase: options.ignoreCase ?? false });
         }
 
         get aliases() {
@@ -123,8 +107,8 @@ export function createAdminBotCommand(
                 return super.match(line, prefix);
             }
 
-            const [command, ...params] = line.split(' ');
-            const transformedLine = [command.toLowerCase(), ...params].join(' ');
+            const [command, ...params] = line.split(" ");
+            const transformedLine = [command.toLowerCase(), ...params].join(" ");
             return super.match(transformedLine, prefix);
         }
 

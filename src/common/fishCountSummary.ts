@@ -8,9 +8,9 @@ export async function getFishRecordStats({
     channelProviderId,
     userProviderId,
 }: {
-    prisma: PrismaClient,
-    channelProviderId: string,
-    userProviderId: string,
+    prisma: PrismaClient;
+    channelProviderId: string;
+    userProviderId: string;
 }): Promise<string> {
     const fishRecords = await prisma.fishRecord.findMany({
         where: {
@@ -83,9 +83,9 @@ export async function getFishRecordStats({
 
     const recordsText = Object.entries(records).some(([_, items]) => items.length > 0)
         ? `They hold the record for: ${Object.entries(records)
-            .filter(([_, items]) => items.length > 0)
-            .map(([type, items]) => `${type.charAt(0).toUpperCase() + type.slice(1)}: ${items.map(i => i.text).join(", ")}`)
-            .join("; ")}!`
+              .filter(([_, items]) => items.length > 0)
+              .map(([type, items]) => `${type.charAt(0).toUpperCase() + type.slice(1)}: ${items.map(i => i.text).join(", ")}`)
+              .join("; ")}!`
         : "They do not hold any records.";
 
     return recordsText;
@@ -99,12 +99,12 @@ export async function getFishCountSummary({
     userLogin,
     userDisplayName,
 }: {
-    prisma: PrismaClient,
-    channelLogin: string,
-    channelProviderId: string,
-    userProviderId: string,
-    userLogin: string,
-    userDisplayName: string,
+    prisma: PrismaClient;
+    channelLogin: string;
+    channelProviderId: string;
+    userProviderId: string;
+    userLogin: string;
+    userDisplayName: string;
 }): Promise<string> {
     // Optionally update user info if getUserByIdFn is provided
     const user = await getUserById(prisma, userProviderId);

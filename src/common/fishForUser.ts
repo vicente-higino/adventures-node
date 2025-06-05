@@ -46,9 +46,7 @@ export async function fishForUser({
     cooldownHours,
 }: FishForUserParams): Promise<string> {
     const fishStats = await findOrCreateFishStats(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);
-    if (
-        fishStats.totalSilverWorth > 0
-    ) {
+    if (fishStats.totalSilverWorth > 0) {
         const lastFishedAt = fishStats.updatedAt;
         const nextAvailable = new Date(lastFishedAt.getTime() + 1000 * 60 * 60 * cooldownHours);
         const now = new Date();
@@ -70,19 +68,9 @@ export async function fishForUser({
         if (!balance) {
             return `@${userDisplayName} Something went wrong finding your balance.`;
         }
-        const updateCaughtTimestamp = prisma.fishStats.update({
-            where: { id: fishStats.id },
-            data: { updatedAt: dayjs().toISOString() },
-        });
-        const updateFishFinesInFishStats = prisma.fishStats.update({
-            where: { id: fishStats.id },
-            data: { fishFines: { increment: fine } },
-        });
-        await Promise.all([
-            increaseBalance(prisma, balance.id, -fine),
-            updateFishFinesInFishStats,
-            updateCaughtTimestamp,
-        ]);
+        const updateCaughtTimestamp = prisma.fishStats.update({ where: { id: fishStats.id }, data: { updatedAt: dayjs().toISOString() } });
+        const updateFishFinesInFishStats = prisma.fishStats.update({ where: { id: fishStats.id }, data: { fishFines: { increment: fine } } });
+        await Promise.all([increaseBalance(prisma, balance.id, -fine), updateFishFinesInFishStats, updateCaughtTimestamp]);
         return `@${userDisplayName} POLICE You got caught fishing in ${place} and were fined ${fine} silver! ${pickRandom(FISH_FINE_EMOTES)}`;
     }
 
@@ -97,7 +85,6 @@ export async function fishForUser({
         treasureBonus += chestBonus;
         treasureMessage = `🎁 You found a treasure chest hidden in the trash! (+${chestBonus} silver)`;
     }
-
 
     const [createdFish, existingRecord] = await Promise.all([
         prisma.fish.create({
@@ -189,7 +176,10 @@ export async function fishForUser({
     }
     promises.push(increaseBalance(prisma, balance.id, fish.sellValue + bonus + treasureBonus));
 
-    let fishStatsUpdateData: Prisma.FishStatsUpdateInput = { totalSilverWorth: { increment: fish.sellValue + bonus + treasureBonus }, treasureSilver: { increment: treasureBonus } };
+    let fishStatsUpdateData: Prisma.FishStatsUpdateInput = {
+        totalSilverWorth: { increment: fish.sellValue + bonus + treasureBonus },
+        treasureSilver: { increment: treasureBonus },
+    };
     switch (fish.rarity) {
         case Rarity.Trash:
             fishStatsUpdateData = { ...fishStatsUpdateData, trashFishCount: { increment: 1 } };

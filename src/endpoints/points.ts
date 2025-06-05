@@ -28,14 +28,7 @@ export class Point extends OpenAPIRoute {
             userLogin = user?.login ?? data.headers["x-fossabot-message-userlogin"];
             userDisplayName = user?.displayName ?? data.headers["x-fossabot-message-userdisplayname"];
         }
-        const result = await getUserSilverString({
-            prisma,
-            channelLogin,
-            channelProviderId,
-            userProviderId,
-            userLogin,
-            userDisplayName
-        });
+        const result = await getUserSilverString({ prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName });
         return c.text(result);
     }
 }

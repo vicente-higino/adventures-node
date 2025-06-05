@@ -23,7 +23,7 @@ import env from "@/env";
 import { createBot } from "@/bot";
 import { prisma } from "@/prisma";
 import { AuthTwitch, AuthTwitchRedirect } from "./endpoints/authTwitch";
-import { bearerAuth } from 'hono/bearer-auth'
+import { bearerAuth } from "hono/bearer-auth";
 import { startCron } from "./cron";
 // Start a Hono app
 const hono = new Hono<HonoEnv>();
@@ -41,7 +41,7 @@ app.use("*", timeout(9500, new HTTPException(408, { message: "oopsie Something w
 
 // app.use("/api/*", authMiddleware);
 // Add health endpoint
-app.get("/health", async (c) => {
+app.get("/health", async c => {
     try {
         await prisma.$queryRaw`SELECT 1`;
         return c.text("ok");
@@ -51,7 +51,7 @@ app.get("/health", async (c) => {
 });
 
 app.use("*", (c, next) => {
-    c.env = env
+    c.env = env;
     c.set("prisma", prisma);
     return next();
 });
@@ -76,7 +76,6 @@ app.get("/api/fish/last/:query", LastFish);
 app.get("/api/duel/create/:challengedId/:wagerAmount", DuelCreate);
 app.get("/api/duel/accept/:challengerId", DuelAccept);
 app.get("/api/duel/cancel/:challengedId", DuelCancel);
-
 
 app.get("/api/leaderboard/:amount/:sortBy", ConsolidatedLeaderboard);
 

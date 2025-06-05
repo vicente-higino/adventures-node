@@ -1,25 +1,19 @@
-import { createBotCommand } from '../BotCommandWithKeywords';
-import { prisma } from "@/prisma"
+import { createBotCommand } from "../BotCommandWithKeywords";
+import { prisma } from "@/prisma";
 import { formatSize, formatWeight } from "@/utils/misc";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import calendar from 'dayjs/plugin/calendar';
+import calendar from "dayjs/plugin/calendar";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { Fish } from "@prisma/client"
-import z from 'zod';
-import { getBotConfig } from '..';
+import { Fish } from "@prisma/client";
+import z from "zod";
+import { getBotConfig } from "..";
 dayjs.extend(relativeTime);
 dayjs.extend(utc);
-dayjs.extend(calendar)
+dayjs.extend(calendar);
 // Returns the user's single most valuable fish (highest value, most recent if tie)
 async function getUserMostValuableFish(userId: string, channelProviderId: string) {
-    const fish = await prisma.fish.findFirst({
-        where: { userId, channelProviderId },
-        orderBy: [
-            { value: 'desc' },
-            { createdAt: 'desc' }
-        ]
-    });
+    const fish = await prisma.fish.findFirst({ where: { userId, channelProviderId }, orderBy: [{ value: "desc" }, { createdAt: "desc" }] });
     return fish;
 }
 
@@ -40,36 +34,38 @@ function formatFishDisplay(fish: Fish) {
     return `[${fish.rarity}] ${fish.prefix} ${fish.name} (${weightStr}, ${sizeStr}) worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
 }
 
-export const flexFishCommand = createBotCommand('flexfish', async (params, ctx) => {
-    const { userId, userDisplayName, broadcasterId, say } = ctx;
-    const [first] = params;
+export const flexFishCommand = createBotCommand(
+    "flexfish",
+    async (params, ctx) => {
+        const { userId, userDisplayName, broadcasterId, say } = ctx;
+        const [first] = params;
 
-    let fish;
-    let flexLabel = "most valuable fish";
-    if (first) {
-        // Use zod to validate and extract id with #
-        const idSchema = z.string().regex(/^#\d+$/, { message: "Must start with # followed by a number" });
-        const idParsed = idSchema.safeParse(first);
-        if (!idParsed.success) {
-            say(`${userDisplayName}, invalid fish id. Usage: ${getBotConfig().prefix}flexfish [#fishId]`);
-            return;
+        let fish;
+        let flexLabel = "most valuable fish";
+        if (first) {
+            // Use zod to validate and extract id with #
+            const idSchema = z.string().regex(/^#\d+$/, { message: "Must start with # followed by a number" });
+            const idParsed = idSchema.safeParse(first);
+            if (!idParsed.success) {
+                say(`${userDisplayName}, invalid fish id. Usage: ${getBotConfig().prefix}flexfish [#fishId]`);
+                return;
+            }
+            const fishId = Number(first.slice(1));
+            fish = await prisma.fish.findFirst({ where: { id: fishId, userId, channelProviderId: broadcasterId } });
+            if (!fish) {
+                say(`${userDisplayName}, you don't own a fish with id ${fishId}.`);
+                return;
+            }
+            flexLabel = `fish #${fishId}`;
+        } else {
+            // Fetch the user's most valuable fish
+            fish = await getUserMostValuableFish(userId, broadcasterId);
+            if (!fish) {
+                say(`${userDisplayName}, you don't have any fish to flex! Go fishing first.`);
+                return;
+            }
         }
-        const fishId = Number(first.slice(1));
-        fish = await prisma.fish.findFirst({
-            where: { id: fishId, userId, channelProviderId: broadcasterId }
-        });
-        if (!fish) {
-            say(`${userDisplayName}, you don't own a fish with id ${fishId}.`);
-            return;
-        }
-        flexLabel = `fish #${fishId}`;
-    } else {
-        // Fetch the user's most valuable fish
-        fish = await getUserMostValuableFish(userId, broadcasterId);
-        if (!fish) {
-            say(`${userDisplayName}, you don't have any fish to flex! Go fishing first.`);
-            return;
-        }
-    }
-    say(`${userDisplayName} ${flexLabel}: ${formatFishDisplay(fish)}. EZ`);
-}, { ignoreCase: true });
+        say(`${userDisplayName} ${flexLabel}: ${formatFishDisplay(fish)}. EZ`);
+    },
+    { ignoreCase: true },
+);

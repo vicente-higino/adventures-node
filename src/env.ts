@@ -1,35 +1,16 @@
 import { z } from "zod";
-import 'dotenv/config';
+import "dotenv/config";
 
 const envSchema = z.object({
-    TWITCH_CLIENT_ID: z.string({
-        required_error: "Missing environment variable: TWITCH_CLIENT_ID"
-    }),
-    TWITCH_CLIENT_SECRET: z.string({
-        required_error: "Missing environment variable: TWITCH_CLIENT_SECRET"
-    }),
-    TWTICH_EVENTSUB_PROXY_HOST: z.string({
-        required_error: "Missing environment variable: TWTICH_EVENTSUB_PROXY_HOST"
-    }),
-    TWTICH_EVENTSUB_PROXY_PORT: z.coerce.number({
-        required_error: "Missing environment variable: TWTICH_EVENTSUB_PROXY_PORT"
-    }),
-    TWTICH_EVENTSUB_SECRET: z.string({
-        required_error: "Missing environment variable: TWTICH_EVENTSUB_SECRET"
-    }),
-    TWTICH_REDIRECT_URI: z.string({
-        required_error: "Missing environment variable: TWTICH_REDIRECT_URI"
-    }),
-    DATABASE_URL: z.string({
-        required_error: "Missing environment variable: DATABASE_URL"
-    }),
-    COOLDOWN_FISHING_IN_HOURS: z.coerce.number({
-        required_error: "Missing environment variable: COOLDOWN_FISHING_IN_HOURS"
-    }),
-    COOLDOWN_ADVENTURE_IN_HOURS: z.coerce.number({
-        required_error: "Missing environment variable: COOLDOWN_ADVENTURE_IN_HOURS"
-    }),
-
+    TWITCH_CLIENT_ID: z.string({ required_error: "Missing environment variable: TWITCH_CLIENT_ID" }),
+    TWITCH_CLIENT_SECRET: z.string({ required_error: "Missing environment variable: TWITCH_CLIENT_SECRET" }),
+    TWTICH_EVENTSUB_PROXY_HOST: z.string({ required_error: "Missing environment variable: TWTICH_EVENTSUB_PROXY_HOST" }),
+    TWTICH_EVENTSUB_PROXY_PORT: z.coerce.number({ required_error: "Missing environment variable: TWTICH_EVENTSUB_PROXY_PORT" }),
+    TWTICH_EVENTSUB_SECRET: z.string({ required_error: "Missing environment variable: TWTICH_EVENTSUB_SECRET" }),
+    TWTICH_REDIRECT_URI: z.string({ required_error: "Missing environment variable: TWTICH_REDIRECT_URI" }),
+    DATABASE_URL: z.string({ required_error: "Missing environment variable: DATABASE_URL" }),
+    COOLDOWN_FISHING_IN_HOURS: z.coerce.number({ required_error: "Missing environment variable: COOLDOWN_FISHING_IN_HOURS" }),
+    COOLDOWN_ADVENTURE_IN_HOURS: z.coerce.number({ required_error: "Missing environment variable: COOLDOWN_ADVENTURE_IN_HOURS" }),
 });
 export type Env = z.infer<typeof envSchema>;
 // Parse and validate environment variables

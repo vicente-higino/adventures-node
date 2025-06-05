@@ -78,7 +78,7 @@ export class AdventureJoin extends OpenAPIRoute {
         const userLogin = data.headers["x-fossabot-message-userlogin"];
         const userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
         const lockName = `AdventureJoinLock-${channelProviderId}`;
-        if (advEndMutex.isLocked()) return c.text(`@${userDisplayName}, the adventure has ended.`)
+        if (advEndMutex.isLocked()) return c.text(`@${userDisplayName}, the adventure has ended.`);
         const advDone = await prisma.adventure.findFirst({
             where: { channelProviderId: channelProviderId, name: "DONE" },
             orderBy: { createdAt: "desc" },
@@ -214,20 +214,17 @@ function scheduleAdventureWarnings(prisma: PrismaClient, channelLogin: string, a
     const warnings = [
         {
             delay: 30 * 60 * 1000,
-            message: `⚠️ 30 minutes have passed since the adventure started! Don't forget to end the adventure with !adventureend or !advend to claim your rewards!`
+            message: `⚠️ 30 minutes have passed since the adventure started! Don't forget to end the adventure with !adventureend or !advend to claim your rewards!`,
         },
         {
             delay: 40 * 60 * 1000,
-            message: `⚠️ Ending the adventure in 5 minutes! Join now or update your silver with !adventure|adv to participate! dinkDonk`
+            message: `⚠️ Ending the adventure in 5 minutes! Join now or update your silver with !adventure|adv to participate! dinkDonk`,
         },
         {
             delay: 43 * 60 * 1000,
-            message: `⚠️ Ending the adventure in 2 minutes! Join now or update your silver with !adventure|adv to participate! dinkDonk`
+            message: `⚠️ Ending the adventure in 2 minutes! Join now or update your silver with !adventure|adv to participate! dinkDonk`,
         },
-        {
-            delay: 45 * 60 * 1000,
-            message: `!adventureend`
-        }
+        { delay: 45 * 60 * 1000, message: `!adventureend` },
     ];
 
     for (const { delay, message } of warnings) {

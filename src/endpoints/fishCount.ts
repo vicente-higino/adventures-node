@@ -30,14 +30,7 @@ export class FishCount extends OpenAPIRoute {
             userLogin = user?.login ?? data.headers["x-fossabot-message-userlogin"];
             userDisplayName = user?.displayName ?? data.headers["x-fossabot-message-userdisplayname"];
         }
-        const summary = await getFishCountSummary({
-            prisma,
-            channelLogin,
-            channelProviderId,
-            userProviderId,
-            userLogin,
-            userDisplayName,
-        });
+        const summary = await getFishCountSummary({ prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName });
         return c.text(summary);
     }
 }

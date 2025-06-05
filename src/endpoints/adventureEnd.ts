@@ -49,7 +49,10 @@ export class AdventureEnd extends OpenAPIRoute {
             const formattedPayoutRate = payoutRate.toFixed(2);
 
             // Combine player data with adventure results
-            const combinedResults = players.map(player => ({ ...player, result: advResults.results.find(r => r.player === player.user.displayName) }));
+            const combinedResults = players.map(player => ({
+                ...player,
+                result: advResults.results.find(r => r.player === player.user.displayName),
+            }));
 
             // Filter winners and losers using the combined data
             const winners = combinedResults.filter(p => p.result?.outcome === "win");

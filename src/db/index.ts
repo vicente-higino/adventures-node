@@ -117,14 +117,7 @@ export async function cancelExpiredDuels(prisma: dbClient): Promise<void> {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     // Find pending duels older than one hour
-    const expiredDuels = await prisma.duel.findMany({
-        where: {
-            status: "Pending",
-            createdAt: {
-                lt: oneHourAgo,
-            },
-        },
-    });
+    const expiredDuels = await prisma.duel.findMany({ where: { status: "Pending", createdAt: { lt: oneHourAgo } } });
 
     if (expiredDuels.length === 0) {
         console.log("No expired duels found.");
@@ -179,7 +172,6 @@ export async function findOrCreateFishStats(
     userLogin: string,
     userDisplayName: string,
 ): Promise<FishStats> {
-
     let fishStats = await prisma.fishStats.findUnique({
         where: { channelProviderId_userId: { channelProviderId, userId: userProviderId } },
         include: { user: true },
@@ -207,5 +199,4 @@ export async function findOrCreateFishStats(
     return fishStats;
 }
 
-
-type dbClient = PrismaClient | Prisma.TransactionClient
+type dbClient = PrismaClient | Prisma.TransactionClient;

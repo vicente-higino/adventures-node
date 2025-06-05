@@ -16,16 +16,7 @@ function generateRandomState(length = 32) {
 }
 
 export class AuthTwitch extends OpenAPIRoute {
-    schema = {
-        request: {
-            query: z.object({
-                code: z.string(),
-                scope: z.string(),
-                state: z.string().optional(),
-
-            })
-        }, responses: {}
-    };
+    schema = { request: { query: z.object({ code: z.string(), scope: z.string(), state: z.string().optional() }) }, responses: {} };
 
     async handle(c: Context<HonoEnv>) {
         const data = await this.getValidatedData<typeof this.schema>();
@@ -38,7 +29,6 @@ export class AuthTwitch extends OpenAPIRoute {
         // Remove state after use to prevent replay
         validOAuthStates.delete(state);
 
-
         const redirectUri = c.env.TWTICH_REDIRECT_URI;
         if (!redirectUri) {
             return c.json({ error: "Redirect URI is not configured" }, 500);
@@ -47,7 +37,7 @@ export class AuthTwitch extends OpenAPIRoute {
         try {
             const tokenData = await exchangeCode(c.env.TWITCH_CLIENT_ID, c.env.TWITCH_CLIENT_SECRET, code, redirectUri);
             const userId = await refreshingAuthProvider.addUserForToken(tokenData);
-            await fs.writeFile(`./secrets/tokens.${userId}.json`, JSON.stringify(tokenData, null, 4), 'utf-8');
+            await fs.writeFile(`./secrets/tokens.${userId}.json`, JSON.stringify(tokenData, null, 4), "utf-8");
             await updateBotConfig({ userId });
             createBot();
             return c.json({ message: "Token added successfully" });
@@ -60,14 +50,8 @@ export class AuthTwitch extends OpenAPIRoute {
 
 export class AuthTwitchRedirect extends OpenAPIRoute {
     schema = {
-        request: {
-            query: z.object({
-                redirect_uri: z.string().url().optional(),
-                scope: z.string().optional(),
-                state: z.string().optional(),
-            })
-        },
-        responses: {}
+        request: { query: z.object({ redirect_uri: z.string().url().optional(), scope: z.string().optional(), state: z.string().optional() }) },
+        responses: {},
     };
 
     async handle(c: Context<HonoEnv>) {
@@ -85,12 +69,7 @@ export class AuthTwitchRedirect extends OpenAPIRoute {
             state = generateRandomState(24);
         }
         validOAuthStates.add(state);
-        const params = new URLSearchParams({
-            response_type: "code",
-            client_id: clientId,
-            redirect_uri: redirectUri,
-            scope: scope,
-        });
+        const params = new URLSearchParams({ response_type: "code", client_id: clientId, redirect_uri: redirectUri, scope: scope });
         if (state) params.append("state", state);
 
         const twitchAuthUrl = `https://id.twitch.tv/oauth2/authorize?${params.toString()}`;

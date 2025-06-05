@@ -1,21 +1,21 @@
-import { RefreshingAuthProvider } from '@twurple/auth';
-import { promises as fs, readFileSync } from 'fs';
-import env from '@/env';
-import { Bot } from '@twurple/easy-bot';
-import { fishCommand } from './commands/fish';
-import { silverCommand } from './commands/silver';
-import { z } from 'zod';
-import { apiClient } from '@/twitch/api';
-import { listener } from '@/twitch/eventsub';
-import { setRarityWeightCommand } from './commands/setFishWeight';
-import { resetRarityWeightCommand } from './commands/resetFishWeight';
+import { RefreshingAuthProvider } from "@twurple/auth";
+import { promises as fs, readFileSync } from "fs";
+import env from "@/env";
+import { Bot } from "@twurple/easy-bot";
+import { fishCommand } from "./commands/fish";
+import { silverCommand } from "./commands/silver";
+import { z } from "zod";
+import { apiClient } from "@/twitch/api";
+import { listener } from "@/twitch/eventsub";
+import { setRarityWeightCommand } from "./commands/setFishWeight";
+import { resetRarityWeightCommand } from "./commands/resetFishWeight";
 
-import { fishOddsCommand } from './commands/fishOdds';
-import { flexFishCommand } from './commands/flexFish';
-import { fishGalleryCommand } from './commands/fishGallery';
-import { fishDexCommand, fishDexGlobalCommand } from './commands/fishDex';
-import { fishCountCommand } from './commands/fishCount';
-import { fishRecordsCommand } from './commands/fishRecords';
+import { fishOddsCommand } from "./commands/fishOdds";
+import { flexFishCommand } from "./commands/flexFish";
+import { fishGalleryCommand } from "./commands/fishGallery";
+import { fishDexCommand, fishDexGlobalCommand } from "./commands/fishDex";
+import { fishCountCommand } from "./commands/fishCount";
+import { fishRecordsCommand } from "./commands/fishRecords";
 const clientId = env.TWITCH_CLIENT_ID;
 const clientSecret = env.TWITCH_CLIENT_SECRET;
 
@@ -26,7 +26,7 @@ const BotConfigSchema = z.object({
     userId: z.string(),
     debug: z.boolean(),
     isAlwaysMod: z.boolean(),
-    superUserId: z.string()
+    superUserId: z.string(),
 });
 
 // Load bot config
@@ -36,17 +36,17 @@ let botConfig = BotConfigSchema.parse(JSON.parse(config));
 export function getBotConfig() {
     return botConfig;
 }
-export const refreshingAuthProvider = new RefreshingAuthProvider(
-    {
-        clientId,
-        clientSecret
-    }
+export const refreshingAuthProvider = new RefreshingAuthProvider({ clientId, clientSecret });
+refreshingAuthProvider.onRefresh(
+    async (userId, newTokenData) => await fs.writeFile(`./secrets/tokens.${userId}.json`, JSON.stringify(newTokenData, null, 4), "utf-8"),
 );
-refreshingAuthProvider.onRefresh(async (userId, newTokenData) => await fs.writeFile(`./secrets/tokens.${userId}.json`, JSON.stringify(newTokenData, null, 4), 'utf-8'));
 
 // Track which channels are live using LiveChannel objects
 class LiveChannel {
-    constructor(public userId: string, public userName: string) { }
+    constructor(
+        public userId: string,
+        public userName: string,
+    ) {}
 
     matches(channel: string) {
         return this.userId === channel || this.userName.toLowerCase() === channel.toLowerCase();
@@ -67,7 +67,10 @@ async function fetchLiveChannels() {
     for (const stream of streams) {
         liveChannels.add(new LiveChannel(stream.userId, stream.userName));
     }
-    console.log('Live channels:', Array.from(liveChannels).map(lc => ({ id: lc.userId, name: lc.userName })));
+    console.log(
+        "Live channels:",
+        Array.from(liveChannels).map(lc => ({ id: lc.userId, name: lc.userName })),
+    );
 }
 
 // Track which userIds have listeners to avoid duplicate listeners
@@ -83,7 +86,10 @@ async function createEventsubListeners(users: string[]) {
         listener.onStreamOnline(user, e => {
             liveChannels.add(new LiveChannel(e.broadcasterId, e.broadcasterName));
             console.log(`${e.broadcasterDisplayName} just went live!`);
-            console.log('Live channels:', Array.from(liveChannels).map(lc => ({ id: lc.userId, name: lc.userName })));
+            console.log(
+                "Live channels:",
+                Array.from(liveChannels).map(lc => ({ id: lc.userId, name: lc.userName })),
+            );
         });
         listener.onStreamOffline(user, e => {
             // Remove by id or name
@@ -93,7 +99,10 @@ async function createEventsubListeners(users: string[]) {
                 }
             }
             console.log(`${e.broadcasterDisplayName} just went offline`);
-            console.log('Live channels:', Array.from(liveChannels).map(lc => ({ id: lc.userId, name: lc.userName })));
+            console.log(
+                "Live channels:",
+                Array.from(liveChannels).map(lc => ({ id: lc.userId, name: lc.userName })),
+            );
         });
         eventsubListeners.add(user.id);
     }
@@ -104,7 +113,7 @@ let currentBotUserId: string | null = null; // Track the userId for the singleto
 
 export const GetBot = () => bot;
 
-export const createBot = (async () => {
+export const createBot = async () => {
     await loadBotConfig();
 
     if (bot && currentBotUserId === botConfig.userId) {
@@ -117,8 +126,8 @@ export const createBot = (async () => {
     bot?.chat.quit();
     try {
         await fs.access(tokenFile);
-        const tokenData = JSON.parse(await fs.readFile(tokenFile, 'utf-8'));
-        const userId = await refreshingAuthProvider.addUserForToken(tokenData, ['chat']);
+        const tokenData = JSON.parse(await fs.readFile(tokenFile, "utf-8"));
+        const userId = await refreshingAuthProvider.addUserForToken(tokenData, ["chat"]);
         bot = new Bot({
             authProvider: refreshingAuthProvider,
             channels: botConfig.channels,
@@ -136,19 +145,20 @@ export const createBot = (async () => {
                 fishDexCommand,
                 fishDexGlobalCommand,
                 fishCountCommand,
-                fishRecordsCommand
-            ]
+                fishRecordsCommand,
+            ],
         });
         bot.onAuthenticationSuccess(() => {
-            bot?.api.users.getAuthenticatedUser(userId).then(user => {
-                console.log(`Logged in as ${user.name}`);
-            }
-            ).catch(err => {
-                console.error('Error fetching user:', err);
-            }
-            );
+            bot?.api.users
+                .getAuthenticatedUser(userId)
+                .then(user => {
+                    console.log(`Logged in as ${user.name}`);
+                })
+                .catch(err => {
+                    console.error("Error fetching user:", err);
+                });
         });
-        bot.onMessage((ctx) => {
+        bot.onMessage(ctx => {
             const { broadcasterName, userId, text } = ctx;
             const temuBotslieRegex = /temu botslie/i;
             if (temuBotslieRegex.test(text)) {
@@ -159,33 +169,31 @@ export const createBot = (async () => {
 
         return bot;
     } catch (err) {
-        console.error(err)
+        console.error(err);
         console.error(`Token file not found: ${tokenFile}`);
         // Optionally handle initialization without tokens here
     }
-});
+};
 
 async function loadBotConfig() {
     try {
-        const raw = await fs.readFile('./config/bot-config.json', 'utf-8');
+        const raw = await fs.readFile("./config/bot-config.json", "utf-8");
         botConfig = BotConfigSchema.parse(JSON.parse(raw));
     } catch (e) {
-        throw new Error('Failed to load or validate bot-config.json');
+        throw new Error("Failed to load or validate bot-config.json");
     }
 }
 
 // Save the current botConfig to file
 export async function saveBotConfig() {
-    if (!botConfig) throw new Error('botConfig is not loaded');
-    await fs.writeFile('./config/bot-config.json', JSON.stringify(botConfig, null, 4), 'utf-8');
+    if (!botConfig) throw new Error("botConfig is not loaded");
+    await fs.writeFile("./config/bot-config.json", JSON.stringify(botConfig, null, 4), "utf-8");
 }
 
 // Update botConfig with new options, validate, and save
 export async function updateBotConfig(updates: Partial<z.infer<typeof BotConfigSchema>>) {
-    if (!botConfig) throw new Error('botConfig is not loaded');
+    if (!botConfig) throw new Error("botConfig is not loaded");
     const newConfig = { ...botConfig, ...updates };
     botConfig = BotConfigSchema.parse(newConfig);
     await saveBotConfig();
 }
-
-

@@ -22,7 +22,7 @@ export const fishTable: CatchDetails[] = [
     {
         sellValue: RARITY_POINTS.Legendary * 5,
         name: "Socko",
-        emote: () => pickRandom(["shocko", "wideSock", "sockTime", "sockZZZ", "sockBday", "sockSludge", "fusSock",]),
+        emote: () => pickRandom(["shocko", "wideSock", "sockTime", "sockZZZ", "sockBday", "sockSludge", "fusSock"]),
         rarity: "Legendary",
         size: 30,
         weight: 4,
@@ -30,7 +30,7 @@ export const fishTable: CatchDetails[] = [
     {
         sellValue: RARITY_POINTS.Legendary * 10,
         name: "April Fooze",
-        emote: () => pickRandom(["fusApril", "fusMoney", "fusVlog",]),
+        emote: () => pickRandom(["fusApril", "fusMoney", "fusVlog"]),
         rarity: "Legendary",
         size: 170,
         weight: 60,
@@ -38,7 +38,7 @@ export const fishTable: CatchDetails[] = [
     {
         sellValue: RARITY_POINTS.Legendary * 15,
         name: "Fuslie",
-        emote: () => pickRandom(["fus7", "fusW", "fusBald", "fusFarm", "fusLurks", "fusUnprepared", "periodt", "WOWMOM",]),
+        emote: () => pickRandom(["fus7", "fusW", "fusBald", "fusFarm", "fusLurks", "fusUnprepared", "periodt", "WOWMOM"]),
         rarity: "Legendary",
         size: 170,
         weight: 60,

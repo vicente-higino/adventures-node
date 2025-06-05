@@ -39,7 +39,7 @@ const COOLDOWN_EMOTES = [
     "peepoHappyWaiting",
     "stara",
     "staree",
-    "SphealChillinInDaWater"
+    "SphealChillinInDaWater",
 ];
 
 export const ADVENTURE_COOLDOWN_EMOTES = COOLDOWN_EMOTES;

@@ -1,7 +1,16 @@
-import { boxMullerTransform, formatSize, formatWeight, pickRandom, roundToDecimalPlaces, sendActionToAllChannel, sendActionToChannel, UnitSystem } from "@/utils/misc";
+import {
+    boxMullerTransform,
+    formatSize,
+    formatWeight,
+    pickRandom,
+    roundToDecimalPlaces,
+    sendActionToAllChannel,
+    sendActionToChannel,
+    UnitSystem,
+} from "@/utils/misc";
 import { fishTable } from "./fishTable";
 import { Rarity, CatchDetails, RARITY_WEIGHTS_DEFAULT, SELL_MULTIPLIERS, SIZE_PREFIXES, VALUE_EMOTES } from "./constants";
-import cron from 'node-cron';
+import cron from "node-cron";
 import { getBotConfig, isChannelLive } from "@/bot";
 
 let rarityWeights: Record<Rarity, number> = RARITY_WEIGHTS_DEFAULT;
@@ -71,10 +80,7 @@ export function getSellMultiplier(sizeMultiplier: number): number {
 }
 
 // Example usage in getSize function:
-type GetFishFunc = (args?: {
-    rndFish?: () => CatchDetails;
-    unitSystem?: UnitSystem;
-}) => {
+type GetFishFunc = (args?: { rndFish?: () => CatchDetails; unitSystem?: UnitSystem }) => {
     name: string;
     rarity: Rarity;
     rarityEmote: string;
@@ -90,10 +96,7 @@ type GetFishFunc = (args?: {
 };
 
 export const getFish: GetFishFunc = (args = {}) => {
-    const {
-        rndFish = randomFish,
-        unitSystem = "metric",
-    } = args;
+    const { rndFish = randomFish, unitSystem = "metric" } = args;
 
     const fish = rndFish();
     const { name, rarity, size, weight, sellValue, emote } = fish;
@@ -141,15 +144,14 @@ export const getFish: GetFishFunc = (args = {}) => {
  */
 export function modifyRarityWeights(
     changes: Partial<{ [K in Rarity]: number | ((current: number) => number) }>,
-    baseWeights: Record<Rarity, number> = RARITY_WEIGHTS_DEFAULT
+    baseWeights: Record<Rarity, number> = RARITY_WEIGHTS_DEFAULT,
 ): void {
     const newWeights: Record<Rarity, number> = { ...baseWeights };
     for (const key in changes) {
         if (changes[key as Rarity] !== undefined) {
             const current = baseWeights[key as Rarity];
             const change = changes[key as Rarity];
-            newWeights[key as Rarity] =
-                typeof change === "function" ? change(current) : change!;
+            newWeights[key as Rarity] = typeof change === "function" ? change(current) : change!;
         }
     }
     console.log(formatRarityWeightDisplay(newWeights));
@@ -182,7 +184,6 @@ function getRarityByChance(chance: number, weights: Record<Rarity, number> = rar
         }
     }
     return null; // No rarity found for the given chance
-
 }
 export function formatRarityWeightDisplay(weights: Record<Rarity, number> = rarityWeights): string {
     const totalWeight = getTotalWeight(weights);
@@ -192,7 +193,7 @@ export function formatRarityWeightDisplay(weights: Record<Rarity, number> = rari
 }
 
 export const legendaryEventTaskPerChannel = (channels: string[]) =>
-    cron.createTask('*/1 * * * *', (c) => {
+    cron.createTask("*/1 * * * *", c => {
         console.log(`[${c.dateLocalIso}] Running legendary event task for channels: ${channels.join(", ")}`);
         const chance = 5 / (7 * 24 * 60);
         // Only run if ALL channels are not live
@@ -203,16 +204,21 @@ export const legendaryEventTaskPerChannel = (channels: string[]) =>
             const legendaryChanceBefore = getChanceByRarity("Legendary");
             modifyRarityWeights({ Legendary: Math.round(boxMullerTransform(25, 10, 20)) });
             const legendaryChanceAfter = getChanceByRarity("Legendary");
-            const chanceStr = `${legendaryChanceBefore.toFixed(2)}% -> ${legendaryChanceAfter.toFixed(2)}%`
-            sendActionToAllChannel(`🌟 A Legendary Fishing Event has started! Legendary fish are much more likely for the next hour! ${chanceStr} 🎣`);
-            c.task?.stop()
-            setTimeout(() => {
-                resetRarityWeights();
-                // Only send end message if all channels are still offline
-                if (channels.every(channel => !isChannelLive(channel)))
-                    sendActionToAllChannel("⏰ The Legendary Fishing Event has ended. Legendary fish odds are back to normal.");
-                c.task?.start()
-            }, 60 * 60 * 1000);
+            const chanceStr = `${legendaryChanceBefore.toFixed(2)}% -> ${legendaryChanceAfter.toFixed(2)}%`;
+            sendActionToAllChannel(
+                `🌟 A Legendary Fishing Event has started! Legendary fish are much more likely for the next hour! ${chanceStr} 🎣`,
+            );
+            c.task?.stop();
+            setTimeout(
+                () => {
+                    resetRarityWeights();
+                    // Only send end message if all channels are still offline
+                    if (channels.every(channel => !isChannelLive(channel)))
+                        sendActionToAllChannel("⏰ The Legendary Fishing Event has ended. Legendary fish odds are back to normal.");
+                    c.task?.start();
+                },
+                60 * 60 * 1000,
+            );
         }
     });
 
