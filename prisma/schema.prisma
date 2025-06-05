@@ -137,8 +137,9 @@ model FishStats {
     rareFishCount      Int      @default(0)
     epicFishCount      Int      @default(0)
     legendaryFishCount Int      @default(0)
-    fishFines          Int      @default(0) // Total fines accumulated by the user for fish
-    totalSilverWorth   Int      @default(0) // Added field for total silver worth of fish caught
+    fishFines          Int      @default(0)
+    treasureSilver     Int      @default(0)
+    totalSilverWorth   Int      @default(0)
     createdAt          DateTime @default(now())
     updatedAt          DateTime @updatedAt
 

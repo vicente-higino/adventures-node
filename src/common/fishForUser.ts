@@ -189,7 +189,7 @@ export async function fishForUser({
     }
     promises.push(increaseBalance(prisma, balance.id, fish.sellValue + bonus + treasureBonus));
 
-    let fishStatsUpdateData: Prisma.FishStatsUpdateInput = { totalSilverWorth: { increment: fish.sellValue + bonus } };
+    let fishStatsUpdateData: Prisma.FishStatsUpdateInput = { totalSilverWorth: { increment: fish.sellValue + bonus + treasureBonus }, treasureSilver: { increment: treasureBonus } };
     switch (fish.rarity) {
         case Rarity.Trash:
             fishStatsUpdateData = { ...fishStatsUpdateData, trashFishCount: { increment: 1 } };
@@ -217,7 +217,7 @@ export async function fishForUser({
         promises.push(prisma.fishStats.update({ where: { id: fishStats.id }, data: fishStatsUpdateData }));
     }
 
-    await Promise.all(promises);
+    Promise.all(promises);
 
     const totalValueMessage = bonus > 0 ? `${fish.sellValue} + ${bonus} (Bonus) = ${fish.sellValue + bonus}` : `${fish.sellValue}`;
     const valueEmote = bonus > 0 || treasureBonus > 0 ? getValueEmote(fish.sellValue + bonus + treasureBonus) : fish.rarityEmote;
