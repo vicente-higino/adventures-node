@@ -237,7 +237,7 @@ function scheduleAdventureWarnings(prisma: PrismaClient, channelLogin: string, a
                 }
                 return;
             }
-            await sendActionToChannel(channelLogin, message);
+            sendActionToChannel(channelLogin, message);
         }, delay);
         timer.unref();
         adventureWarningTimers[adventureId].push(timer);

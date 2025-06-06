@@ -7,7 +7,7 @@ export async function findOrCreateBalance(
     userProviderId: string,
     userLogin: string,
     userDisplayName: string,
-    newValue: number = 500,
+    newValue = 500,
 ) {
     let balance = await db.balance.findUnique({
         where: { channelProviderId_userId: { channelProviderId, userId: userProviderId } },

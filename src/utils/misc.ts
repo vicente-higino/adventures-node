@@ -69,7 +69,7 @@ export function formatWeight(weight: number, unitSystem: UnitSystem = "metric"):
     }
 }
 
-export function roundToDecimalPlaces(value: number, decimalPlaces: number = 2): number {
+export function roundToDecimalPlaces(value: number, decimalPlaces = 2): number {
     const factor = Math.pow(10, decimalPlaces);
     return Math.round(value * factor) / factor;
 }
@@ -111,7 +111,7 @@ export function calculateAmount(
     amountStr: string,
     availableAmount: number,
     currentAmount?: number,
-    allowDelta: boolean = true,
+    allowDelta = true,
     payoutRate?: number,
 ): number {
     const cleanedAmountStr = amountStr.trim().toLowerCase();
@@ -273,7 +273,7 @@ export function limitAdvMessage(base: string, advMsg: string): string {
     return advMsg;
 }
 
-export async function sendMessageToChannel(channel: string, message: string) {
+export function sendMessageToChannel(channel: string, message: string) {
     // Placeholder function to send a message to a channel
     // Replace with actual implementation
     console.log(`Sending message to ${channel}: ${message}`);
@@ -283,7 +283,7 @@ export async function sendMessageToChannel(channel: string, message: string) {
             console.error(`Error sending message to ${channel}:`, err);
         });
 }
-export async function sendActionToChannel(channel: string, message: string) {
+export function sendActionToChannel(channel: string, message: string) {
     // Placeholder function to send a message to a channel
     // Replace with actual implementation
     console.log(`Sending message to ${channel}: ${message}`);
@@ -294,7 +294,7 @@ export async function sendActionToChannel(channel: string, message: string) {
         });
 }
 
-export async function sendMessageToAllChannel(message: string) {
+export function sendMessageToAllChannel(message: string) {
     // Placeholder function to send a message to a channel
     // Replace with actual implementation
     const { channels } = getBotConfig();
@@ -307,7 +307,7 @@ export async function sendMessageToAllChannel(message: string) {
             });
     }
 }
-export async function sendActionToAllChannel(message: string) {
+export function sendActionToAllChannel(message: string) {
     // Placeholder function to send a message to a channel
     // Replace with actual implementation
     const { channels } = getBotConfig();

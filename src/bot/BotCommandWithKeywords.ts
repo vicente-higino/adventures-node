@@ -42,7 +42,7 @@ class BotCommandWithKeywords extends BotCommand {
         }
         return null;
     }
-    matchesKeyword(input: string, ignoreCase: boolean = false): boolean {
+    matchesKeyword(input: string, ignoreCase = false): boolean {
         const inputWords = input.split(" ");
         if (!ignoreCase) {
             return this._keywords.some(keyword => inputWords.includes(keyword));

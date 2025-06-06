@@ -36,7 +36,7 @@ export const numbersOrAll = (s: z.ZodString) =>
         })
         .refine(n => n > 0, { message: "Value must be bigger or equal to 1" });
 
-export type Bindings = {
+export interface Bindings {
     DATABASE_URL: string;
     TWITCH_CLIENT_ID: string;
     TWITCH_CLIENT_SECRET: string;

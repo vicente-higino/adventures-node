@@ -32,10 +32,10 @@ export async function getFishRecordStats({
     });
 
     const records = fishRecords.reduce<{
-        largest: Array<{ text: string; value: number }>;
-        smallest: Array<{ text: string; value: number }>;
-        heaviest: Array<{ text: string; value: number }>;
-        lightest: Array<{ text: string; value: number }>;
+        largest: { text: string; value: number }[];
+        smallest: { text: string; value: number }[];
+        heaviest: { text: string; value: number }[];
+        lightest: { text: string; value: number }[];
     }>(
         (acc, record) => {
             if (record.largestFish.userId === userProviderId) {
@@ -83,9 +83,9 @@ export async function getFishRecordStats({
 
     const recordsText = Object.entries(records).some(([_, items]) => items.length > 0)
         ? `They hold the record for: ${Object.entries(records)
-              .filter(([_, items]) => items.length > 0)
-              .map(([type, items]) => `${type.charAt(0).toUpperCase() + type.slice(1)}: ${items.map(i => i.text).join(", ")}`)
-              .join("; ")}!`
+            .filter(([_, items]) => items.length > 0)
+            .map(([type, items]) => `${type.charAt(0).toUpperCase() + type.slice(1)}: ${items.map(i => i.text).join(", ")}`)
+            .join("; ")}!`
         : "They do not hold any records.";
 
     return recordsText;

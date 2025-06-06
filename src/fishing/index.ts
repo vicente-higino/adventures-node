@@ -59,9 +59,9 @@ export function randomFish(): CatchDetails {
 
 export function getSizePrefix(multiplier: number): string {
     // Find the appropriate prefix based on maximum thresholds
-    for (let i = 0; i < SIZE_PREFIXES.length; i++) {
-        if (multiplier < SIZE_PREFIXES[i].threshold) {
-            return SIZE_PREFIXES[i].name;
+    for (const size of SIZE_PREFIXES) {
+        if (multiplier < size.threshold) {
+            return size.name;
         }
     }
 
@@ -69,9 +69,9 @@ export function getSizePrefix(multiplier: number): string {
 }
 
 export function getSellMultiplier(sizeMultiplier: number): number {
-    for (let i = 0; i < SELL_MULTIPLIERS.length; i++) {
-        if (sizeMultiplier <= SELL_MULTIPLIERS[i].threshold) {
-            return SELL_MULTIPLIERS[i].multiplier;
+    for (const size of SELL_MULTIPLIERS) {
+        if (sizeMultiplier <= size.threshold) {
+            return size.multiplier;
         }
     }
 
@@ -142,7 +142,7 @@ export const getFish: GetFishFunc = (args = {}) => {
  *   modifyRarityWeights({ Legendary: 10, Common: 1 })
  */
 export function modifyRarityWeights(
-    changes: Partial<{ [K in Rarity]: number | ((current: number) => number) }>,
+    changes: Partial<Record<Rarity, number | ((current: number) => number)>>,
     baseWeights: Record<Rarity, number> = RARITY_WEIGHTS_DEFAULT,
 ): void {
     const newWeights: Record<Rarity, number> = { ...baseWeights };
@@ -221,7 +221,7 @@ export const legendaryEventTaskPerChannel = (channels: string[]) =>
         }
     });
 
-export async function startLegendaryTasks() {
+export function startLegendaryTasks(): void {
     const { channels } = getBotConfig();
     legendaryEventTaskPerChannel(channels).start();
 }

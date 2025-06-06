@@ -21,6 +21,8 @@
 		"skipLibCheck": true,
 		"strict": true,
 		"traceResolution": false,
+		"noUnusedLocals": false,
+		"noUnusedParameters": false,
 		"outDir": "build",
 		"target": "esnext",
 		"module": "esnext",

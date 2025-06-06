@@ -5,7 +5,7 @@ import { prisma } from "./prisma";
 
 export function startCron() {
     startLegendaryTasks();
-    cron.schedule("0 * * * *", async () => {
+    cron.schedule("0 * * * *", () => {
         cancelExpiredDuels(prisma);
         console.log("Expired duels cancelled");
     });

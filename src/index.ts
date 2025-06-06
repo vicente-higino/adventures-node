@@ -33,7 +33,7 @@ const hono = new Hono<HonoEnv>();
 // Setup OpenAPI registry
 const app = fromHono(hono);
 
-createBot();
+createBot().catch(e => console.error);
 app.use(logger());
 
 // Add validation middleware before routes

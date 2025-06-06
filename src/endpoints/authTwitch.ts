@@ -38,7 +38,7 @@ export class AuthTwitch extends OpenAPIRoute {
             const userId = await refreshingAuthProvider.addUserForToken(tokenData);
             await fs.writeFile(`./secrets/tokens.${userId}.json`, JSON.stringify(tokenData, null, 4), "utf-8");
             await updateBotConfig({ userId });
-            createBot();
+            await createBot();
             return c.json({ message: "Token added successfully" });
         } catch (error) {
             console.error("Error exchanging code:", error);

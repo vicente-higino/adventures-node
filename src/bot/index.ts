@@ -117,7 +117,7 @@ export const createBot = async () => {
     await loadBotConfig();
 
     if (bot && currentBotUserId === botConfig.userId) {
-        return bot; // Return existing bot if userId matches
+        return; // Return existing bot if userId matches
     }
     fetchLiveChannels();
     createEventsubListeners(botConfig.channels);
@@ -167,7 +167,6 @@ export const createBot = async () => {
         });
         currentBotUserId = userId; // Update the current userId
 
-        return bot;
     } catch (err) {
         console.error(err);
         console.error(`Token file not found: ${tokenFile}`);
