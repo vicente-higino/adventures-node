@@ -51,9 +51,9 @@ export const authMiddleware = async (c: Context<HonoEnv>, next: Next) => {
         }
         // If validation is successful (status 200)
         return next();
-    } catch (error: any) {
+    } catch (error) {
         clearTimeout(timeoutId);
-        if (error.name === "AbortError") {
+        if (error instanceof Error && error.name === "AbortError") {
             console.error(`Fossabot API validation timed out for token ending with ...${token.slice(-4)}.`);
         } else {
             console.error(`Fossabot API validation failed for token ending with ...${token.slice(-4)}.`);

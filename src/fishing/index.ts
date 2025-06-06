@@ -5,7 +5,6 @@ import {
     pickRandom,
     roundToDecimalPlaces,
     sendActionToAllChannel,
-    sendActionToChannel,
     UnitSystem,
 } from "@/utils/misc";
 import { fishTable } from "./fishTable";
@@ -99,7 +98,7 @@ export const getFish: GetFishFunc = (args = {}) => {
     const { rndFish = randomFish, unitSystem = "metric" } = args;
 
     const fish = rndFish();
-    const { name, rarity, size, weight, sellValue, emote } = fish;
+    const { rarity, size, weight, sellValue, emote } = fish;
 
     // Size calculation
     const sizeMean = size * 1.25;

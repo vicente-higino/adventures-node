@@ -1,13 +1,12 @@
 import { createAdminBotCommand } from "../BotCommandWithKeywords";
-import { getChanceByRarity, modifyRarityWeights, weightToChance } from "@/fishing";
+import { getChanceByRarity, modifyRarityWeights } from "@/fishing";
 import { z } from "zod";
 import { Rarity } from "@prisma/client";
 
 export const setRarityWeightCommand = createAdminBotCommand(
     "setweight",
     async (params, ctx) => {
-        const { broadcasterId, broadcasterName, userDisplayName, userId, userName, msg, say } = ctx;
-        const { isBroadcaster, isMod } = msg.userInfo;
+        const { msg, say } = ctx;
         // Zod schema for validation
         const schema = z.tuple([z.string(), z.coerce.number().min(1)]);
         const parseResult = schema.safeParse(params);
@@ -25,7 +24,7 @@ export const setRarityWeightCommand = createAdminBotCommand(
             return;
         }
 
-        const newWeights = modifyRarityWeights({ [rarityKey]: value });
+        modifyRarityWeights({ [rarityKey]: value });
 
         // You can now use newWeights with getFish or randomFish
         // Example: const fish = getFish({ rarityWeights: newWeights });

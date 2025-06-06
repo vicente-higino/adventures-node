@@ -1,18 +1,14 @@
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { type HonoEnv, FossaHeaders } from "@/types";
-import { PrismaClient, Rarity } from "@prisma/client";
 import type { Context } from "hono";
 import { getUserById } from "@/twitch/api";
-import { formatSize, formatWeight, roundToDecimalPlaces } from "@/utils/misc";
-import { formatSilver } from "@/utils/misc";
 import { createUserIdParam } from "@/utils/params";
-import { findOrCreateFishStats } from "@/db";
 import { getFishCountSummary } from "@/common/fishCountSummary";
 
 export class FishCount extends OpenAPIRoute {
     schema = { request: { headers: FossaHeaders, params: z.object({ userId: createUserIdParam() }) }, responses: {} };
-    handleValidationError(errors: z.ZodIssue[]): Response {
+    handleValidationError(): Response {
         const msg = "Usage: !fishcount [username]";
         return new Response(msg, { status: 400 });
     }

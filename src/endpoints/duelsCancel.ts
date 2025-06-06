@@ -19,7 +19,7 @@ export class DuelCancel extends OpenAPIRoute {
         },
         responses: {},
     };
-    handleValidationError(errors: z.ZodIssue[]): Response {
+    handleValidationError(): Response {
         // Combined usage for cancelling or denying
         const msg = "Usage: !cancelduel [username] OR !deny [username]";
         return new Response(msg, { status: 400 });
@@ -82,7 +82,7 @@ export class DuelCancel extends OpenAPIRoute {
         }
 
         // Create an array to hold background tasks
-        const backgroundTasks: Promise<any>[] = [];
+        const backgroundTasks: Promise<unknown>[] = [];
 
         // Refund the wager to the challenger
         backgroundTasks.push(increaseBalanceWithChannelID(prisma, channelProviderId, duel.challengerId, duel.wagerAmount));

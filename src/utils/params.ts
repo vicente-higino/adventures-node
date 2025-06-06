@@ -6,7 +6,7 @@ import { z } from "zod";
  * @param required Whether the parameter is required (defaults to false)
  * @returns A string schema with transformation
  */
-export function createUserIdParam(description = "User id", required = false) {
+export function createUserIdParam(description = "User id") {
     return z.string({ description }).transform(data => {
         return data.includes("Error") ? null : data;
     });

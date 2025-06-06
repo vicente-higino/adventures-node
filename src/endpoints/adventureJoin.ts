@@ -5,7 +5,7 @@ import { Context } from "hono";
 import { findOrCreateBalance, setBalance } from "@/db";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { pickRandom, roundToDecimalPlaces, calculateAmount, delay, sendActionToChannel } from "@/utils/misc";
+import { pickRandom, roundToDecimalPlaces, calculateAmount, sendActionToChannel } from "@/utils/misc";
 import { formatTimeToWithSeconds } from "@/utils/time";
 import { ADVENTURE_COOLDOWN_EMOTES } from "@/emotes";
 import { Mutex } from "async-mutex";
@@ -64,7 +64,7 @@ export class AdventureJoin extends OpenAPIRoute {
         },
         responses: {},
     };
-    handleValidationError(errors: z.ZodIssue[]) {
+    handleValidationError() {
         const msg = "Usage: !adventure|adv [silver(K/M/B)|%|all|+/-delta|to:X|k:X]";
         return new Response(msg, { status: 400 });
     }
@@ -77,7 +77,6 @@ export class AdventureJoin extends OpenAPIRoute {
         const userProviderId = data.headers["x-fossabot-message-userproviderid"];
         const userLogin = data.headers["x-fossabot-message-userlogin"];
         const userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
-        const lockName = `AdventureJoinLock-${channelProviderId}`;
         if (advEndMutex.isLocked()) return c.text(`@${userDisplayName}, the adventure has ended.`);
         const advDone = await prisma.adventure.findFirst({
             where: { channelProviderId: channelProviderId, name: "DONE" },

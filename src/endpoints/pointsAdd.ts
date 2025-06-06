@@ -1,4 +1,4 @@
-import { Bool, Num, OpenAPIRoute, Str } from "chanfana";
+import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { HonoEnv, FossaHeaders } from "@/types";
 import { Context } from "hono";
@@ -17,7 +17,7 @@ export class PointAdd extends OpenAPIRoute {
         },
         responses: {},
     };
-    handleValidationError(errors: z.ZodIssue[]): Response {
+    handleValidationError(): Response {
         const msg = "Usage: !addsilver <username> <amount>";
         return new Response(msg, { status: 400 });
     }

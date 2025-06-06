@@ -34,7 +34,7 @@ export class DuelCreate extends OpenAPIRoute {
         },
         responses: {},
     };
-    handleValidationError(errors: z.ZodIssue[]): Response {
+    handleValidationError(): Response {
         const msg = "Usage: !duel username [silver|K/M/B|%|all]";
         return new Response(msg, { status: 400 });
     }
@@ -114,7 +114,7 @@ export class DuelCreate extends OpenAPIRoute {
         }
 
         // Create an array to hold background tasks
-        const backgroundTasks: Promise<any>[] = [];
+        const backgroundTasks: Promise<unknown>[] = [];
 
         // Deduct actual wager from challenger's balance
         backgroundTasks.push(increaseBalanceWithChannelID(prisma, channelProviderId, challengerId, -actualWagerAmount));

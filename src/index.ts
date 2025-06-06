@@ -1,5 +1,5 @@
 import { fromHono } from "chanfana";
-import { Context, Hono } from "hono";
+import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { PointUpdate } from "@/endpoints/pointsUpdate";
 import { HTTPException } from "hono/http-exception";
@@ -46,6 +46,7 @@ app.get("/health", async c => {
         await prisma.$queryRaw`SELECT 1`;
         return c.text("ok");
     } catch (e) {
+        console.error(e);
         return c.text("db error", 500);
     }
 });

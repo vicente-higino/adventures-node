@@ -20,7 +20,7 @@ export class PointUpdate extends OpenAPIRoute {
         },
         responses: {},
     };
-    handleValidationError(errors: z.ZodIssue[]): Response {
+    handleValidationError(): Response {
         const msg = "Usage: !updatesilver <username> <new_balance>";
         return new Response(msg, { status: 400 });
     }

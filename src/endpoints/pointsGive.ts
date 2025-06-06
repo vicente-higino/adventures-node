@@ -23,7 +23,7 @@ export class PointGive extends OpenAPIRoute {
         },
         responses: {},
     };
-    handleValidationError(errors: z.ZodIssue[]): Response {
+    handleValidationError(): Response {
         // Update usage message to be more specific about format
         const msg = "Usage: !givesilver [username] [silver|K/M/B|%|all]";
         return new Response(msg, { status: 400 });
@@ -69,7 +69,7 @@ export class PointGive extends OpenAPIRoute {
 
         // Proceed with the transfer
         const newBalance = await increaseBalance(prisma, fromBalance.id, -giveAmount);
-        const newToBalance = await increaseBalance(prisma, toBalance.id, giveAmount);
+        await increaseBalance(prisma, toBalance.id, giveAmount);
 
         // Use formatSilver for consistent output if desired, otherwise keep as is
         const formattedGiveAmount = giveAmount; // Or formatSilver(giveAmount)

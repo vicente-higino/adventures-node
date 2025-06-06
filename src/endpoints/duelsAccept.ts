@@ -21,7 +21,7 @@ export class DuelAccept extends OpenAPIRoute {
         },
         responses: {},
     };
-    handleValidationError(errors: z.ZodIssue[]): Response {
+    handleValidationError(): Response {
         const msg = "Usage: !accept [username]";
         return new Response(msg, { status: 400 });
     }
@@ -92,7 +92,7 @@ export class DuelAccept extends OpenAPIRoute {
         const winnerDisplayName = isChallengerWinner ? duel.challenger.displayName : userDisplayName;
 
         // Create an array to hold background tasks
-        const backgroundTasks: Promise<any>[] = [];
+        const backgroundTasks: Promise<unknown>[] = [];
 
         // Update balances
         if (isChallengerWinner) {

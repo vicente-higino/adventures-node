@@ -1,4 +1,3 @@
-import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import { DateTime, Str } from "chanfana";
 import { z } from "zod";
@@ -28,7 +27,7 @@ export const FossaHeaders = z.object({
 
 export const numbersOrAll = (s: z.ZodString) =>
     s
-        .regex(/^(all|\-?\d+)(?!.+)/gim, { message: "Value amount must be a number or 'all'" })
+        .regex(/^(all|-?\d+)(?!.+)/gim, { message: "Value amount must be a number or 'all'" })
         .transform(value => {
             if (value.toLowerCase() === "all") {
                 return Number.POSITIVE_INFINITY;
@@ -50,13 +49,4 @@ export interface HonoEnv {
     Variables: { prisma: PrismaClient };
 }
 
-interface AiResponse {
-    response: string;
-    usage: Usage;
-}
 
-interface Usage {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-}

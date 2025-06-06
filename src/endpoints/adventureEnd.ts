@@ -16,9 +16,7 @@ export class AdventureEnd extends OpenAPIRoute {
         const channelLogin = data.headers["x-fossabot-channellogin"];
         const channelProviderId = data.headers["x-fossabot-channelproviderid"];
         const userProviderId = data.headers["x-fossabot-message-userproviderid"];
-        const userLogin = data.headers["x-fossabot-message-userlogin"];
         const userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
-        const lockName = `AdventureEndLock-${channelProviderId}`;
         const adv = await prisma.adventure.findFirst({
             where: { channelProviderId: channelProviderId, name: { not: "DONE" } },
             orderBy: { createdAt: "desc" },

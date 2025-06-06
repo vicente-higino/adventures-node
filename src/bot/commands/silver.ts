@@ -6,7 +6,8 @@ import { prisma } from "@/prisma";
 export const silverCommand = createBotCommand(
     "silver",
     async (params, ctx) => {
-        let { broadcasterId, broadcasterName, userDisplayName, userId, userName, say } = ctx;
+        const { broadcasterId, broadcasterName, say } = ctx;
+        let { userDisplayName, userId, userName } = ctx;
         let usernameArg = params.shift();
         if (usernameArg) {
             usernameArg = usernameArg.replaceAll("@", "");

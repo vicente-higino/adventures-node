@@ -46,7 +46,7 @@ class LiveChannel {
     constructor(
         public userId: string,
         public userName: string,
-    ) {}
+    ) { }
 
     matches(channel: string) {
         return this.userId === channel || this.userName.toLowerCase() === channel.toLowerCase();
@@ -159,7 +159,7 @@ export const createBot = async () => {
                 });
         });
         bot.onMessage(ctx => {
-            const { broadcasterName, userId, text } = ctx;
+            const { broadcasterName, text } = ctx;
             const temuBotslieRegex = /temu botslie/i;
             if (temuBotslieRegex.test(text)) {
                 bot?.say(broadcasterName, `SideEye`);
@@ -180,6 +180,7 @@ async function loadBotConfig() {
         const raw = await fs.readFile("./config/bot-config.json", "utf-8");
         botConfig = BotConfigSchema.parse(JSON.parse(raw));
     } catch (e) {
+        console.error(e);
         throw new Error("Failed to load or validate bot-config.json");
     }
 }

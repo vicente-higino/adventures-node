@@ -41,7 +41,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
         responses: {},
     };
 
-    handleValidationError(errors: z.ZodIssue[]): Response {
+    handleValidationError(): Response {
         // Concise usage message
         const msg =
             "Usage: !leaderboard [duel-][wins|played|wagered|profit] | fish[-silver|-avg|-fines|-rarity|-top] | silver [-asc|-bottom] [amount] (default: silver, 5)";

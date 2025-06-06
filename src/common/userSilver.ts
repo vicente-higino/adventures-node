@@ -1,8 +1,9 @@
+import { PrismaClient } from "@prisma/client";
 import { findOrCreateBalance } from "../db";
 import { formatSilver } from "../utils/misc";
 
 interface GetUserSilverStringParams {
-    prisma: any;
+    prisma: PrismaClient;
     channelLogin: string;
     channelProviderId: string;
     userProviderId: string;

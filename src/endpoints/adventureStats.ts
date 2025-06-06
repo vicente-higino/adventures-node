@@ -10,7 +10,7 @@ import { findOrCreateBalance } from "@/db"; // Import findOrCreateBalance
 export class AdventureStats extends OpenAPIRoute {
     schema = { request: { headers: FossaHeaders, params: z.object({ userId: createUserIdParam() }) }, responses: {} };
 
-    handleValidationError(errors: z.ZodIssue[]): Response {
+    handleValidationError(): Response {
         const msg = "Usage: !stats [username]";
         return new Response(msg, { status: 400 });
     }

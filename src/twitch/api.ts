@@ -1,5 +1,3 @@
-import { Context } from "hono";
-import { HonoEnv } from "@/types";
 import { PrismaClient } from "@prisma/client"; // Import PrismaClient and User
 import { ApiClient } from "@twurple/api";
 // import { AppTokenAuthProviderWithStore } from "./auth";
@@ -27,14 +25,10 @@ export const apiClient = new ApiClient({ authProvider });
 async function handleApiRequest<T>(apiCall: () => Promise<T>, authProvider: AppTokenAuthProvider): Promise<T | null> {
     try {
         return await apiCall();
-    } catch (error: any) {
-        if (error.statusCode === 401) {
-            console.error("401 Unauthorized. Fetching new token@.");
-            await authProvider.getAppAccessToken(true);
-            return await apiCall(); // Retry the API call
-        }
-        console.error("Error during API request:", error);
-        return null;
+    } catch (error) {
+        console.error("API call failed:", error);
+        await authProvider.getAppAccessToken(true);
+        return await apiCall(); // Retry the API call
     }
 }
 

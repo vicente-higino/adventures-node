@@ -20,8 +20,7 @@ export class AuthTwitch extends OpenAPIRoute {
 
     async handle(c: Context<HonoEnv>) {
         const data = await this.getValidatedData<typeof this.schema>();
-        const prisma = c.get("prisma");
-        const { code, scope, state } = data.query;
+        const { code, state } = data.query;
         // Validate state
         if (!state || !validOAuthStates.has(state)) {
             return c.json({ error: "Invalid or missing OAuth state" }, 400);
