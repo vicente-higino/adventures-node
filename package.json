@@ -16,8 +16,7 @@
 		"prepare": "npx simple-git-hooks"
 	},
 	"simple-git-hooks": {
-		"pre-commit": "npm run type-check",
-		"pre-push": "npm run prettier"
+		"pre-commit": "npm run type-check && npm run prettier"
 	},
 	"dependencies": {
 		"@hono/node-server": "^1.14.1",
