@@ -42,11 +42,9 @@ export interface Bindings {
     TWITCH_CLIENT_SECRET: string;
     COOLDOWN_ADVENTURE_IN_HOURS: number;
     COOLDOWN_FISHING_IN_HOURS: number;
-};
+}
 
 export interface HonoEnv {
     Bindings: Env;
     Variables: { prisma: PrismaClient };
 }
-
-

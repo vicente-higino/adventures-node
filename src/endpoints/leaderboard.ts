@@ -15,7 +15,10 @@ type LeaderboardType = "Adventure" | "Duel" | "Fish" | "Silver"; // Renamed Poin
 // Define internal metrics for Fish leaderboard
 type FishMetric = "count" | "silver" | "fines" | "avg" | "trash" | "common" | "uncommon" | "fine" | "rare" | "epic" | "legendary" | "top";
 
-interface LeaderboardResult { formattedLeaderboard: string[]; metricDisplay: string };
+interface LeaderboardResult {
+    formattedLeaderboard: string[];
+    metricDisplay: string;
+}
 
 export class ConsolidatedLeaderboard extends OpenAPIRoute {
     // Updated schema to handle all leaderboard types

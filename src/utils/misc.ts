@@ -107,13 +107,7 @@ export function formatSilver(silver: number): string {
  * @param payoutRate - The payout rate for "to:X" calculations.
  * @returns The calculated amount as a number, clamped between 0 and availableAmount.
  */
-export function calculateAmount(
-    amountStr: string,
-    availableAmount: number,
-    currentAmount?: number,
-    allowDelta = true,
-    payoutRate?: number,
-): number {
+export function calculateAmount(amountStr: string, availableAmount: number, currentAmount?: number, allowDelta = true, payoutRate?: number): number {
     const cleanedAmountStr = amountStr.trim().toLowerCase();
     let isDelta = false;
     let sign = 1;

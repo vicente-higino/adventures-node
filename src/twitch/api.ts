@@ -17,7 +17,7 @@ interface DbUser {
     id: string; // Corresponds to providerId
     login: string;
     displayName: string;
-};
+}
 
 const authProvider = new AppTokenAuthProvider(TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET);
 export const apiClient = new ApiClient({ authProvider });

@@ -46,7 +46,7 @@ class LiveChannel {
     constructor(
         public userId: string,
         public userName: string,
-    ) { }
+    ) {}
 
     matches(channel: string) {
         return this.userId === channel || this.userName.toLowerCase() === channel.toLowerCase();
@@ -166,7 +166,6 @@ export const createBot = async () => {
             }
         });
         currentBotUserId = userId; // Update the current userId
-
     } catch (err) {
         console.error(err);
         console.error(`Token file not found: ${tokenFile}`);
