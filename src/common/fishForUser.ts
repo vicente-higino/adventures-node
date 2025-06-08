@@ -3,8 +3,8 @@ import dayjs from "dayjs";
 import { findOrCreateBalance, findOrCreateFishStats, increaseBalance } from "@/db";
 import { getFish, getValueEmote } from "@/fishing";
 import { formatTimeToWithSeconds } from "@/utils/time";
-import { boxMullerTransform, pickRandom } from "@/utils/misc";
-import { FISH_COOLDOWN_EMOTES, FISH_FINE_EMOTES } from "@/emotes";
+import { boxMullerTransform, delay, pickRandom, sendActionToAllChannel, sendActionToChannel, sendMessageToChannel } from "@/utils/misc";
+import { FISH_COOLDOWN_EMOTES, FISH_FINE_EMOTES, PAUSE_EMOTES } from "@/emotes";
 import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
 
@@ -80,10 +80,14 @@ export async function fishForUser({
     let treasureBonus = 0;
     let treasureMessage = "";
     if (fish.rarity === Rarity.Trash && Math.random() < 0.25) {
-        // Treasure chest logic: random bonus between 50 and 200 silver
         const chestBonus = Math.floor(boxMullerTransform(1000, 500, 250));
         treasureBonus += chestBonus;
-        treasureMessage = `🎁 You found a treasure chest hidden in the trash! (+${chestBonus} silver)`;
+        treasureMessage = `💰 While sifting through the trash, you discovered a hidden treasure chest containing ${chestBonus} silver! ${getValueEmote(chestBonus)}`;
+        setTimeout(async () => {
+            sendActionToChannel(channelLogin, `@${userDisplayName} Hold on... something's glimmering in the trash! ${pickRandom(PAUSE_EMOTES)}`);
+            await delay(1000);
+            sendActionToChannel(channelLogin, `@${userDisplayName} ${treasureMessage}`);
+        }, 1500);
     }
 
     const [createdFish, existingRecord] = await Promise.all([
@@ -210,7 +214,7 @@ export async function fishForUser({
     Promise.all(promises);
 
     const totalValueMessage = bonus > 0 ? `${fish.sellValue} + ${bonus} (Bonus) = ${fish.sellValue + bonus}` : `${fish.sellValue}`;
-    const valueEmote = bonus > 0 || treasureBonus > 0 ? getValueEmote(fish.sellValue + bonus + treasureBonus) : fish.rarityEmote;
-    const resText = `@${userDisplayName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} #${createdFish.id} ${fish.formatedSize} ${fish.formatedWeight}! It sold for ${totalValueMessage} silver! ${treasureMessage} ${recordMessage} ${valueEmote}`;
+    const valueEmote = bonus > 0 ? getValueEmote(fish.sellValue + bonus) : fish.rarityEmote;
+    const resText = `@${userDisplayName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} #${createdFish.id} ${fish.formatedSize} ${fish.formatedWeight}! It sold for ${totalValueMessage} silver! ${recordMessage} ${valueEmote}`;
     return resText;
 }
