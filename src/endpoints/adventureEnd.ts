@@ -88,18 +88,6 @@ export class AdventureEnd extends OpenAPIRoute {
                     );
                 }
 
-                // Sort and format results
-                await Promise.all(promises);
-
-                promises = [];
-                resultArr.sort((a, b) => b.profit - a.profit);
-                const formattedResults = resultArr.map(r => {
-                    let streakMsg = r.streakBonus > 0 ? ` (+${formatSilver(r.streakBonus)} win streak bonus, ${r.streak}x win streak)` : "";
-                    return `@${r.displayName} (+${formatSilver(r.profit - r.streakBonus)} silver${streakMsg})`;
-                });
-                const joinedResults = formattedResults.join(", ");
-
-                // Process losers with lose streak bonuses
                 const loserMessages: string[] = [];
                 promises.push(
                     ...losers.map(async p => {
@@ -112,12 +100,23 @@ export class AdventureEnd extends OpenAPIRoute {
                         const loseBonus = calculateLoseStreakBonus(stats.newStreak, p.buyin);
                         if (loseBonus > 0) {
                             await increaseBalanceWithChannelID(prisma, channelProviderId, p.user.providerId, loseBonus);
-                            loserMessages.push(
-                                `@${p.user.displayName} (+${formatSilver(loseBonus)} lose streak bonus, ${stats.newStreak}x lose streak)`,
-                            );
+                            loserMessages.push(`@${p.user.displayName} (+${formatSilver(loseBonus)} bonus, ${stats.newStreak}x lose streak)`);
                         }
                     }),
                 );
+
+                await Promise.all(promises);
+
+                promises = [];
+                resultArr.sort((a, b) => b.profit - a.profit);
+                const winnerMessages = resultArr.map(r => {
+                    let streakMsg = r.streakBonus > 0 ? ` +${formatSilver(r.streakBonus)} bonus, ${r.streak}x win streak` : "";
+                    return `@${r.displayName} (+${formatSilver(r.profit - r.streakBonus)} silver${streakMsg})`;
+                });
+                const loseStreakMsg = loserMessages.length > 0 ? ` ${loserMessages.join(", ")}` : "";
+                const joinedResults = `${winnerMessages.join(", ")}${loseStreakMsg}`;
+
+                // Process losers with lose streak bonuses
                 // await Promise.all(promises);
                 // Add adventure cleanup operations
                 promises.push(
@@ -127,8 +126,7 @@ export class AdventureEnd extends OpenAPIRoute {
 
                 await Promise.all(promises);
                 // Compose the message and limit advResults.message
-                const loseStreakMsg = loserMessages.length > 0 ? ` ${loserMessages.join(", ")}.` : "";
-                const base = ` The adventure ended with a ${formattedPayoutRate}x payout rate! Survivors are: ${joinedResults}. ${loseStreakMsg}`;
+                const base = ` The adventure ended with a ${formattedPayoutRate}x payout rate! Survivors are: ${joinedResults}.`;
                 const advMsg = limitAdvMessage(base, advResults.message);
                 let message = `${advMsg}${base}`;
                 // Final fallback in case of edge case overflow
@@ -152,7 +150,7 @@ export class AdventureEnd extends OpenAPIRoute {
                     const loseBonus = calculateLoseStreakBonus(stats.newStreak, p.buyin);
                     if (loseBonus > 0) {
                         await increaseBalanceWithChannelID(prisma, channelProviderId, p.user.providerId, loseBonus);
-                        loserMessages.push(`@${p.user.displayName} (+${formatSilver(loseBonus)} lose streak bonus, ${stats.newStreak}x lose streak)`);
+                        loserMessages.push(`@${p.user.displayName} (+${formatSilver(loseBonus)} bonus, ${stats.newStreak}x lose streak)`);
                     }
                 }),
             );
