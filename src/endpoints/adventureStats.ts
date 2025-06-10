@@ -45,15 +45,19 @@ export class AdventureStats extends OpenAPIRoute {
         // Adventure Stats Calculation
         const adventureWinRate = userStats.gamesPlayed > 0 ? Math.round((userStats.gamesWon / userStats.gamesPlayed) * 100) : 0;
         const adventureProfit = userStats.totalWinnings - userStats.totalWagers;
-
-        // Duel Stats Calculation
         const duelWinRate = userStats.duelsPlayed > 0 ? Math.round((userStats.duelsWon / userStats.duelsPlayed) * 100) : 0;
-        // Note: duelsWonAmount already represents the net amount won from duels (winnings - losses from wagers)
-        // If you want profit specifically (won amount - wagered amount), calculate it:
         const duelProfit = userStats.duelsWonAmount - userStats.duelsWagered; // This might be negative if losses > wins
 
+        // Streak info
+        let streakInfo = "";
+        if (userStats.winStreak > 0) {
+            streakInfo = `${userStats.winStreak}x Win Streak`;
+        } else if (userStats.loseStreak > 0) {
+            streakInfo = `${userStats.loseStreak}x Lose Streak`;
+        }
+
         // Construct the response string
-        const adventureStatsString = `Adventures: ${userStats.gamesWon}/${userStats.gamesPlayed} wins (${adventureWinRate}%) | Wagered: ${formatSilver(userStats.totalWagers)} | Won: ${formatSilver(userStats.totalWinnings)} | Profit: ${adventureProfit >= 0 ? "+" : ""}${formatSilver(adventureProfit)}`;
+        const adventureStatsString = `Adventures: ${userStats.gamesWon}/${userStats.gamesPlayed} wins (${adventureWinRate}%) | Wagered: ${formatSilver(userStats.totalWagers)} | Won: ${formatSilver(userStats.totalWinnings)} | Profit: ${adventureProfit >= 0 ? "+" : ""}${formatSilver(adventureProfit)} | ${streakInfo}`;
         const duelStatsString = `Duels: ${userStats.duelsWon}/${userStats.duelsPlayed} wins (${duelWinRate}%) | Wagered: ${formatSilver(userStats.duelsWagered)} | Won: ${formatSilver(userStats.duelsWonAmount)} | Profit: ${duelProfit >= 0 ? "+" : ""}${formatSilver(duelProfit)}`; // Using calculated profit
 
         const balanceString = `Balance: ${formatSilver(userBalance.value)} silver`; // Use fetched balance

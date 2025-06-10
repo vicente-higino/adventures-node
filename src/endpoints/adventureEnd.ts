@@ -3,9 +3,15 @@ import { HonoEnv, FossaHeaders } from "@/types";
 import { Context } from "hono";
 import { increaseBalanceWithChannelID, updateUserAdventureStats } from "@/db";
 import { runGroupAdventure } from "@/adventures";
-import { formatSilver, limitMessageLength, limitAdvMessage } from "@/utils/misc";
+import { calculateWinStreakBonus, calculateLoseStreakBonus, formatSilver, limitMessageLength, limitAdvMessage } from "@/utils/misc";
 import { Mutex } from "async-mutex";
 export const advEndMutex = new Mutex();
+interface ResultArrItem {
+    displayName: string;
+    profit: number;
+    streakBonus: number;
+    streak: number;
+}
 export class AdventureEnd extends OpenAPIRoute {
     schema = { request: { headers: FossaHeaders }, responses: {} };
 
@@ -57,44 +63,62 @@ export class AdventureEnd extends OpenAPIRoute {
             const losers = combinedResults.filter(p => p.result?.outcome === "lose");
 
             if (winners.length > 0) {
-                const promises = [];
-                const resultArr = [];
+                let promises = [];
+                const resultArr: ResultArrItem[] = [];
 
                 // Convert winner operations to promises
                 for (const p of winners) {
-                    // Use the dynamic payout rate instead of hardcoded 1.3
                     const winAmount = Math.ceil(p.buyin * payoutRate);
                     const profit = Math.ceil(p.buyin * (payoutRate - 1));
 
                     promises.push(
-                        increaseBalanceWithChannelID(prisma, channelProviderId, p.user.providerId, winAmount),
-                        updateUserAdventureStats(prisma, channelLogin, channelProviderId, p.user.providerId, {
-                            wagerAmount: p.buyin,
-                            winAmount: winAmount,
-                            didWin: true,
-                        }),
+                        (async () => {
+                            const stats = await updateUserAdventureStats(prisma, channelLogin, channelProviderId, p.user.providerId, {
+                                wagerAmount: p.buyin,
+                                winAmount: winAmount,
+                                didWin: true,
+                            });
+
+                            const streakBonus = calculateWinStreakBonus(stats.newStreak, p.buyin);
+
+                            await increaseBalanceWithChannelID(prisma, channelProviderId, p.user.providerId, winAmount + streakBonus);
+
+                            resultArr.push({ displayName: p.user.displayName, profit: profit + streakBonus, streakBonus, streak: stats.newStreak });
+                        })(),
                     );
-                    resultArr.push({ displayName: p.user.displayName, profit: profit });
                 }
 
-                // Sort results by profit descending
-                resultArr.sort((a, b) => b.profit - a.profit);
+                // Sort and format results
+                await Promise.all(promises);
 
-                // Format the sorted results for display
-                const formattedResults = resultArr.map(r => `@${r.displayName} (+${formatSilver(r.profit)} silver)`);
+                promises = [];
+                resultArr.sort((a, b) => b.profit - a.profit);
+                const formattedResults = resultArr.map(r => {
+                    let streakMsg = r.streakBonus > 0 ? ` (+${formatSilver(r.streakBonus)} win streak bonus, ${r.streak}x win streak)` : "";
+                    return `@${r.displayName} (+${formatSilver(r.profit - r.streakBonus)} silver${streakMsg})`;
+                });
                 const joinedResults = formattedResults.join(", ");
 
-                // Add loser stat updates to promises
+                // Process losers with lose streak bonuses
+                const loserMessages: string[] = [];
                 promises.push(
-                    ...losers.map(p =>
-                        updateUserAdventureStats(prisma, channelLogin, channelProviderId, p.user.providerId, {
+                    ...losers.map(async p => {
+                        const stats = await updateUserAdventureStats(prisma, channelLogin, channelProviderId, p.user.providerId, {
                             wagerAmount: p.buyin,
                             winAmount: 0,
                             didWin: false,
-                        }),
-                    ),
-                );
+                        });
 
+                        const loseBonus = calculateLoseStreakBonus(stats.newStreak, p.buyin);
+                        if (loseBonus > 0) {
+                            await increaseBalanceWithChannelID(prisma, channelProviderId, p.user.providerId, loseBonus);
+                            loserMessages.push(
+                                `@${p.user.displayName} (+${formatSilver(loseBonus)} lose streak bonus, ${stats.newStreak}x lose streak)`,
+                            );
+                        }
+                    }),
+                );
+                // await Promise.all(promises);
                 // Add adventure cleanup operations
                 promises.push(
                     prisma.adventure.deleteMany({ where: { channelProviderId: channelProviderId, id: { not: adv.id }, name: "DONE" } }),
@@ -102,9 +126,9 @@ export class AdventureEnd extends OpenAPIRoute {
                 );
 
                 await Promise.all(promises);
-
                 // Compose the message and limit advResults.message
-                const base = ` The adventure ended with a ${formattedPayoutRate}x payout rate! Survivors are: ${joinedResults}.`;
+                const loseStreakMsg = loserMessages.length > 0 ? ` ${loserMessages.join(", ")}.` : "";
+                const base = ` The adventure ended with a ${formattedPayoutRate}x payout rate! Survivors are: ${joinedResults}. ${loseStreakMsg}`;
                 const advMsg = limitAdvMessage(base, advResults.message);
                 let message = `${advMsg}${base}`;
                 // Final fallback in case of edge case overflow
@@ -114,21 +138,35 @@ export class AdventureEnd extends OpenAPIRoute {
             }
 
             // All players lost case
-            const promises = [
-                ...players.map(p =>
-                    updateUserAdventureStats(prisma, channelLogin, channelProviderId, p.user.providerId, {
+            const promises = [];
+            const loserMessages: string[] = [];
+
+            promises.push(
+                ...players.map(async p => {
+                    const stats = await updateUserAdventureStats(prisma, channelLogin, channelProviderId, p.user.providerId, {
                         wagerAmount: p.buyin,
                         winAmount: 0,
                         didWin: false,
-                    }),
-                ),
+                    });
+
+                    const loseBonus = calculateLoseStreakBonus(stats.newStreak, p.buyin);
+                    if (loseBonus > 0) {
+                        await increaseBalanceWithChannelID(prisma, channelProviderId, p.user.providerId, loseBonus);
+                        loserMessages.push(`@${p.user.displayName} (+${formatSilver(loseBonus)} lose streak bonus, ${stats.newStreak}x lose streak)`);
+                    }
+                }),
+            );
+
+            promises.push(
                 prisma.adventure.deleteMany({ where: { channelProviderId: channelProviderId, id: { not: adv.id }, name: "DONE" } }),
                 prisma.adventure.update({ where: { id: adv.id }, data: { name: "DONE" } }),
-            ];
+            );
 
             await Promise.all(promises);
+
             // Compose the message and limit advResults.message
-            const base = " The adventure ended! No survivors. All players lost their silver.";
+            const loseStreakMsg = loserMessages.length > 0 ? ` ${loserMessages.join(", ")}.` : "";
+            const base = ` The adventure ended! No survivors. All players lost their silver. ${loseStreakMsg}`;
             const advMsg = limitAdvMessage(base, advResults.message);
             let message = `${advMsg}${base}`;
             // Final fallback in case of edge case overflow

@@ -31,12 +31,11 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                     .string({
                         description: "Sort criteria",
                         invalid_type_error:
-                            "Sort by must be [adventure-|duel-][wins|played|wagered|profit][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary|-top][-asc|-bottom], or silver[-asc|-bottom]. Default: silver.", // Added top
+                            "Sort by must be [adventure-|duel-][wins|played|wagered|profit|streak][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary|-top][-asc|-bottom], or silver[-asc|-bottom].",
                     })
                     .regex(
-                        // Add top to regex
-                        /^(?:(adventure|duel)-)?(wins|played|wagered|profit|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top))?|silver)(-(?:asc|bottom))?$/i,
-                        "Sort by: [adventure-|duel-][wins|played|wagered|profit][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary|-top][-asc|-bottom], or silver[-asc|-bottom].", // Added top
+                        /^(?:(adventure|duel)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top))?|silver)(-(?:asc|bottom))?$/i,
+                        "Sort by: [adventure-|duel-][wins|played|wagered|profit|streak][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary|-top][-asc|-bottom], or silver[-asc|-bottom].",
                     )
                     .default("silver"), // Default to silver
             }),
@@ -47,7 +46,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
     handleValidationError(): Response {
         // Concise usage message
         const msg =
-            "Usage: !leaderboard [duel-][wins|played|wagered|profit] | fish[-silver|-avg|-fines|-rarity|-top] | silver [-asc|-bottom] [amount] (default: silver, 5)";
+            "Usage: !leaderboard [duel-][wins|played|wagered|profit|streak] | fish[-silver|-avg|-fines|-rarity|-top] | silver [-asc|-bottom] [amount] (default: silver, 5)";
         return new Response(msg, { status: 400 });
     }
 
@@ -55,7 +54,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
     private async _handleAdventure(
         prisma: PrismaClient<{ adapter: PrismaD1 }>,
         channelProviderId: string,
-        metric: "wins" | "played" | "wagered" | "profit",
+        metric: "wins" | "played" | "wagered" | "profit" | "streak", // Add streak option
         order: "asc" | "desc",
         amount: number,
     ): Promise<LeaderboardResult> {
@@ -72,7 +71,8 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                 const wagered = entry.totalWagers;
                 const profit = entry.totalWinnings - entry.totalWagers;
                 const winRate = played > 0 ? Math.round((wins / played) * 100) : 0;
-                return { name: entry.user.displayName, wins, played, wagered, profit, winRate };
+                const streak = entry.winStreak > 0 ? entry.winStreak : -entry.loseStreak; // Combine win/lose streaks
+                return { name: entry.user.displayName, wins, played, wagered, profit, winRate, streak };
             })
             .sort((a, b) => {
                 const multiplier = order === "asc" ? 1 : -1;
@@ -93,6 +93,10 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                     case "profit":
                         compareA = a.profit;
                         compareB = b.profit;
+                        break;
+                    case "streak":
+                        compareA = a.streak;
+                        compareB = b.streak;
                         break;
                 }
                 let tieBreakerA = a.winRate,
@@ -119,6 +123,10 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                         return `${index}. ${entry.name}: ${formatSilver(entry.wagered)} silver`;
                     case "profit":
                         return `${index}. ${entry.name}: ${entry.profit >= 0 ? "+" : ""}${formatSilver(entry.profit)} silver`;
+                    case "streak":
+                        const streakType = entry.streak > 0 ? "win" : "lose";
+                        const streakValue = Math.abs(entry.streak);
+                        return `${index}. ${entry.name}: ${streakValue}x ${streakType} streak`;
                     default:
                         return "";
                 }
@@ -464,7 +472,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
         const sortParts = sortBy
             .toLowerCase()
             .match(
-                /^(?:(adventure|duel)-)?(wins|played|wagered|profit|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top))?|silver)(-(?:asc|bottom))?$/i,
+                /^(?:(adventure|duel)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top))?|silver)(-(?:asc|bottom))?$/i,
             ); // Use updated regex
         if (!sortParts) {
             // This should ideally not happen due to Zod validation, but good practice to keep.
@@ -480,7 +488,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
         let internalMetric: string = metricOrType; // Use a separate variable for internal logic if needed
 
         // Determine Leaderboard Type and adjust metric if needed
-        if (["wins", "played", "wagered", "profit"].includes(metricOrType)) {
+        if (["wins", "played", "wagered", "profit", "streak"].includes(metricOrType)) {
             // If prefix is 'duel', it's Duel. Otherwise (adventure or undefined), it's Adventure.
             leaderboardType = prefix === "duel" ? "Duel" : "Adventure";
         } else if (metricOrType.startsWith("fish-")) {
@@ -505,7 +513,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                 result = await this._handleAdventure(
                     prisma,
                     channelProviderId,
-                    internalMetric as "wins" | "played" | "wagered" | "profit",
+                    internalMetric as "wins" | "played" | "wagered" | "profit" | "streak",
                     order,
                     amount,
                 );

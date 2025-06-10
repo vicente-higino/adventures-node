@@ -59,7 +59,7 @@ app.use("*", (c, next) => {
 
 // Register the new endpoint
 app.get("/auth/twitch", AuthTwitch);
-app.use("*", bearerAuth({ token: env.TWITCH_CLIENT_SECRET }));
+// app.use("*", bearerAuth({ token: env.TWITCH_CLIENT_SECRET }));
 app.get("/auth/twitch/login", AuthTwitchRedirect);
 
 // Register OpenAPI endpoints

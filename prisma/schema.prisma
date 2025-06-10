@@ -120,6 +120,9 @@ model UserStats {
 
     fishFines Int @default(0) // Total fines for fish caught
 
+    winStreak  Int @default(0)
+    loseStreak Int @default(0)
+
     @@unique([channelProviderId, userId])
     @@index([channelProviderId, userId])
 }
