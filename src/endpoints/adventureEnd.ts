@@ -110,7 +110,7 @@ export class AdventureEnd extends OpenAPIRoute {
                 promises = [];
                 resultArr.sort((a, b) => b.profit - a.profit);
                 const winnerMessages = resultArr.map(r => {
-                    let streakMsg = r.streakBonus > 0 ? ` +${formatSilver(r.streakBonus)} bonus, ${r.streak}x win streak` : "";
+                    const streakMsg = r.streakBonus > 0 ? ` +${formatSilver(r.streakBonus)} bonus, ${r.streak}x win streak` : "";
                     return `@${r.displayName} (+${formatSilver(r.profit - r.streakBonus)} silver${streakMsg})`;
                 });
                 const loseStreakMsg = loserMessages.length > 0 ? ` ${loserMessages.join(", ")}` : "";
