@@ -12,11 +12,7 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
-		"prettier": "prettier --write ./src",
-		"prepare": "npx simple-git-hooks"
-	},
-	"simple-git-hooks": {
-		"pre-commit": "npm run type-check && npm run prettier"
+		"prettier": "prettier --write ./src"
 	},
 	"dependencies": {
 		"@hono/node-server": "^1.14.1",
@@ -46,7 +42,6 @@
 		"globals": "^16.2.0",
 		"prettier": "3.5.3",
 		"prisma": "^6.5.0",
-		"simple-git-hooks": "^2.13.0",
 		"ts-node": "^10.9.2",
 		"tsx": "^4.19.4",
 		"typescript": "^5.8.3",
