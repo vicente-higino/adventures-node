@@ -318,11 +318,13 @@ export function sendActionToAllChannel(message: string) {
 export function calculateWinStreakBonus(streak: number, streakWager: number): number {
     if (streak <= 2) return 0;
     const baseBonus = Math.min((streak - 2) * 100, 1000);
-    return Math.min(baseBonus, streakWager);
+    const maxStreakWager = Math.floor(streakWager * 0.15);
+    return Math.min(baseBonus, maxStreakWager);
 }
 
 export function calculateLoseStreakBonus(streak: number, streakWager: number): number {
     if (streak <= 2) return 0;
-    const baseBonus = Math.min((streak - 2) * 50, 500);
-    return Math.min(baseBonus, streakWager);
+    const baseBonus = Math.min((streak - 2) * 100, 1000);
+    const maxStreakWager = Math.floor(streakWager * 0.3);
+    return Math.min(baseBonus, maxStreakWager);
 }
