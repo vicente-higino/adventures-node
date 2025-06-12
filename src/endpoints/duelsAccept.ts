@@ -138,10 +138,10 @@ export class DuelAccept extends OpenAPIRoute {
         await Promise.all(backgroundTasks);
 
         if (winnerStats.duelWinStreak > 1) {
-            winnerDisplayName += ` (${winnerStats.duelWinStreak} duel wins in a row)`;
+            winnerDisplayName += ` (${winnerStats.duelWinStreak} wins in a row)`;
         }
         if (loserStats.duelLoseStreak > 1) {
-            loserDisplayName += ` (${loserStats.duelLoseStreak} duel losses in a row)`;
+            loserDisplayName += ` (${loserStats.duelLoseStreak} losses in a row)`;
         }
 
         // Return response immediately
