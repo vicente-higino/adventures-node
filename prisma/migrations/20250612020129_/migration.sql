@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "UserStats" ADD COLUMN     "duelLoseStreak" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "duelWinStreak" INTEGER NOT NULL DEFAULT 0;

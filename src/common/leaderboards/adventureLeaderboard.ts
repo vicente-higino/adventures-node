@@ -75,7 +75,7 @@ export async function handleAdventure(
                 case "profit":
                     return `${index}. ${entry.name}: ${entry.profit >= 0 ? "+" : ""}${formatSilver(entry.profit)} silver`;
                 case "streak":
-                    const streakType = entry.streak > 0 ? "win" : "lose";
+                    const streakType = entry.streak >= 0 ? "win" : "lose";
                     const streakValue = Math.abs(entry.streak);
                     return `${index}. ${entry.name}: ${streakValue}x ${streakType} streak`;
                 default:

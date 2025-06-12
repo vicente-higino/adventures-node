@@ -5,7 +5,7 @@ import { LeaderboardResult } from ".";
 export async function handleDuel(
     prisma: PrismaClient,
     channelProviderId: string,
-    metric: "wins" | "played" | "wagered" | "profit",
+    metric: "wins" | "played" | "wagered" | "profit" | "streak",
     order: "asc" | "desc",
     amount: number,
 ): Promise<LeaderboardResult> {
@@ -22,7 +22,8 @@ export async function handleDuel(
             const wagered = entry.duelsWagered;
             const profit = entry.duelsWonAmount - entry.duelsWagered;
             const winRate = played > 0 ? Math.round((wins / played) * 100) : 0;
-            return { name: entry.user.displayName, wins, played, wagered, profit, winRate };
+            const streak = entry.winStreak > 0 ? entry.winStreak : -entry.loseStreak; // Combine win/lose streaks
+            return { name: entry.user.displayName, wins, played, wagered, profit, winRate, streak };
         })
         .sort((a, b) => {
             const multiplier = order === "asc" ? 1 : -1;
@@ -44,6 +45,10 @@ export async function handleDuel(
                     compareA = a.profit;
                     compareB = b.profit;
                     break;
+                case "streak":
+                    compareA = a.streak;
+                    compareB = b.streak;
+                    break;
             }
             let tieBreakerA = a.winRate,
                 tieBreakerB = b.winRate;
@@ -51,6 +56,9 @@ export async function handleDuel(
                 tieBreakerA = a.profit;
                 tieBreakerB = b.profit;
             } else if (metric === "profit") {
+                tieBreakerA = a.wins;
+                tieBreakerB = b.wins;
+            } else if (metric === "streak") {
                 tieBreakerA = a.wins;
                 tieBreakerB = b.wins;
             }
@@ -69,6 +77,10 @@ export async function handleDuel(
                     return `${index}. ${entry.name}: ${formatSilver(entry.wagered)} silver`;
                 case "profit":
                     return `${index}. ${entry.name}: ${entry.profit >= 0 ? "+" : ""}${formatSilver(entry.profit)} silver`;
+                case "streak":
+                    const streakType = entry.streak > 0 ? "win" : "lose";
+                    const streakValue = Math.abs(entry.streak);
+                    return `${index}. ${entry.name}: ${streakValue}x ${streakType} streak`;
                 default:
                     return "";
             }

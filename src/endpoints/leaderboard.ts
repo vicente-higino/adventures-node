@@ -18,10 +18,10 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                     .string({
                         description: "Sort criteria",
                         invalid_type_error:
-                            "Sort by must be [adventure-|duel-][wins|played|wagered|profit|streak][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary|-top][-asc|-bottom], or silver[-asc|-bottom].",
+                            "Sort by must be [adv-|duel-][wins|played|wagered|profit|streak][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary|-top][-asc|-bottom], or silver[-asc|-bottom].",
                     })
                     .regex(
-                        /^(?:(adventure|duel)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top))?|silver)(-(?:asc|bottom))?$/i,
+                        /^(?:(adv|duel)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top))?|silver)(-(?:asc|bottom))?$/i,
                         "Sort by: [adventure-|duel-][wins|played|wagered|profit|streak][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary|-top][-asc|-bottom], or silver[-asc|-bottom].",
                     )
                     .default("silver"), // Default to silver
@@ -47,7 +47,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
         const sortParts = sortBy
             .toLowerCase()
             .match(
-                /^(?:(adventure|duel)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top))?|silver)(-(?:asc|bottom))?$/i,
+                /^(?:(adv|duel)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top))?|silver)(-(?:asc|bottom))?$/i,
             ); // Use updated regex
         if (!sortParts) {
             // This should ideally not happen due to Zod validation, but good practice to keep.
@@ -63,15 +63,15 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
         let internalMetric: string = metricOrType; // Use a separate variable for internal logic if needed
 
         // Determine Leaderboard Type and adjust metric if needed
-        if (prefix === "duel" && ["wins", "played", "wagered", "profit"].includes(metricOrType)) {
-            leaderboardType = "Duel";
+        if (["wins", "played", "wagered", "profit", "streak"].includes(metricOrType)) {
             internalMetric = metricOrType;
-        } else if ((prefix === "adventure" || !prefix) && ["wins", "played", "wagered", "profit", "streak"].includes(metricOrType)) {
-            leaderboardType = "Adventure";
-            internalMetric = metricOrType;
-        } else if (metricOrType.startsWith("duel-")) {
-            leaderboardType = "Duel";
-            internalMetric = metricOrType.substring(5);
+            if ((prefix === "adv" || !prefix)) {
+                leaderboardType = "Adventure";
+            } else if (prefix === "duel") {
+                leaderboardType = "Duel";
+            } else {
+                return c.text("Invalid leaderboard type prefix.", { status: 400 });
+            }
         } else if (metricOrType.startsWith("fish-")) {
             leaderboardType = "Fish";
             internalMetric = metricOrType.substring(5); // "silver", "fines", "legendary", etc.
@@ -86,7 +86,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
             return c.text("Invalid sort type.", { status: 400 });
         }
 
-        let result: LeaderboardResult;
+        let result: LeaderboardResult | undefined;
 
         try {
             if (leaderboardType === "Adventure") {
@@ -97,7 +97,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                 }
                 result = await handleAdventure(prisma, channelProviderId, parsedMetric.data, order, amount);
             } else if (leaderboardType === "Duel") {
-                const duelMetricSchema = z.enum(["wins", "played", "wagered", "profit"]);
+                const duelMetricSchema = z.enum(["wins", "played", "wagered", "profit", "streak"]);
                 const parsedDuelMetric = duelMetricSchema.safeParse(internalMetric);
                 if (!parsedDuelMetric.success) {
                     return c.text("Invalid metric for Duel leaderboard.", { status: 400 });
@@ -123,7 +123,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                     return c.text("Invalid metric for Fish leaderboard.", { status: 400 });
                 }
                 result = await handleFish(prisma, channelProviderId, parsedFishMetric.data, order, amount);
-            } else {
+            } else if (leaderboardType === "Silver") {
                 result = await handleSilver(prisma, channelProviderId, order, amount);
             }
         } catch (error) {
@@ -134,6 +134,10 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                 console.error("Prisma Error Meta:", error.meta);
             }
             return c.text("An error occurred while generating the leaderboard.", { status: 500 });
+        }
+
+        if (!result) {
+            return c.text("Failed to generate leaderboard.", { status: 500 });
         }
 
         // Construct final response

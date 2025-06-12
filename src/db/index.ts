@@ -111,6 +111,18 @@ export async function updateUseDuelsStats(
     stats: { wagerAmount: number; winAmount: number; didWin: boolean },
 ) {
     const userStats = await findOrCreateUserStats(db, channel, channelProviderId, userProviderId);
+
+    // Compute new duel streaks
+    let newDuelWinStreak = userStats.duelWinStreak ?? 0;
+    let newDuelLoseStreak = userStats.duelLoseStreak ?? 0;
+    if (stats.didWin) {
+        newDuelWinStreak += 1;
+        newDuelLoseStreak = 0;
+    } else {
+        newDuelLoseStreak += 1;
+        newDuelWinStreak = 0;
+    }
+
     const updatedUserStats = await db.userStats.update({
         where: { id: userStats.id },
         data: {
@@ -118,6 +130,8 @@ export async function updateUseDuelsStats(
             duelsPlayed: { increment: 1 },
             duelsWon: stats.didWin ? { increment: 1 } : undefined,
             duelsWonAmount: stats.didWin ? { increment: stats.winAmount } : undefined,
+            duelWinStreak: newDuelWinStreak,
+            duelLoseStreak: newDuelLoseStreak,
         },
     });
     return updatedUserStats;

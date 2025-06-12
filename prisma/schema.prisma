@@ -123,6 +123,9 @@ model UserStats {
     winStreak  Int @default(0)
     loseStreak Int @default(0)
 
+    duelWinStreak  Int @default(0)
+    duelLoseStreak Int @default(0)
+
     @@unique([channelProviderId, userId])
     @@index([channelProviderId, userId])
 }

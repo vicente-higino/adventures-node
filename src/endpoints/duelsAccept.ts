@@ -108,20 +108,16 @@ export class DuelAccept extends OpenAPIRoute {
         }
 
         // Update stats
-        backgroundTasks.push(
-            updateUseDuelsStats(prisma, channelLogin, channelProviderId, winnerId, {
-                didWin: true,
-                wagerAmount: duel.wagerAmount,
-                winAmount: duel.wagerAmount * 2, // Winner always gains the wager amount
-            }),
-        );
-        backgroundTasks.push(
-            updateUseDuelsStats(prisma, channelLogin, channelProviderId, loserId, {
-                didWin: false,
-                wagerAmount: duel.wagerAmount,
-                winAmount: 0, // Loser gains 0, loses wagerAmount (already deducted or handled above)
-            }),
-        );
+        const winnerStatsPromise = updateUseDuelsStats(prisma, channelLogin, channelProviderId, winnerId, {
+            didWin: true,
+            wagerAmount: duel.wagerAmount,
+            winAmount: duel.wagerAmount * 2, // Winner always gains the wager amount
+        });
+        const loserStatsPromise = updateUseDuelsStats(prisma, channelLogin, channelProviderId, loserId, {
+            didWin: false,
+            wagerAmount: duel.wagerAmount,
+            winAmount: 0, // Loser gains 0, loses wagerAmount (already deducted or handled above)
+        });
 
         // Delete the duel using the specific IDs from the found duel object
         backgroundTasks.push(
@@ -137,11 +133,30 @@ export class DuelAccept extends OpenAPIRoute {
         );
 
         // Execute tasks in the background
+        const [winnerStats, loserStats] = await Promise.all([winnerStatsPromise, loserStatsPromise]);
         await Promise.all(backgroundTasks);
+
+        // Prepare streak message
+        let streakMsg = "";
+        if (isChallengerWinner) {
+            if (winnerStats.duelWinStreak > 1) {
+                streakMsg = ` (${winnerStats.duelWinStreak} duel win streak!)`;
+            }
+            if (loserStats.duelLoseStreak > 1) {
+                streakMsg += ` (${loserStats.duelLoseStreak} duel losses in a row)`;
+            }
+        } else {
+            if (winnerStats.duelWinStreak > 1) {
+                streakMsg = ` (${winnerStats.duelWinStreak} duel win streak!)`;
+            }
+            if (loserStats.duelLoseStreak > 1) {
+                streakMsg += ` (${loserStats.duelLoseStreak} duel losses in a row)`;
+            }
+        }
 
         // Return response immediately
         return c.text(
-            `${winnerDisplayName} won the duel against ${isChallengerWinner ? userDisplayName : duel.challenger.displayName} and claimed ${duel.wagerAmount} silver! ${pickRandom(DUEL_WIN_EMOTES)}`,
+            `${winnerDisplayName} won the duel against ${isChallengerWinner ? userDisplayName : duel.challenger.displayName} and claimed ${duel.wagerAmount} silver!${streakMsg} ${pickRandom(DUEL_WIN_EMOTES)}`,
         );
     }
 }
