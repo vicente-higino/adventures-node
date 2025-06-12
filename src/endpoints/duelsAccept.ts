@@ -89,7 +89,8 @@ export class DuelAccept extends OpenAPIRoute {
         // Use duel.challengerId and duel.challengedId consistently
         const winnerId = isChallengerWinner ? duel.challengerId : duel.challengedId;
         const loserId = isChallengerWinner ? duel.challengedId : duel.challengerId;
-        const winnerDisplayName = isChallengerWinner ? duel.challenger.displayName : userDisplayName;
+        let winnerDisplayName = isChallengerWinner ? duel.challenger.displayName : userDisplayName;
+        let loserDisplayName = isChallengerWinner ? userDisplayName : duel.challenger.displayName;
 
         // Create an array to hold background tasks
         const backgroundTasks: Promise<unknown>[] = [];
@@ -136,27 +137,16 @@ export class DuelAccept extends OpenAPIRoute {
         const [winnerStats, loserStats] = await Promise.all([winnerStatsPromise, loserStatsPromise]);
         await Promise.all(backgroundTasks);
 
-        // Prepare streak message
-        let streakMsg = "";
-        if (isChallengerWinner) {
-            if (winnerStats.duelWinStreak > 1) {
-                streakMsg = ` (${winnerStats.duelWinStreak} duel win streak!)`;
-            }
-            if (loserStats.duelLoseStreak > 1) {
-                streakMsg += ` (${loserStats.duelLoseStreak} duel losses in a row)`;
-            }
-        } else {
-            if (winnerStats.duelWinStreak > 1) {
-                streakMsg = ` (${winnerStats.duelWinStreak} duel win streak!)`;
-            }
-            if (loserStats.duelLoseStreak > 1) {
-                streakMsg += ` (${loserStats.duelLoseStreak} duel losses in a row)`;
-            }
+        if (winnerStats.duelWinStreak > 1) {
+            winnerDisplayName += ` (@${winnerDisplayName} ${winnerStats.duelWinStreak} duel win streak!)`;
+        }
+        if (loserStats.duelLoseStreak > 1) {
+            loserDisplayName += ` (@${loserDisplayName} ${loserStats.duelLoseStreak} duel losses in a row)`;
         }
 
         // Return response immediately
         return c.text(
-            `${winnerDisplayName} won the duel against ${isChallengerWinner ? userDisplayName : duel.challenger.displayName} and claimed ${duel.wagerAmount} silver!${streakMsg} ${pickRandom(DUEL_WIN_EMOTES)}`,
+            `${winnerDisplayName} won the duel against ${loserDisplayName} and claimed ${duel.wagerAmount} silver! ${pickRandom(DUEL_WIN_EMOTES)}`,
         );
     }
 }

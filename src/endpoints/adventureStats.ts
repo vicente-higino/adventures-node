@@ -49,16 +49,24 @@ export class AdventureStats extends OpenAPIRoute {
         const duelProfit = userStats.duelsWonAmount - userStats.duelsWagered; // This might be negative if losses > wins
 
         // Streak info
-        let streakInfo = "";
+        let advStreakInfo = "";
         if (userStats.winStreak > 0) {
-            streakInfo = `${userStats.winStreak}x Win Streak`;
+            advStreakInfo = `${userStats.winStreak}x Win Streak`;
         } else if (userStats.loseStreak > 0) {
-            streakInfo = `${userStats.loseStreak}x Lose Streak`;
+            advStreakInfo = `${userStats.loseStreak}x Lose Streak`;
+        }
+
+        // Duel streak info
+        let duelStreakInfo = "";
+        if (userStats.duelWinStreak > 0) {
+            duelStreakInfo = `${userStats.duelWinStreak}x Win Streak`;
+        } else if (userStats.duelLoseStreak > 0) {
+            duelStreakInfo = `${userStats.duelLoseStreak}x Lose Streak`;
         }
 
         // Construct the response string
-        const adventureStatsString = `Adventures: ${userStats.gamesWon}/${userStats.gamesPlayed} wins (${adventureWinRate}%) | Wagered: ${formatSilver(userStats.totalWagers)} | Won: ${formatSilver(userStats.totalWinnings)} | Profit: ${adventureProfit >= 0 ? "+" : ""}${formatSilver(adventureProfit)} | ${streakInfo}`;
-        const duelStatsString = `Duels: ${userStats.duelsWon}/${userStats.duelsPlayed} wins (${duelWinRate}%) | Wagered: ${formatSilver(userStats.duelsWagered)} | Won: ${formatSilver(userStats.duelsWonAmount)} | Profit: ${duelProfit >= 0 ? "+" : ""}${formatSilver(duelProfit)}`; // Using calculated profit
+        const adventureStatsString = `Adventures: ${userStats.gamesWon}/${userStats.gamesPlayed} wins (${adventureWinRate}%) | Wagered: ${formatSilver(userStats.totalWagers)} | Won: ${formatSilver(userStats.totalWinnings)} | Profit: ${adventureProfit >= 0 ? "+" : ""}${formatSilver(adventureProfit)} | ${advStreakInfo}`;
+        const duelStatsString = `Duels: ${userStats.duelsWon}/${userStats.duelsPlayed} wins (${duelWinRate}%) | Wagered: ${formatSilver(userStats.duelsWagered)} | Won: ${formatSilver(userStats.duelsWonAmount)} | Profit: ${duelProfit >= 0 ? "+" : ""}${formatSilver(duelProfit)} | ${duelStreakInfo}`; // Using calculated profit
 
         const balanceString = `Balance: ${formatSilver(userBalance.value)} silver`; // Use fetched balance
 

@@ -315,14 +315,14 @@ export function sendActionToAllChannel(message: string) {
     }
 }
 
-export function calculateWinStreakBonus(streak: number, wager: number): number {
+export function calculateWinStreakBonus(streak: number, streakWager: number): number {
     if (streak <= 2) return 0;
-    if (wager < 100) return 0; // Minimum 100 silver wager required for streak bonus
-    return Math.min((streak - 2) * 100, 1000);
+    const baseBonus = Math.min((streak - 2) * 100, 1000);
+    return Math.min(baseBonus, streakWager);
 }
 
-export function calculateLoseStreakBonus(streak: number, wager: number): number {
+export function calculateLoseStreakBonus(streak: number, streakWager: number): number {
     if (streak <= 2) return 0;
-    if (wager < 100) return 0; // Minimum 100 silver wager required for streak bonus
-    return Math.min((streak - 2) * 50, 500);
+    const baseBonus = Math.min((streak - 2) * 50, 500);
+    return Math.min(baseBonus, streakWager);
 }

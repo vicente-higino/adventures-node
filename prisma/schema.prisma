@@ -126,6 +126,8 @@ model UserStats {
     duelWinStreak  Int @default(0)
     duelLoseStreak Int @default(0)
 
+    streakWager Int @default(0) // Sum of wagers during current win/lose streak
+
     @@unique([channelProviderId, userId])
     @@index([channelProviderId, userId])
 }

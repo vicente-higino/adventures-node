@@ -77,15 +77,18 @@ export async function updateUserAdventureStats(
 ) {
     const userStats = await findOrCreateUserStats(db, channel, channelProviderId, userProviderId);
 
-    // Compute new streaks
+    // Compute new streaks and streakWager
     let newWinStreak = userStats.winStreak ?? 0;
     let newLoseStreak = userStats.loseStreak ?? 0;
+    let newStreakWager = userStats.streakWager ?? 0;
     if (stats.didWin) {
         newWinStreak += 1;
         newLoseStreak = 0;
+        newStreakWager = newWinStreak === 1 ? stats.wagerAmount : newStreakWager + stats.wagerAmount;
     } else {
         newLoseStreak += 1;
         newWinStreak = 0;
+        newStreakWager = newLoseStreak === 1 ? stats.wagerAmount : newStreakWager + stats.wagerAmount;
     }
 
     const updatedUserStats = await db.userStats.update({
@@ -97,6 +100,7 @@ export async function updateUserAdventureStats(
             gamesWon: stats.didWin ? { increment: 1 } : undefined,
             winStreak: newWinStreak,
             loseStreak: newLoseStreak,
+            streakWager: newStreakWager,
         },
     });
 
@@ -112,15 +116,18 @@ export async function updateUseDuelsStats(
 ) {
     const userStats = await findOrCreateUserStats(db, channel, channelProviderId, userProviderId);
 
-    // Compute new duel streaks
+    // Compute new duel streaks and streakWager
     let newDuelWinStreak = userStats.duelWinStreak ?? 0;
     let newDuelLoseStreak = userStats.duelLoseStreak ?? 0;
+    let newStreakWager = userStats.streakWager ?? 0;
     if (stats.didWin) {
         newDuelWinStreak += 1;
         newDuelLoseStreak = 0;
+        newStreakWager = newDuelWinStreak === 1 ? stats.wagerAmount : newStreakWager + stats.wagerAmount;
     } else {
         newDuelLoseStreak += 1;
         newDuelWinStreak = 0;
+        newStreakWager = newDuelLoseStreak === 1 ? stats.wagerAmount : newStreakWager + stats.wagerAmount;
     }
 
     const updatedUserStats = await db.userStats.update({
@@ -132,6 +139,7 @@ export async function updateUseDuelsStats(
             duelsWonAmount: stats.didWin ? { increment: stats.winAmount } : undefined,
             duelWinStreak: newDuelWinStreak,
             duelLoseStreak: newDuelLoseStreak,
+            streakWager: newStreakWager,
         },
     });
     return updatedUserStats;

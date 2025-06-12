@@ -30,6 +30,7 @@ const COOLDOWN_EMOTES = [
     "Gaze",
     "Igotmyeyesonyou",
     "aga",
+    "waga",
     "ok",
     "Life",
     "agaCute",

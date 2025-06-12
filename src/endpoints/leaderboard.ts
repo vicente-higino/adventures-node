@@ -65,7 +65,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
         // Determine Leaderboard Type and adjust metric if needed
         if (["wins", "played", "wagered", "profit", "streak"].includes(metricOrType)) {
             internalMetric = metricOrType;
-            if ((prefix === "adv" || !prefix)) {
+            if (prefix === "adv" || !prefix) {
                 leaderboardType = "Adventure";
             } else if (prefix === "duel") {
                 leaderboardType = "Duel";
