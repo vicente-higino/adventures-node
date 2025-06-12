@@ -113,7 +113,7 @@ export class AdventureEnd extends OpenAPIRoute {
                     const streakMsg = r.streakBonus > 0 ? ` (+${formatSilver(r.streakBonus)} bonus, ${r.streak}x win streak)` : "";
                     return `@${r.displayName} (+${formatSilver(r.profit - r.streakBonus)}${streakMsg} silver)`;
                 });
-                const loseStreakMsg = loserMessages.length > 0 ? ` ${loserMessages.join(", ")}` : "";
+                const loseStreakMsg = loserMessages.length > 0 ? `, ${loserMessages.join(", ")}` : "";
                 const joinedResults = `${winnerMessages.join(", ")}${loseStreakMsg}`;
 
                 // Process losers with lose streak bonuses
