@@ -100,7 +100,7 @@ export class AdventureEnd extends OpenAPIRoute {
                         const loseBonus = calculateLoseStreakBonus(stats.newStreak, stats.streakWager);
                         if (loseBonus > 0) {
                             await increaseBalanceWithChannelID(prisma, channelProviderId, p.user.providerId, loseBonus);
-                            loserMessages.push(`@${p.user.displayName} (+${formatSilver(loseBonus)} silver bonus, ${stats.newStreak}x lose streak)`);
+                            loserMessages.push(`@${p.user.displayName} (+${formatSilver(loseBonus)} silver bonus, ${stats.newStreak}-lose streak)`);
                         }
                     }),
                 );
@@ -110,8 +110,8 @@ export class AdventureEnd extends OpenAPIRoute {
                 promises = [];
                 resultArr.sort((a, b) => b.profit - a.profit);
                 const winnerMessages = resultArr.map(r => {
-                    const streakMsg = r.streakBonus > 0 ? ` (+${formatSilver(r.streakBonus)} bonus, ${r.streak}x win streak)` : "";
-                    return `@${r.displayName} (+${formatSilver(r.profit - r.streakBonus)}${streakMsg} silver)`;
+                    const streakMsg = r.streakBonus > 0 ? `, +${formatSilver(r.streakBonus)} bonus, ${r.streak}-win streak` : "";
+                    return `@${r.displayName} (+${formatSilver(r.profit - r.streakBonus)} silver${streakMsg})`;
                 });
                 const loseStreakMsg = loserMessages.length > 0 ? `, ${loserMessages.join(", ")}` : "";
                 const joinedResults = `${winnerMessages.join(", ")}${loseStreakMsg}`;
@@ -150,7 +150,7 @@ export class AdventureEnd extends OpenAPIRoute {
                     const loseBonus = calculateLoseStreakBonus(stats.newStreak, stats.streakWager);
                     if (loseBonus > 0) {
                         await increaseBalanceWithChannelID(prisma, channelProviderId, p.user.providerId, loseBonus);
-                        loserMessages.push(`@${p.user.displayName} (+${formatSilver(loseBonus)} silver bonus, ${stats.newStreak}x lose streak)`);
+                        loserMessages.push(`@${p.user.displayName} (+${formatSilver(loseBonus)} silver bonus, ${stats.newStreak}-lose streak)`);
                     }
                 }),
             );
