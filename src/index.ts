@@ -59,7 +59,7 @@ app.use("*", (c, next) => {
 
 // Register the new endpoint
 app.get("/auth/twitch", AuthTwitch);
-app.use("*", bearerAuth({ token: env.TWTICH_EVENTSUB_SECRET }));
+app.use("/auth/twitch/login", bearerAuth({ token: env.TWTICH_EVENTSUB_SECRET }));
 app.get("/auth/twitch/login", AuthTwitchRedirect);
 
 app.use("*", bearerAuth({ token: env.TWITCH_CLIENT_SECRET }));
