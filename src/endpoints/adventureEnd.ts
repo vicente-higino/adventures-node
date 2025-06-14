@@ -1,7 +1,7 @@
 import { OpenAPIRoute } from "chanfana";
 import { HonoEnv, FossaHeaders } from "@/types";
 import { Context } from "hono";
-import { increaseBalanceWithChannelID, updateUserAdventureStats } from "@/db";
+import { increaseBalanceWithChannelID, updateUserAdventureStats, addBonusToUserStats } from "@/db";
 import { runGroupAdventure } from "@/adventures";
 import { calculateWinStreakBonus, calculateLoseStreakBonus, formatSilver, limitMessageLength, limitAdvMessage } from "@/utils/misc";
 import { Mutex } from "async-mutex";
@@ -81,7 +81,10 @@ export class AdventureEnd extends OpenAPIRoute {
 
                             const streakBonus = calculateWinStreakBonus(stats.newStreak, stats.streakWager);
 
-                            await increaseBalanceWithChannelID(prisma, channelProviderId, p.user.providerId, winAmount + streakBonus);
+                            await increaseBalanceWithChannelID(prisma, channelProviderId, p.user.providerId, winAmount);
+                            if (streakBonus > 0) {
+                                await addBonusToUserStats(prisma, channelProviderId, p.user.providerId, streakBonus);
+                            }
 
                             resultArr.push({ displayName: p.user.displayName, profit: profit + streakBonus, streakBonus, streak: stats.newStreak });
                         })(),
@@ -99,7 +102,7 @@ export class AdventureEnd extends OpenAPIRoute {
 
                         const loseBonus = calculateLoseStreakBonus(stats.newStreak, stats.streakWager);
                         if (loseBonus > 0) {
-                            await increaseBalanceWithChannelID(prisma, channelProviderId, p.user.providerId, loseBonus);
+                            await addBonusToUserStats(prisma, channelProviderId, p.user.providerId, loseBonus);
                             loserMessages.push(`@${p.user.displayName} (+${formatSilver(loseBonus)} silver bonus, ${stats.newStreak}-lose streak)`);
                         }
                     }),
@@ -149,7 +152,7 @@ export class AdventureEnd extends OpenAPIRoute {
 
                     const loseBonus = calculateLoseStreakBonus(stats.newStreak, stats.streakWager);
                     if (loseBonus > 0) {
-                        await increaseBalanceWithChannelID(prisma, channelProviderId, p.user.providerId, loseBonus);
+                        await addBonusToUserStats(prisma, channelProviderId, p.user.providerId, loseBonus);
                         loserMessages.push(`@${p.user.displayName} (+${formatSilver(loseBonus)} silver bonus, ${stats.newStreak}-lose streak)`);
                     }
                 }),

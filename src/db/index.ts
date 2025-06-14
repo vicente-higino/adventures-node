@@ -40,25 +40,50 @@ export async function setBalance(db: dbClient, id: number, newValue: number) {
     return balance;
 }
 export async function increaseBalanceWithChannelID(db: dbClient, channelProviderId: string, userProviderId: string, amountToIncrease: number) {
-    let balance = await db.balance.findFirst({ where: { channelProviderId, userId: userProviderId } });
-    if (!balance) {
-        throw new Error("Balance not found");
-    }
+    let balance = await db.balance.findUniqueOrThrow({ where: { channelProviderId_userId: { channelProviderId, userId: userProviderId } } });
     balance = await increaseBalance(db, balance.id, amountToIncrease);
     return balance;
 }
 export async function increaseBalance(db: dbClient, id: number, amountToIncrease: number) {
-    const oldBalance = await db.balance.findUniqueOrThrow({ where: { id } });
-    const isBalanceNegative = oldBalance.value + amountToIncrease < 0;
-    const balance = await db.balance.update({
-        where: { id },
-        data: { value: { increment: isBalanceNegative ? -oldBalance.value : amountToIncrease } },
-    });
-    return balance;
+    if (amountToIncrease < 0) {
+        // Delegate to decreaseBalance for negative amounts
+        return decreaseBalance(db, id, amountToIncrease);
+    }
+    const updated = await db.balance.update({ where: { id }, data: { value: { increment: amountToIncrease } } });
+
+    if (!updated) {
+        throw new Error("Balance not found.");
+    }
+
+    return updated;
+}
+
+export async function decreaseBalance(db: dbClient, id: number, amountToDecrease: number) {
+    // Get the current balance
+    const current = await db.balance.findUniqueOrThrow({ where: { id } });
+
+    if (current.value <= 0) {
+        // Already zero, nothing to do
+        return current;
+    }
+    amountToDecrease = Math.abs(amountToDecrease); // Ensure we are dealing with a positive amount
+    if (amountToDecrease >= current.value) {
+        // Set balance to zero if amount is greater than or equal to current balance
+        return db.balance.update({ where: { id }, data: { value: 0 } });
+    }
+
+    // Otherwise, decrement normally
+    const updated = await db.balance.update({ where: { id, value: { gte: amountToDecrease } }, data: { value: { decrement: amountToDecrease } } });
+
+    if (!updated) {
+        throw new Error("Insufficient balance or balance not found.");
+    }
+
+    return updated;
 }
 
 export async function findOrCreateUserStats(db: dbClient, channelLogin: string, channelProviderId: string, userProviderId: string) {
-    let userStats = await db.userStats.findFirst({ where: { userId: userProviderId, channelProviderId: channelProviderId } });
+    let userStats = await db.userStats.findUnique({ where: { channelProviderId_userId: { channelProviderId, userId: userProviderId } } });
     if (!userStats) {
         userStats = await db.userStats.create({
             data: { channel: channelLogin, channelProviderId: channelProviderId, userId: userProviderId },
@@ -95,7 +120,7 @@ export async function updateUserAdventureStats(
         where: { id: userStats.id },
         data: {
             totalWagers: { increment: stats.wagerAmount },
-            totalWinnings: { increment: stats.didWin ? stats.winAmount : 0 },
+            totalWinnings: stats.didWin ? { increment: stats.winAmount } : undefined,
             gamesPlayed: { increment: 1 },
             gamesWon: stats.didWin ? { increment: 1 } : undefined,
             winStreak: newWinStreak,
@@ -233,6 +258,20 @@ export async function findOrCreateFishStats(
     }
 
     return fishStats;
+}
+
+/**
+ * Adds bonus silver to a user's stats and balance.
+ * Increments totalWinnings and increases balance.
+ */
+export async function addBonusToUserStats(db: dbClient, channelProviderId: string, userProviderId: string, bonusAmount: number) {
+    // Find the userStats for the user in the channel
+    const userStats = await findOrCreateUserStats(db, channelProviderId, channelProviderId, userProviderId);
+    if (userStats) {
+        await db.userStats.update({ where: { id: userStats.id }, data: { totalWinnings: { increment: bonusAmount } } });
+    }
+    // Also add to balance
+    await increaseBalanceWithChannelID(db, channelProviderId, userProviderId, bonusAmount);
 }
 
 type dbClient = PrismaClient | Prisma.TransactionClient;
