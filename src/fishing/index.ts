@@ -197,7 +197,7 @@ export const legendaryEventTaskPerChannel = (channels: string[]) =>
             const legendaryChanceAfter = getChanceByRarity("Legendary");
             const chanceStr = `${legendaryChanceBefore.toFixed(2)}% -> ${legendaryChanceAfter.toFixed(2)}%`;
             sendActionToAllChannel(
-                `🌟 A Legendary Fishing Event has started! Legendary fish are much more likely for the next hour! ${chanceStr} 🎣`,
+                `🌟 A Legendary Fishing Event has started! Legendary fish are much more likely for the next 90 minutes! ${chanceStr} 🎣`,
             );
             c.task?.stop();
             setTimeout(
@@ -208,7 +208,7 @@ export const legendaryEventTaskPerChannel = (channels: string[]) =>
                         sendActionToAllChannel("⏰ The Legendary Fishing Event has ended. Legendary fish odds are back to normal.");
                     c.task?.start();
                 },
-                60 * 60 * 1000,
+                90 * 60 * 1000,
             );
         }
     });
