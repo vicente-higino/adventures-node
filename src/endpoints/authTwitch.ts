@@ -5,6 +5,8 @@ import { exchangeCode } from "@twurple/auth";
 import { refreshingAuthProvider, createBot, updateBotConfig } from "@/bot";
 import fs from "fs/promises";
 import { z } from "zod";
+import { getUserById } from "@/twitch/api";
+import { prisma } from "@/prisma";
 
 // Global set to store valid OAuth states
 const validOAuthStates = new Set<string>();
@@ -23,26 +25,30 @@ export class AuthTwitch extends OpenAPIRoute {
         const { code, state } = data.query;
         // Validate state
         if (!state || !validOAuthStates.has(state)) {
-            return c.json({ error: "Invalid or missing OAuth state" }, 400);
+            return c.json({ error: "Invalid or missing OAuth state. Please try the authentication process again." }, 400);
         }
         // Remove state after use to prevent replay
         validOAuthStates.delete(state);
 
         const redirectUri = c.env.TWTICH_REDIRECT_URI;
         if (!redirectUri) {
-            return c.json({ error: "Redirect URI is not configured" }, 500);
+            return c.json({ error: "Server configuration error: Redirect URI is not set." }, 500);
         }
 
         try {
             const tokenData = await exchangeCode(c.env.TWITCH_CLIENT_ID, c.env.TWITCH_CLIENT_SECRET, code, redirectUri);
             const userId = await refreshingAuthProvider.addUserForToken(tokenData);
+            const user = await getUserById(prisma, userId);
+            if(!user){
+                return c.text("Failed to add user: Unable to retrieve user information from Twitch.", 500);
+            }
             await fs.writeFile(`./secrets/tokens.${userId}.json`, JSON.stringify(tokenData, null, 4), "utf-8");
             await updateBotConfig({ userId });
             await createBot();
-            return c.json({ message: "Token added successfully" });
+            return c.text(`Twitch user "${user.login}" was successfully added and authenticated.`);
         } catch (error) {
             console.error("Error exchanging code:", error);
-            return c.json({ error: "Failed to exchange code" }, 500);
+            return c.text("An error occurred while exchanging the authorization code. Please try again later.", 500);
         }
     }
 }
@@ -59,7 +65,7 @@ export class AuthTwitchRedirect extends OpenAPIRoute {
 
         const redirectUri = c.env.TWTICH_REDIRECT_URI;
         if (!redirectUri) {
-            return c.json({ error: "Redirect URI is not configured" }, 500);
+            return c.json({ error: "Server configuration error: Redirect URI is not set." }, 500);
         }
         const scope = data.query.scope ?? "chat:read chat:edit user:write:chat user:bot user:read:chat user:manage:chat_color";
         // Generate random state if not provided
@@ -73,6 +79,6 @@ export class AuthTwitchRedirect extends OpenAPIRoute {
 
         const twitchAuthUrl = `https://id.twitch.tv/oauth2/authorize?${params.toString()}`;
         console.log("Twitch Auth URL:", twitchAuthUrl);
-        return c.text(twitchAuthUrl);
+        return c.text(`To authenticate with Twitch, please visit the following URL:\n\n${twitchAuthUrl}`);
     }
 }
