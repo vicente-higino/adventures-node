@@ -188,7 +188,7 @@ export async function handleFish(
                 case "legendary":
                     return `${index}. ${entry.name}: ${entry.legendary} Legendary Fish`;
                 case "treasure":
-                    return `${index}. ${entry.name}: ${entry.treasure} Treasure Chests`;
+                    return `${index}. ${entry.name}: ${entry.treasure} Silver found`;
                 default:
                     return "";
             }
