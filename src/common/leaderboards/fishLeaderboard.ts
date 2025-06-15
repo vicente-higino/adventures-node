@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { formatSilver, roundToDecimalPlaces } from "@/utils/misc";
 import { LeaderboardResult } from "@/common/leaderboards";
 
-type FishMetric = "count" | "silver" | "fines" | "avg" | "trash" | "common" | "uncommon" | "fine" | "rare" | "epic" | "legendary" | "top";
+type FishMetric = "count" | "silver" | "fines" | "avg" | "trash" | "common" | "uncommon" | "fine" | "rare" | "epic" | "legendary" | "top" | "treasure";
 
 export async function handleFish(
     prisma: PrismaClient,
@@ -51,6 +51,8 @@ export async function handleFish(
             const fines = fs.fishFines;
             // Calculate avg value per fish, avoid division by zero
             const avg = totalCount > 0 ? roundToDecimalPlaces(value / totalCount, 2) : 0;
+            // Add treasure count
+            const treasure = fs.treasureSilver ?? 0;
             return {
                 name,
                 value,
@@ -64,6 +66,7 @@ export async function handleFish(
                 rare: fs.rareFishCount,
                 epic: fs.epicFishCount,
                 legendary: fs.legendaryFishCount,
+                treasure,
             };
         })
         // Optional: Filter out users with 0 in the metric being sorted, unless sorting ascending
@@ -80,6 +83,7 @@ export async function handleFish(
                 if (metric === "rare") return entry.rare > 0;
                 if (metric === "epic") return entry.epic > 0;
                 if (metric === "legendary") return entry.legendary > 0;
+                if (metric === "treasure") return entry.treasure > 0;
             }
             return true; // Keep all for ascending sort or if value is non-zero
         });
@@ -143,6 +147,10 @@ export async function handleFish(
                     compareA = a.legendary;
                     compareB = b.legendary;
                     break;
+                case "treasure":
+                    compareA = a.treasure;
+                    compareB = b.treasure;
+                    break;
             }
 
             if (compareA !== compareB) {
@@ -179,6 +187,8 @@ export async function handleFish(
                     return `${index}. ${entry.name}: ${entry.epic} Epic Fish`;
                 case "legendary":
                     return `${index}. ${entry.name}: ${entry.legendary} Legendary Fish`;
+                case "treasure":
+                    return `${index}. ${entry.name}: ${entry.treasure} Treasure Chests`;
                 default:
                     return "";
             }
@@ -219,6 +229,9 @@ export async function handleFish(
             break;
         case "legendary":
             metricDisplay = "legendary fish";
+            break;
+        case "treasure":
+            metricDisplay = "treasure chests";
             break;
     }
 

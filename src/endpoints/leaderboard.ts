@@ -21,8 +21,8 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                             "Sort by must be [adv-|duel-][wins|played|wagered|profit|streak][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary|-top][-asc|-bottom], or silver[-asc|-bottom].",
                     })
                     .regex(
-                        /^(?:(adv|duel)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top))?|silver)(-(?:asc|bottom))?$/i,
-                        "Sort by: [adventure-|duel-][wins|played|wagered|profit|streak][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary|-top][-asc|-bottom], or silver[-asc|-bottom].",
+                        /^(?:(adv|duel)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top|treasure))?|silver)(-(?:asc|bottom))?$/i,
+                        "Sort by: [adventure-|duel-][wins|played|wagered|profit|streak][-asc|-bottom], fish[-silver|-avg|-fines|-trash|-common|-uncommon|-fine|-rare|-epic|-legendary|-top|-treasure][-asc|-bottom], or silver[-asc|-bottom].",
                     )
                     .default("silver"), // Default to silver
             }),
@@ -33,7 +33,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
     handleValidationError(): Response {
         // Concise usage message
         const msg =
-            "Usage: !leaderboard [duel-][wins|played|wagered|profit|streak] | fish[-silver|-avg|-fines|-rarity|-top] | silver [-asc|-bottom] [amount] (default: silver, 5)";
+            "Usage: !leaderboard [duel-][wins|played|wagered|profit|streak] | fish[-silver|-avg|-fines|-rarity|-top|-treasure] | silver [-asc|-bottom] [amount] (default: silver, 5)";
         return new Response(msg, { status: 400 });
     }
 
@@ -47,7 +47,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
         const sortParts = sortBy
             .toLowerCase()
             .match(
-                /^(?:(adv|duel)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top))?|silver)(-(?:asc|bottom))?$/i,
+                /^(?:(adv|duel)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top|treasure))?|silver)(-(?:asc|bottom))?$/i,
             ); // Use updated regex
         if (!sortParts) {
             // This should ideally not happen due to Zod validation, but good practice to keep.
@@ -117,6 +117,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
                     "epic",
                     "legendary",
                     "top",
+                    "treasure",
                 ]);
                 const parsedFishMetric = fishMetricSchema.safeParse(internalMetric);
                 if (!parsedFishMetric.success) {
