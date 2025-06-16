@@ -83,7 +83,7 @@ export class AdventureEnd extends OpenAPIRoute {
 
                             await increaseBalanceWithChannelID(prisma, channelProviderId, p.user.providerId, winAmount);
                             if (streakBonus > 0) {
-                                await addBonusToUserStats(prisma, channelProviderId, p.user.providerId, streakBonus);
+                                await addBonusToUserStats(prisma, channelLogin, channelProviderId, p.user.providerId, streakBonus);
                             }
 
                             resultArr.push({ displayName: p.user.displayName, profit: profit + streakBonus, streakBonus, streak: stats.newStreak });
@@ -102,7 +102,7 @@ export class AdventureEnd extends OpenAPIRoute {
 
                         const loseBonus = calculateLoseStreakBonus(stats.newStreak, stats.streakWager);
                         if (loseBonus > 0) {
-                            await addBonusToUserStats(prisma, channelProviderId, p.user.providerId, loseBonus);
+                            await addBonusToUserStats(prisma, channelLogin, channelProviderId, p.user.providerId, loseBonus);
                             loserMessages.push(`@${p.user.displayName} (+${formatSilver(loseBonus)} silver bonus, ${stats.newStreak}-lose streak)`);
                         }
                     }),
@@ -152,7 +152,7 @@ export class AdventureEnd extends OpenAPIRoute {
 
                     const loseBonus = calculateLoseStreakBonus(stats.newStreak, stats.streakWager);
                     if (loseBonus > 0) {
-                        await addBonusToUserStats(prisma, channelProviderId, p.user.providerId, loseBonus);
+                        await addBonusToUserStats(prisma, channelLogin, channelProviderId, p.user.providerId, loseBonus);
                         loserMessages.push(`@${p.user.displayName} (+${formatSilver(loseBonus)} silver bonus, ${stats.newStreak}-lose streak)`);
                     }
                 }),

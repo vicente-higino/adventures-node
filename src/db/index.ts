@@ -264,11 +264,20 @@ export async function findOrCreateFishStats(
  * Adds bonus silver to a user's stats and balance.
  * Increments totalWinnings and increases balance.
  */
-export async function addBonusToUserStats(db: dbClient, channelProviderId: string, userProviderId: string, bonusAmount: number) {
+export async function addBonusToUserStats(
+    db: dbClient,
+    channelLogin: string,
+    channelProviderId: string,
+    userProviderId: string,
+    bonusAmount: number,
+) {
     // Find the userStats for the user in the channel
-    const userStats = await findOrCreateUserStats(db, channelProviderId, channelProviderId, userProviderId);
+    const userStats = await findOrCreateUserStats(db, channelLogin, channelProviderId, userProviderId);
     if (userStats) {
-        await db.userStats.update({ where: { id: userStats.id }, data: { totalWinnings: { increment: bonusAmount }, streakWager: { decrement: bonusAmount } } });
+        await db.userStats.update({
+            where: { id: userStats.id },
+            data: { totalWinnings: { increment: bonusAmount }, streakWager: { decrement: bonusAmount } },
+        });
     }
     // Also add to balance
     await increaseBalanceWithChannelID(db, channelProviderId, userProviderId, bonusAmount);
