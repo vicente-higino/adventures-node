@@ -268,7 +268,7 @@ export async function addBonusToUserStats(db: dbClient, channelProviderId: strin
     // Find the userStats for the user in the channel
     const userStats = await findOrCreateUserStats(db, channelProviderId, channelProviderId, userProviderId);
     if (userStats) {
-        await db.userStats.update({ where: { id: userStats.id }, data: { totalWinnings: { increment: bonusAmount } } });
+        await db.userStats.update({ where: { id: userStats.id }, data: { totalWinnings: { increment: bonusAmount }, streakWager: { decrement: bonusAmount } } });
     }
     // Also add to balance
     await increaseBalanceWithChannelID(db, channelProviderId, userProviderId, bonusAmount);
