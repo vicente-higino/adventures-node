@@ -39,7 +39,7 @@ export class AuthTwitch extends OpenAPIRoute {
             const tokenData = await exchangeCode(c.env.TWITCH_CLIENT_ID, c.env.TWITCH_CLIENT_SECRET, code, redirectUri);
             const userId = await refreshingAuthProvider.addUserForToken(tokenData);
             const user = await getUserById(prisma, userId);
-            if(!user){
+            if (!user) {
                 return c.text("Failed to add user: Unable to retrieve user information from Twitch.", 500);
             }
             await fs.writeFile(`./secrets/tokens.${userId}.json`, JSON.stringify(tokenData, null, 4), "utf-8");

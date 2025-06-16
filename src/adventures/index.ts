@@ -49,11 +49,11 @@ const adventures: Adventure[] = [
     ...customAdventures,
 ];
 
-function randomAdventure(): Adventure {
-    return pickRandom(adventures);
+function randomAdventure(adv = adventures): Adventure {
+    return pickRandom(adv);
 }
 export function runGroupAdventure(players: string[]) {
-    const adventure = randomAdventure();
+    const adventure = players.length > 12 ? randomAdventure(customAdventures) : randomAdventure();
     const results: PlayerAdventureResult[] = players.map(player => {
         const outcome = Math.random() > 0.5 ? "win" : "lose";
         const message = outcome === "win" ? pickRandom(adventure.winMessages)(player) : pickRandom(adventure.loseMessages)(player);

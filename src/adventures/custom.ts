@@ -46,8 +46,54 @@ export const customAdventures: Adventure[] = [
         //         ? `Success! ${names} secures the Golden Slice! The taste is... indescribable! You've achieved pizza nirvana!`
         //         : "The Golden Slice is secured! Pizza for everyone!",
         endLose: names =>
+            names ? `Oh no! ${names} couldn't handle the heat and got tossed out like yesterday's crusts! No Golden Slice today.` : "",
+    },
+    {
+        description: () =>
+            `You awaken in a cold, metallic room. A voice booms, "Welcome, contestants, to the Galactic Gameshow! Your challenge: survive the obstacle course of doom!"`,
+        winMessages: [name => ``],
+        loseMessages: [name => ``],
+        endWin: names =>
             names
-                ? `Oh no! ${names} couldn't handle the heat and got tossed out like yesterday's crusts! No Golden Slice today.`
-                : "The animatronics were too much! The party retreats, defeated and hungry.",
+                ? `Congratulations, ${names}! You've conquered the Galactic Gameshow and won the grand prize: a lifetime supply of space snacks!`
+                : "",
+        endLose: names => (names ? `Alas, ${names} couldn't survive the gameshow. Better luck in the next dimension!` : ""),
+    },
+    {
+        description: () =>
+            `The air crackles with magic. You stand before the Grand Library of Eldoria, rumored to contain spells of unimaginable power. But beware, the library is guarded by arcane constructs and mischievous imps!`,
+        winMessages: [name => ``],
+        loseMessages: [name => ``],
+        endWin: names => (names ? `Huzzah, ${names}! You've mastered the Grand Library and gained untold magical knowledge!` : ""),
+        endLose: names => (names ? `Tragedy strikes! ${names} couldn't navigate the library's dangers and is lost forever!` : ""),
+    },
+    {
+        description: () =>
+            `A dense fog rolls in. You find yourselves in the heart of the Carnival of Lost Souls, a place where dreams and nightmares intertwine. The ringmaster beckons, "Step right up, adventurers, and test your fate!"`,
+        winMessages: [name => ``],
+        loseMessages: [name => ``],
+        endWin: names => (names ? `Bravo, ${names}! You've survived the Carnival of Lost Souls and escaped with your sanity intact!` : ""),
+        endLose: names => (names ? `Alas, ${names} couldn't escape the carnival's clutches and is doomed to wander its twisted paths forever!` : ""),
+    },
+    {
+        description: () => `You stumble upon an ancient portal pulsating with energy. Do you dare to step through and face the unknown?`,
+        winMessages: [name => ``],
+        loseMessages: [name => ``],
+        endWin: names => (names ? `With a final surge of power, ${names} close the portal, preventing further incursions.` : ""),
+        endLose: names => (names ? `The portal overwhelms ${names}, scattering them across time and space.` : ""),
+    },
+    {
+        description: () => `A mysterious signal leads you to a derelict spaceship drifting in the void. What secrets does it hold?`,
+        winMessages: [name => ``],
+        loseMessages: [name => ``],
+        endWin: names => (names ? `${names} successfully repair the ship and set a course for home.` : ""),
+        endLose: names => (names ? `The ship's automated defenses activate, vaporizing ${names}.` : ""),
+    },
+    {
+        description: () => `You find yourselves in a bustling goblin market. Can you haggle your way to a valuable treasure?`,
+        winMessages: [name => ``],
+        loseMessages: [name => ``],
+        endWin: names => (names ? `${names} strike a bargain and acquire a legendary artifact.` : ""),
+        endLose: names => (names ? `The goblins swindle ${names}, leaving them penniless and humiliated.` : ""),
     },
 ];

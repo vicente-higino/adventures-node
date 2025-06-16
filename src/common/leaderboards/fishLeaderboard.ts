@@ -2,7 +2,20 @@ import { PrismaClient } from "@prisma/client";
 import { formatSilver, roundToDecimalPlaces } from "@/utils/misc";
 import { LeaderboardResult } from "@/common/leaderboards";
 
-type FishMetric = "count" | "silver" | "fines" | "avg" | "trash" | "common" | "uncommon" | "fine" | "rare" | "epic" | "legendary" | "top" | "treasure";
+type FishMetric =
+    | "count"
+    | "silver"
+    | "fines"
+    | "avg"
+    | "trash"
+    | "common"
+    | "uncommon"
+    | "fine"
+    | "rare"
+    | "epic"
+    | "legendary"
+    | "top"
+    | "treasure";
 
 export async function handleFish(
     prisma: PrismaClient,
