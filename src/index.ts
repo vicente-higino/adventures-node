@@ -25,13 +25,16 @@ import { prisma } from "@/prisma";
 import { AuthTwitch, AuthTwitchRedirect } from "./endpoints/authTwitch";
 import { bearerAuth } from "hono/bearer-auth";
 import { startCron } from "./cron";
+import { authMiddleware } from "@/middleware/authMiddleware";
 // Start a Hono app
 const hono = new Hono<HonoEnv>();
+const honoWithAuth = new Hono<HonoEnv>();
 
 // Error handling middleware
 
 // Setup OpenAPI registry
 const app = fromHono(hono);
+const authenticatedRoute = fromHono(honoWithAuth);
 
 createBot().catch(e => console.error);
 app.use(logger());
@@ -39,7 +42,7 @@ app.use(logger());
 // Add validation middleware before routes
 app.use("*", timeout(9500, new HTTPException(408, { message: "oopsie Something went wrong. Please try again in a few seconds." })));
 
-// app.use("/api/*", authMiddleware);
+authenticatedRoute.use("*", authMiddleware);
 // Add health endpoint
 app.get("/health", async c => {
     try {
@@ -65,8 +68,8 @@ app.get("/auth/twitch/login", AuthTwitchRedirect);
 app.use("*", bearerAuth({ token: env.TWITCH_CLIENT_SECRET }));
 // Register OpenAPI endpoints
 app.get("/api/points/:userId", Point);
-app.get("/api/points/update/:userId/:newBalance", PointUpdate);
-app.get("/api/points/add/:userId/:add", PointAdd);
+authenticatedRoute.get("/api/points/update/:userId/:newBalance", PointUpdate);
+authenticatedRoute.get("/api/points/add/:userId/:add", PointAdd);
 app.get("/api/points/give/:userId/:giveAmount", PointGive);
 app.get("/api/adventures/join/:amount", AdventureJoin);
 app.get("/api/adventures/end", AdventureEnd);
@@ -81,6 +84,7 @@ app.get("/api/duel/cancel/:challengedId", DuelCancel);
 
 app.get("/api/leaderboard/:amount/:sortBy", ConsolidatedLeaderboard);
 
+app.route("/", authenticatedRoute);
 // Add the last fish endpoint
 startCron();
 
