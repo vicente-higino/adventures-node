@@ -1,7 +1,7 @@
-import { createAdminBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../BotCommandWithKeywords";
 import { formatRarityWeightDisplay } from "@/fishing";
 
-export const fishOddsCommand = createAdminBotCommand(
+export const fishOddsCommand = createBotCommand(
     "fishingodds",
     async (params, ctx) => {
         const { msg, say } = ctx;
