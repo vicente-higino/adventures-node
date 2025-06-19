@@ -1,4 +1,4 @@
-import { formatSize, formatSilver } from "@/utils/misc";
+import { formatSize, formatSilver, formatWeight } from "@/utils/misc";
 import { Fish, PrismaClient, Rarity } from "@prisma/client";
 
 export async function getFishRecordStats({
@@ -35,7 +35,7 @@ export async function getFishRecordStats({
                     const id = fish.id;
                     if (!acc.has(id)) {
                         acc.set(id, {
-                            text: `${record.fishName} #${fish.id} (${formatSize(parseFloat(fish.size))} - ${formatSilver(fish.value)} Silver)`,
+                            text: `${record.fishName} #${fish.id} (${formatSize(parseFloat(fish.size))}, ${formatWeight(parseFloat(fish.weight))}, ${formatSilver(fish.value)} Silver)`,
                             value: parseFloat(fish.size),
                             silver: fish.value,
                             types: [],
