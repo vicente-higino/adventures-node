@@ -28,7 +28,7 @@ async function handleApiRequest<T>(apiCall: () => Promise<T>, authProvider: AppT
     } catch (error) {
         console.error("API call failed:", error);
         await authProvider.getAppAccessToken(true);
-        return await apiCall(); // Retry the API call
+        return null; // Return null on failure
     }
 }
 
