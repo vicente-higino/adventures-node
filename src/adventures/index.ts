@@ -53,7 +53,7 @@ function randomAdventure(adv = adventures): Adventure {
     return pickRandom(adv);
 }
 export function runGroupAdventure(players: string[]) {
-    const adventure = players.length >= 15 ? randomAdventure(customAdventures) : randomAdventure();
+    const adventure = players.length > 11 ? randomAdventure(customAdventures) : randomAdventure();
     const results: PlayerAdventureResult[] = players.map(player => {
         const outcome = Math.random() > 0.5 ? "win" : "lose";
         const message = outcome === "win" ? pickRandom(adventure.winMessages)(player) : pickRandom(adventure.loseMessages)(player);
