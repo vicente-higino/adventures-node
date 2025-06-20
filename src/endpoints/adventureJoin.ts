@@ -136,7 +136,7 @@ export class AdventureJoin extends OpenAPIRoute {
             scheduleAdventureWarnings(prisma, channelLogin, adventure.id);
 
             return c.text(
-                `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "!adventure|adv [silver(K/M/B)|%|all|+/-delta|to:X|k:X]" to join in! Then use "!adventureend|advend" to end the adventure and get your rewards!
+                `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "!adventure|adv [silver(K/M/B)|%|all|to:X|k:X]" to join in!
                 This adventure offers a ${formattedPayoutRate}x payout rate! GAMBA
                 $(newline)@${userDisplayName} joined the adventure with ${newBuyin} silver.`,
             );
