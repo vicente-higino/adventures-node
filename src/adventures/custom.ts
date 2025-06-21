@@ -32,19 +32,13 @@ export const customAdventures: Adventure[] = [
     },
     {
         description: () =>
-            `The smell of pepperoni and melting cheese fills the air. ${pickRandom(["MakingPizza", "pizzaSpin"])} You stand before "Offslie's Pizzaria", famed for its legendary Golden Slice. Rumor has it, it grants eternal pizza bliss. But beware, the animatronic band is notoriously aggressive after hours!`,
-        winMessages: [
-            name => `${name} dodges a flying meatball and grabs a slice!`,
-            name => `${name} outsmarts the singing sausage animatronic.`,
-            name => `${name} distracts the animatronics with a pizza box and sneaks past.`,
-            name => `${name} finds a secret passage behind the soda machine and escapes danger.`,
-            name => `${name} impresses Chef Alfredo with their pizza knowledge and earns a reward.`,
-        ],
+            `The smell of pepperoni and melting cheese fills the air. ${pickRandom(["pizzaSpin"])} You stand before "Offslie's Pizzaria", famed for its legendary Golden Slice. Rumor has it, it grants eternal pizza bliss. But beware, the animatronic band is notoriously aggressive after hours!`,
+        winMessages: [name => ``],
         loseMessages: [name => ""],
-        // endWin: names =>
-        //     names
-        //         ? `Success! ${names} secures the Golden Slice! The taste is... indescribable! You've achieved pizza nirvana!`
-        //         : "The Golden Slice is secured! Pizza for everyone!",
+        endWin: names =>
+            names
+                ? `Success! ${names} secures the Golden Slice! The taste is... indescribable! You've achieved pizza nirvana!`
+                : "",
         endLose: names =>
             names ? `Oh no! ${names} couldn't handle the heat and got tossed out like yesterday's crusts! No Golden Slice today.` : "",
     },
@@ -87,7 +81,7 @@ export const customAdventures: Adventure[] = [
         winMessages: [name => ``],
         loseMessages: [name => ``],
         endWin: names => (names ? `${names} successfully repair the ship and set a course for home.` : ""),
-        endLose: names => (names ? `The ship's automated defenses activate, vaporizing ${names}.` : ""),
+        endLose: names => (names ? `${names} trigger the ship's automated defenses and are vaporized instantly.` : ""),
     },
     {
         description: () => `You find yourselves in a bustling goblin market. Can you haggle your way to a valuable treasure?`,
