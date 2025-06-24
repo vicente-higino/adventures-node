@@ -16,6 +16,9 @@ import { fishGalleryCommand } from "./commands/fishGallery";
 import { fishDexCommand, fishDexGlobalCommand } from "./commands/fishDex";
 import { fishCountCommand } from "./commands/fishCount";
 import { fishRecordsCommand } from "./commands/fishRecords";
+import { EmoteTracker } from "./emote-tracker";
+import { emoteCountCommand, emoteRankCommand } from "./commands/emoteCount";
+import { refreshEmotesAdminCommand, refreshEmotesCommand } from "./commands/refreshEmotesCommand";
 const clientId = env.TWITCH_CLIENT_ID;
 const clientSecret = env.TWITCH_CLIENT_SECRET;
 
@@ -110,7 +113,7 @@ async function createEventsubListeners(users: string[]) {
 
 let bot: Bot | null = null;
 let currentBotUserId: string | null = null; // Track the userId for the singleton
-
+export let emoteTracker: EmoteTracker | null = null; // Placeholder for emote tracker
 export const GetBot = () => bot;
 
 export const createBot = async () => {
@@ -133,6 +136,7 @@ export const createBot = async () => {
             channels: botConfig.channels,
             prefix: botConfig.prefix,
             debug: botConfig.debug,
+            emitCommandMessageEvents: true,
             chatClientOptions: { isAlwaysMod: botConfig.isAlwaysMod },
             commands: [
                 fishCommand,
@@ -146,6 +150,10 @@ export const createBot = async () => {
                 fishDexGlobalCommand,
                 fishCountCommand,
                 fishRecordsCommand,
+                emoteRankCommand,
+                emoteCountCommand,
+                refreshEmotesCommand,
+                refreshEmotesAdminCommand,
             ],
         });
         bot.onAuthenticationSuccess(() => {
@@ -165,6 +173,8 @@ export const createBot = async () => {
                 bot?.say(broadcasterName, `SideEye`);
             }
         });
+        emoteTracker = new EmoteTracker(bot);
+        emoteTracker.initialize();
         currentBotUserId = userId; // Update the current userId
     } catch (err) {
         console.error(err);

@@ -35,10 +35,7 @@ export const customAdventures: Adventure[] = [
             `The smell of pepperoni and melting cheese fills the air. ${pickRandom(["pizzaSpin"])} You stand before "Offslie's Pizzaria", famed for its legendary Golden Slice. Rumor has it, it grants eternal pizza bliss. But beware, the animatronic band is notoriously aggressive after hours!`,
         winMessages: [name => ``],
         loseMessages: [name => ""],
-        endWin: names =>
-            names
-                ? `Success! ${names} secures the Golden Slice! The taste is... indescribable! You've achieved pizza nirvana!`
-                : "",
+        endWin: names => (names ? `Success! ${names} secures the Golden Slice! The taste is... indescribable! You've achieved pizza nirvana!` : ""),
         endLose: names =>
             names ? `Oh no! ${names} couldn't handle the heat and got tossed out like yesterday's crusts! No Golden Slice today.` : "",
     },

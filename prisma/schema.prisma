@@ -192,6 +192,27 @@ model Duel {
     @@index([channelProviderId, challengerId, challengedId])
 }
 
+model EmoteUsage {
+    id                Int      @id @default(autoincrement())
+    channelProviderId String
+    emoteName         String
+    usageCount        Int      @default(0)
+    updatedAt         DateTime @updatedAt
+    createdAt         DateTime @default(now())
+
+    @@unique([channelProviderId, emoteName])
+    @@index([channelProviderId, emoteName])
+}
+
+model EmoteUsageEvent {
+    id                Int      @id @default(autoincrement())
+    channelProviderId String
+    emoteName         String
+    usedAt            DateTime @default(now())
+
+    @@index([channelProviderId, emoteName, usedAt])
+}
+
 enum DuelStatus {
     Pending
     Accepted

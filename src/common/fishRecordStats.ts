@@ -2,7 +2,10 @@ import { formatSize, formatSilver, formatWeight } from "@/utils/misc";
 import { Fish, PrismaClient, Rarity } from "@prisma/client";
 
 export async function getFishRecordStats({
-    prisma, channelProviderId, userProviderId, page = 1,
+    prisma,
+    channelProviderId,
+    userProviderId,
+    page = 1,
 }: {
     prisma: PrismaClient;
     channelProviderId: string;
@@ -19,16 +22,10 @@ export async function getFishRecordStats({
                 { lightestFish: { userId: userProviderId, rarity: { not: Rarity.Trash } } },
             ],
         },
-        select: {
-            fishName: true,
-            largestFish: true,
-            smallestFish: true,
-            heaviestFish: true,
-            lightestFish: true,
-        },
+        select: { fishName: true, largestFish: true, smallestFish: true, heaviestFish: true, lightestFish: true },
     });
 
-    const records = fishRecords.reduce<Map<number, { text: string; value: number; silver: number; types: string[]; fishName: string; }>>(
+    const records = fishRecords.reduce<Map<number, { text: string; value: number; silver: number; types: string[]; fishName: string }>>(
         (acc, record) => {
             const processFish = (fish: Fish, type: string) => {
                 if (fish.userId === userProviderId) {
@@ -39,7 +36,7 @@ export async function getFishRecordStats({
                             value: parseFloat(fish.size),
                             silver: fish.value,
                             types: [],
-                            fishName: record.fishName
+                            fishName: record.fishName,
                         });
                     }
                     const entry = acc.get(id);
@@ -47,23 +44,20 @@ export async function getFishRecordStats({
                 }
             };
 
-            processFish(record.largestFish, 'Largest');
-            processFish(record.smallestFish, 'Smallest');
-            processFish(record.heaviestFish, 'Heaviest');
-            processFish(record.lightestFish, 'Lightest');
+            processFish(record.largestFish, "Largest");
+            processFish(record.smallestFish, "Smallest");
+            processFish(record.heaviestFish, "Heaviest");
+            processFish(record.lightestFish, "Lightest");
 
             return acc;
         },
-        new Map()
+        new Map(),
     );
 
     // Convert Map to Array and sort by silver value
     const recordsArray = Array.from(records.values())
         .sort((a, b) => b.silver - a.silver)
-        .map(record => ({
-            ...record,
-            text: `${record.types.join("/")} ${record.text}`
-        }));
+        .map(record => ({ ...record, text: `${record.types.join("/")} ${record.text}` }));
 
     const RECORDS_PER_PAGE = 4;
     const totalPages = Math.max(1, Math.ceil(recordsArray.length / RECORDS_PER_PAGE));
@@ -72,12 +66,7 @@ export async function getFishRecordStats({
     const startIdx = (page - 1) * RECORDS_PER_PAGE;
     const pageRecords = recordsArray.slice(startIdx, startIdx + RECORDS_PER_PAGE);
 
-    const recordsText = pageRecords.length > 0
-        ? pageRecords.map(record => record.text).join(", ")
-        : "No records found.";
+    const recordsText = pageRecords.length > 0 ? pageRecords.map(record => record.text).join(", ") : "No records found.";
 
-    return {
-        text: recordsText,
-        totalPages
-    };
+    return { text: recordsText, totalPages };
 }

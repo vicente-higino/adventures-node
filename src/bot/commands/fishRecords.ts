@@ -16,7 +16,7 @@ export const fishRecordsCommand = createBotCommand(
             const parsedPage = parseInt(param);
             if (!isNaN(parsedPage)) {
                 page = parsedPage;
-            } else if (param.startsWith('@')) {
+            } else if (param.startsWith("@")) {
                 username = param.substring(1);
             } else {
                 username = param;
@@ -36,12 +36,14 @@ export const fishRecordsCommand = createBotCommand(
             prisma,
             channelProviderId: broadcasterId,
             userProviderId: userId,
-            page
+            page,
         });
 
         // Handle invalid page numbers
         if (page < 1 || page > totalPages) {
-            say(`@${userDisplayName}, invalid page number. Available pages: 1-${totalPages}. Usage: ${getBotConfig().prefix}fishrecords [@username] [page]`);
+            say(
+                `@${userDisplayName}, invalid page number. Available pages: 1-${totalPages}. Usage: ${getBotConfig().prefix}fishrecords [@username] [page]`,
+            );
             return;
         }
 
