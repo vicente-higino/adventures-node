@@ -17,7 +17,7 @@ import { fishDexCommand, fishDexGlobalCommand } from "./commands/fishDex";
 import { fishCountCommand } from "./commands/fishCount";
 import { fishRecordsCommand } from "./commands/fishRecords";
 import { EmoteTracker } from "./emote-tracker";
-import { emoteCountCommand, emoteRankCommand } from "./commands/emoteCount";
+import { emoteCountCommand, emoteRankCommand, myEmoteCountCommand, myEmoteRankCommand } from "./commands/emoteCount";
 import { refreshEmotesAdminCommand, refreshEmotesCommand } from "./commands/refreshEmotesCommand";
 const clientId = env.TWITCH_CLIENT_ID;
 const clientSecret = env.TWITCH_CLIENT_SECRET;
@@ -152,6 +152,8 @@ export const createBot = async () => {
                 fishRecordsCommand,
                 emoteRankCommand,
                 emoteCountCommand,
+                myEmoteCountCommand,
+                myEmoteRankCommand,
                 refreshEmotesCommand,
                 refreshEmotesAdminCommand,
             ],

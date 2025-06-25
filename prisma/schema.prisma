@@ -208,6 +208,7 @@ model EmoteUsageEvent {
     id                Int      @id @default(autoincrement())
     channelProviderId String
     emoteName         String
+    userId            String   @default("")
     usedAt            DateTime @default(now())
 
     @@index([channelProviderId, emoteName, usedAt])

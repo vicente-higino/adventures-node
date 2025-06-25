@@ -31,6 +31,7 @@ export class EmoteTracker {
         this.bot.onMessage(async ctx => {
             const channel = ctx.broadcasterName;
             const channelId = ctx.broadcasterId;
+            const userId = ctx.userId;
             const text = ctx.text;
             const emotes = this.channelEmotes.get(channel);
             if (!emotes) return;
@@ -41,7 +42,7 @@ export class EmoteTracker {
                 .map(word => word.trim())
                 .filter(word => word.length > 0);
 
-            const emoteEvents: { channelProviderId: string; emoteName: string }[] = [];
+            const emoteEvents: { channelProviderId: string; emoteName: string; userId: string }[] = [];
 
             for (const word of words) {
                 if (!word) continue;
@@ -49,7 +50,7 @@ export class EmoteTracker {
                     // const t = (usage.get(word) || 0) + 1;
                     // usage.set(word, t);
 
-                    emoteEvents.push({ channelProviderId: channelId, emoteName: word });
+                    emoteEvents.push({ channelProviderId: channelId, emoteName: word, userId });
                 }
             }
 
@@ -73,18 +74,21 @@ export class EmoteTracker {
 
     async refreshEmotes(channel: string) {
         const user = await getUserByUsername(prisma, channel);
-        if (!user) return;
+        if (!user) return 0;
         const emotes = await this.emoteFetcher.fetchAll(user.id);
         this.channelEmotes.set(channel, emotes);
+        return emotes.size;
         // Optionally reset usage for refreshed emotes:
         // this.emoteUsage.set(channel, new Map());
     }
 
-    refreshAllEmotes() {
+    async refreshAllEmotes() {
         const config = getBotConfig();
+        let total = 0;
         for (const channel of config.channels) {
-            this.refreshEmotes(channel);
+            total += await this.refreshEmotes(channel);
         }
+        return total;
     }
     startRefreshAllEmotesCronjobTask() {
         cron.schedule(
