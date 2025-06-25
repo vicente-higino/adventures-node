@@ -6,12 +6,14 @@ interface KeywordCommand {
     keywords: string[];
     action: (params: string[], context: BotCommandContext) => void | Promise<void>;
     ignoreCase?: boolean;
+    offlineOnly?: boolean;
 }
 
 class BotCommandWithKeywords extends BotCommand {
     private _name: string;
     private _keywords: string[];
     private _ignoreCase: boolean;
+    private _offlineOnly: boolean;
     private _action: (params: string[], context: BotCommandContext) => void | Promise<void>;
     constructor(command: KeywordCommand) {
         super();
@@ -19,6 +21,7 @@ class BotCommandWithKeywords extends BotCommand {
         this._keywords = command.keywords;
         this._action = command.action;
         this._ignoreCase = command.ignoreCase ?? false;
+        this._offlineOnly = command.offlineOnly ?? true;
     }
 
     get name(): string {
@@ -28,6 +31,11 @@ class BotCommandWithKeywords extends BotCommand {
     get keywords(): string[] {
         return this._keywords;
     }
+
+    get offlineOnly(): boolean {
+        return this._offlineOnly;
+    }
+
     match(line: string, prefix: string): string[] | null {
         let [command, ...params] = line.split(" ");
         if (this.matchesKeyword(line, this._ignoreCase)) {
@@ -58,11 +66,17 @@ class BotCommandWithKeywords extends BotCommand {
 export function createBotCommand(
     commandName: string,
     handler: (params: string[], context: BotCommandContext) => void | Promise<void>,
-    options: CreateBotCommandOptions & { keywords?: string[] } = {},
+    options: CreateBotCommandOptions & { keywords?: string[]; offlineOnly?: boolean } = {},
 ): BotCommand {
     return new (class extends BotCommandWithKeywords {
         constructor(private readonly _options: CreateBotCommandOptions) {
-            super({ name: commandName, keywords: options.keywords ?? [], action: handler, ignoreCase: options.ignoreCase ?? false });
+            super({
+                name: commandName,
+                keywords: options.keywords ?? [],
+                action: handler,
+                ignoreCase: options.ignoreCase ?? false,
+                offlineOnly: options.offlineOnly ?? true,
+            });
         }
 
         get aliases() {
@@ -80,7 +94,11 @@ export function createBotCommand(
         }
 
         canExecute(channelId: string, userId: string): boolean {
-            return !isChannelLive(channelId);
+            if (this.offlineOnly) {
+                // If the command is offline only, check if the channel is live
+                return !isChannelLive(channelId);
+            }
+            return true;
         }
 
         async execute(params: string[], context: BotCommandContext) {

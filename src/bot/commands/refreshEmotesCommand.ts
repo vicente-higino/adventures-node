@@ -15,7 +15,7 @@ export const refreshEmotesCommand = createBotCommand("refreshemotes", async (par
     }
     await emoteTracker.refreshEmotes(broadcasterName);
     say(`Emotes refreshed for ${broadcasterName}.`);
-});
+}, { offlineOnly: false });
 export const refreshEmotesAdminCommand = createAdminBotCommand("refreshemotesfor", async (params, ctx) => {
     let { say, broadcasterName, msg } = ctx;
     for (const p of params) {

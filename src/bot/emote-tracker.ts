@@ -11,7 +11,7 @@ export class EmoteTracker {
     private channelEmotes: Map<string, Map<string, Emote>> = new Map(); // channel login -> emotes
     // private emoteUsage: Map<string, Map<string, number>> = new Map(); // channel login -> emote name -> count
 
-    constructor(private bot: Bot) { }
+    constructor(private bot: Bot) {}
 
     async initialize() {
         const config = getBotConfig();
@@ -87,9 +87,13 @@ export class EmoteTracker {
         }
     }
     startRefreshAllEmotesCronjobTask() {
-        cron.schedule("0 0,12 * * *", c => {
-            console.log(`[${c.dateLocalIso}] Running Refresh Emotes Task`);
-            this.refreshAllEmotes();
-        }, { timezone: "UTC" });
+        cron.schedule(
+            "0 0,12 * * *",
+            c => {
+                console.log(`[${c.dateLocalIso}] Running Refresh Emotes Task`);
+                this.refreshAllEmotes();
+            },
+            { timezone: "UTC" },
+        );
     }
 }

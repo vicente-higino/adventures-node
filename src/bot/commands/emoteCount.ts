@@ -90,7 +90,7 @@ export const emoteRankCommand = createBotCommand(
         say(`Top ${TOP_EMOTES_COUNT} emotes${range ? ` ${range}` : ""} (${sort}):`);
         say(`${res}`);
     },
-    { aliases: ["er"] },
+    { aliases: ["er"], offlineOnly: false },
 );
 
 export const emoteCountCommand = createBotCommand(
@@ -130,5 +130,5 @@ export const emoteCountCommand = createBotCommand(
         const count = result._count.emoteName;
         say(`${emoteName} was used ${count} time${count === 1 ? "" : "s"}${range ? ` in the last ${range}` : ""}.`);
     },
-    { aliases: ["ec"] },
+    { aliases: ["ec"], offlineOnly: false },
 );
