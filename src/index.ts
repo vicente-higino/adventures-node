@@ -26,6 +26,7 @@ import { AuthTwitch, AuthTwitchRedirect } from "./endpoints/authTwitch";
 import { bearerAuth } from "hono/bearer-auth";
 import { startCron } from "./cron";
 import { authMiddleware } from "@/middleware/authMiddleware";
+import { ignoreMiddleware } from "./middleware/ignoreUsers";
 // Start a Hono app
 const hono = new Hono<HonoEnv>();
 const honoWithAuth = new Hono<HonoEnv>();
@@ -74,6 +75,7 @@ app.get("/api/points/give/:userId/:giveAmount", PointGive);
 app.get("/api/adventures/join/:amount", AdventureJoin);
 app.get("/api/adventures/end", AdventureEnd);
 app.get("/api/adventures/stats/:userId", AdventureStats);
+app.use("/api/fish", ignoreMiddleware);
 app.get("/api/fish", Fish);
 app.get("/api/fish/count/:userId", FishCount);
 app.get("/api/fish/last/", LastFish);

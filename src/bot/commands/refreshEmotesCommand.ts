@@ -18,7 +18,7 @@ export const refreshEmotesCommand = createBotCommand(
         const total = await emoteTracker.refreshEmotes(broadcasterName);
         say(`Emotes refreshed for ${broadcasterName}. ${total} emotes in total.`);
     },
-    { offlineOnly: false },
+    { aliases: ["re"], offlineOnly: false },
 );
 export const refreshEmotesAdminCommand = createAdminBotCommand("refreshemotesfor", async (params, ctx) => {
     let { say, broadcasterName, msg } = ctx;
@@ -32,4 +32,4 @@ export const refreshEmotesAdminCommand = createAdminBotCommand("refreshemotesfor
     }
     const total = await emoteTracker.refreshEmotes(broadcasterName);
     say(`Emotes refreshed for ${broadcasterName}. ${total} emotes in total.`);
-});
+}, { aliases: ["ref"] });
