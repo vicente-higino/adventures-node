@@ -44,7 +44,7 @@ function getStartDate(duration: string | undefined): Date {
             ms = value * 365 * 24 * 60 * 60 * 1000;
             break;
         default:
-            ms = 0;
+            ms = value * 24 * 60 * 60 * 1000;
     }
     return new Date(now.getTime() - ms);
 }
