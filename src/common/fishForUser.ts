@@ -85,9 +85,9 @@ export async function fishForUser({
         treasureMessage = `💰 While sifting through the trash, you discovered a hidden treasure chest containing ${chestBonus} silver! ${getValueEmote(chestBonus)}`;
         setTimeout(async () => {
             sendActionToChannel(channelLogin, `@${userDisplayName} Hold on... something's glimmering in the trash! ${pickRandom(PAUSE_EMOTES)}`);
-            await delay(1000);
+            await delay(2000);
             sendActionToChannel(channelLogin, `@${userDisplayName} ${treasureMessage}`);
-        }, 1500);
+        }, 2000);
     }
 
     const [createdFish, existingRecord] = await Promise.all([
