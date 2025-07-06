@@ -40,69 +40,87 @@ export type Emote = { name: string; id: string | number; provider: "7tv" | "ffz"
 
 class EmoteFetcher {
     async fetch7TV(userId: string): Promise<Emote[]> {
-        console.debug(`[EmoteFetcher] Fetching 7TV emotes for userId: ${userId}`);
-        const res = await fetch(SEVENTV_URL(userId));
-        if (!res.ok) {
-            console.debug(`[EmoteFetcher] 7TV fetch failed for userId: ${userId}`);
+        try {
+            console.debug(`[EmoteFetcher] Fetching 7TV emotes for userId: ${userId}`);
+            const res = await fetch(SEVENTV_URL(userId));
+            if (!res.ok) {
+                console.debug(`[EmoteFetcher] 7TV fetch failed for userId: ${userId}`);
+                return [];
+            }
+            const data = await res.json();
+            const parsed = senventvResSchema.safeParse(data);
+            if (!parsed.success || !parsed.data.emote_set || !Array.isArray(parsed.data.emote_set.emotes)) {
+                console.debug(`[EmoteFetcher] 7TV validation failed for userId: ${userId}`);
+                return [];
+            }
+            console.debug(`[EmoteFetcher] 7TV fetch and validation succeeded for userId: ${userId}`);
+            return parsed.data.emote_set.emotes.map((emote) => ({ name: emote.name, id: emote.id, provider: "7tv", data: emote }));
+        } catch (error) {
+            console.error(`[EmoteFetcher] Error fetching 7TV emotes for userId ${userId}:`, error);
             return [];
+
         }
-        const data = await res.json();
-        const parsed = senventvResSchema.safeParse(data);
-        if (!parsed.success || !parsed.data.emote_set || !Array.isArray(parsed.data.emote_set.emotes)) {
-            console.debug(`[EmoteFetcher] 7TV validation failed for userId: ${userId}`);
-            return [];
-        }
-        console.debug(`[EmoteFetcher] 7TV fetch and validation succeeded for userId: ${userId}`);
-        return parsed.data.emote_set.emotes.map((emote: any) => ({ name: emote.name, id: emote.id, provider: "7tv", data: emote }));
     }
 
     async fetchFFZ(userId: string): Promise<Emote[]> {
-        console.debug(`[EmoteFetcher] Fetching FFZ emotes for userId: ${userId}`);
-        const res = await fetch(FFZ_URL(userId));
-        if (!res.ok) {
-            console.debug(`[EmoteFetcher] FFZ fetch failed for userId: ${userId}`);
-            return [];
-        }
-        const data = await res.json();
-        const parsed = ffzResSchema.safeParse(data);
-        if (!parsed.success) {
-            console.debug(`[EmoteFetcher] FFZ validation failed for userId: ${userId}`);
-            return [];
-        }
-        console.debug(`[EmoteFetcher] FFZ fetch and validation succeeded for userId: ${userId}`);
-        const sets = parsed.data.sets || {};
-        let emotes: Emote[] = [];
-        for (const setId in sets) {
-            const set = sets[setId];
-            if (set && Array.isArray(set.emoticons)) {
-                emotes = emotes.concat(set.emoticons.map((emote: any) => ({ name: emote.name, id: emote.id, provider: "ffz", data: emote })));
+        try {
+            console.debug(`[EmoteFetcher] Fetching FFZ emotes for userId: ${userId}`);
+            const res = await fetch(FFZ_URL(userId));
+            if (!res.ok) {
+                console.debug(`[EmoteFetcher] FFZ fetch failed for userId: ${userId}`);
+                return [];
             }
+            const data = await res.json();
+            const parsed = ffzResSchema.safeParse(data);
+            if (!parsed.success) {
+                console.debug(`[EmoteFetcher] FFZ validation failed for userId: ${userId}`);
+                return [];
+            }
+            console.debug(`[EmoteFetcher] FFZ fetch and validation succeeded for userId: ${userId}`);
+            const sets = parsed.data.sets || {};
+            let emotes: Emote[] = [];
+            for (const setId in sets) {
+                const set = sets[setId];
+                if (set && Array.isArray(set.emoticons)) {
+                    emotes = emotes.concat(set.emoticons.map((emote) => ({ name: emote.name, id: emote.id, provider: "ffz", data: emote })));
+                }
+            }
+            return emotes;
+        } catch (error) {
+            console.error(`[EmoteFetcher] Error fetching FFZ emotes for userId ${userId}:`, error);
+            return [];
+
         }
-        return emotes;
     }
 
     async fetchBTTV(userId: string): Promise<Emote[]> {
-        console.debug(`[EmoteFetcher] Fetching BTTV emotes for userId: ${userId}`);
-        const res = await fetch(BBTV_URL(userId));
-        if (!res.ok) {
-            console.debug(`[EmoteFetcher] BTTV fetch failed for userId: ${userId}`);
+        try {
+            console.debug(`[EmoteFetcher] Fetching BTTV emotes for userId: ${userId}`);
+            const res = await fetch(BBTV_URL(userId));
+            if (!res.ok) {
+                console.debug(`[EmoteFetcher] BTTV fetch failed for userId: ${userId}`);
+                return [];
+            }
+            const data = await res.json();
+            const parsed = bbtvResSchema.safeParse(data);
+            if (!parsed.success) {
+                console.debug(`[EmoteFetcher] BTTV validation failed for userId: ${userId}`);
+                return [];
+            }
+            console.debug(`[EmoteFetcher] BTTV fetch and validation succeeded for userId: ${userId}`);
+            const emotes: Emote[] = [];
+            if (Array.isArray(parsed.data.channelEmotes)) {
+                emotes.push(...parsed.data.channelEmotes.map(emote => ({ name: emote.code, id: emote.id, provider: "bttv" as const, data: emote })));
+            }
+            if (Array.isArray(parsed.data.sharedEmotes)) {
+                emotes.push(...parsed.data.sharedEmotes.map(emote => ({ name: emote.code, id: emote.id, provider: "bttv" as const, data: emote })));
+            }
+            return emotes;
+        } catch (error) {
+            console.error(`[EmoteFetcher] Error fetching BTTV emotes for userId ${userId}:`, error);
             return [];
+
         }
-        const data = await res.json();
-        const parsed = bbtvResSchema.safeParse(data);
-        if (!parsed.success) {
-            console.debug(`[EmoteFetcher] BTTV validation failed for userId: ${userId}`);
-            return [];
-        }
-        console.debug(`[EmoteFetcher] BTTV fetch and validation succeeded for userId: ${userId}`);
-        const emotes: Emote[] = [];
-        if (Array.isArray(parsed.data.channelEmotes)) {
-            emotes.push(...parsed.data.channelEmotes.map(emote => ({ name: emote.code, id: emote.id, provider: "bttv" as const, data: emote })));
-        }
-        if (Array.isArray(parsed.data.sharedEmotes)) {
-            emotes.push(...parsed.data.sharedEmotes.map(emote => ({ name: emote.code, id: emote.id, provider: "bttv" as const, data: emote })));
-        }
-        return emotes;
     }
 
     async fetchAll(userId: string): Promise<Map<string, Emote>> {
