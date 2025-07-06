@@ -78,7 +78,7 @@ export const emoteRankCommand = createBotCommand(
 
         const startDate = getStartDate(range);
         const channelEmotes = emoteTracker?.getChannelEmotes(channel ?? broadcasterName);
-        const emotes = await prisma.emoteUsageEvent.groupBy({
+        const emotes = await prisma.emoteUsageEventV2.groupBy({
             by: ["emoteName"],
             _count: { emoteName: true },
             where: { channelProviderId: broadcasterId, usedAt: { gte: startDate } },
@@ -152,7 +152,7 @@ export const emoteCountCommand = createBotCommand(
         }
 
         const startDate = getStartDate(range);
-        const result = await prisma.emoteUsageEvent.aggregate({
+        const result = await prisma.emoteUsageEventV2.aggregate({
             _count: { emoteName: true },
             where: { channelProviderId: broadcasterId, emoteName: emoteName, usedAt: { gte: startDate } },
         });
@@ -181,7 +181,7 @@ export const myEmoteRankCommand = createBotCommand(
         }
 
         const startDate = getStartDate(range);
-        const emotes = await prisma.emoteUsageEvent.groupBy({
+        const emotes = await prisma.emoteUsageEventV2.groupBy({
             by: ["emoteName"],
             _count: { emoteName: true },
             where: { userId, channelProviderId: broadcasterId, usedAt: { gte: startDate } },
@@ -226,7 +226,7 @@ export const myEmoteCountCommand = createBotCommand(
         }
 
         const startDate = getStartDate(range);
-        const result = await prisma.emoteUsageEvent.aggregate({
+        const result = await prisma.emoteUsageEventV2.aggregate({
             _count: { emoteName: true },
             where: { userId, channelProviderId: broadcasterId, emoteName: emoteName, usedAt: { gte: startDate } },
         });

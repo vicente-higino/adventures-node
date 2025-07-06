@@ -214,6 +214,16 @@ model EmoteUsageEvent {
     @@index([channelProviderId, emoteName, usedAt])
 }
 
+model EmoteUsageEventV2 {
+    id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    channelProviderId String
+    emoteName         String
+    userId            String
+    usedAt            DateTime @default(now()) @db.Timestamptz()
+
+    @@index([channelProviderId, emoteName, usedAt])
+}
+
 enum DuelStatus {
     Pending
     Accepted
