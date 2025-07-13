@@ -59,7 +59,7 @@ export async function getFishRecordStats({
         .sort((a, b) => b.silver - a.silver)
         .map(record => ({ ...record, text: `${record.types.join("/")} ${record.text}` }));
 
-    const RECORDS_PER_PAGE = 4;
+    const RECORDS_PER_PAGE = 2;
     const totalPages = Math.max(1, Math.ceil(recordsArray.length / RECORDS_PER_PAGE));
     page = Math.max(1, Math.min(page, totalPages));
 
