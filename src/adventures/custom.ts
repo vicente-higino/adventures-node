@@ -13,9 +13,9 @@ export const customAdventures: Adventure[] = [
     {
         description: () =>
             `I think we have a much bigger threat on our hands than the cave in... It is half man, half bear, half pig... Don't Laugh, I'M SUPER CEREAL! As the adventurers work their way through the tunnels they hear a soft noise from behind them...`,
-        winMessages: [name => `${name} run away.`],
+        winMessages: [name => ``],
         loseMessages: [name => ``],
-        endWin: names => (names ? `Let's get out of here guys! We can't deal with this alone.` : ""),
+        endWin: names => (names ? `${names} run away. Let's get out of here guys! We can't deal with this alone.` : ""),
         endLose: names => (names ? `Look out! It's ManBearPig! ${names} get dragged off into the darkness.` : ""),
     },
     {
