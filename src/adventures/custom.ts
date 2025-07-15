@@ -8,7 +8,7 @@ export const customAdventures: Adventure[] = [
         winMessages: [name => ``],
         loseMessages: [name => ``],
         endWin: names => (names ? `Dayum, that was a close call for losing a leg. But you've deserved this ${names}!` : ""),
-        endLose: names => (names ? `Look out, bear traps! ${names} got their legs ripped off! !` : ""),
+        endLose: names => (names ? `Look out, bear traps! ${names} got their legs ripped off!` : ""),
     },
     {
         description: () =>
