@@ -62,7 +62,6 @@ export const FISH_FINE_EMOTES = [
     "um",
     "widepeepoSad",
     "UHM",
-    "umCute",
     "LL",
     "BLUBBERS",
     "BLUBBERSWTF",
