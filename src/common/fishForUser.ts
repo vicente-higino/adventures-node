@@ -27,6 +27,29 @@ const wrongPlaces = [
     "a public restroom's sink",
 ];
 
+const friendlyCooldownMessages = [
+    "How are you doing today?",
+    "Caught any big ones lately?",
+    "Hope you're having a great day!",
+    "What's your favorite fish?",
+    "Any fishing tips to share?",
+    "Did you remember to bring bait?",
+    "Stay patient, the big one is coming!",
+    "Ever tried fishing at night?",
+    "What's your lucky fishing spot?",
+    "Hope you get a legendary next time!",
+    "Do you prefer rivers or lakes for fishing?",
+    "What's the weirdest thing you've ever caught?",
+    "Remember to stay hydrated out there!",
+    "Do you fish alone or with friends?",
+    "What's your dream fishing destination?",
+    "Ever tried fly fishing?",
+    "Do you have a favorite fishing story?",
+    "What's your go-to fishing snack?",
+    "Any plans for a fishing trip soon?",
+    "Do you listen to music while fishing?",
+];
+
 interface FishForUserParams {
     prisma: PrismaClient;
     channelLogin: string;
@@ -55,7 +78,11 @@ export async function fishForUser({
 
         if (secondsLeft > 0) {
             const timeUntilNext = dayjs(nextAvailable);
-            const cooldownMessage = `@${userDisplayName}, you can only fish again in ${formatTimeToWithSeconds(timeUntilNext.toDate())}. ${pickRandom(FISH_COOLDOWN_EMOTES)}`;
+            let cooldownMessage = `@${userDisplayName}, you can only fish again in ${formatTimeToWithSeconds(timeUntilNext.toDate())}. ${pickRandom(FISH_COOLDOWN_EMOTES)}`;
+            // 10% chance to add a friendly message
+            if (Math.random() < 0.25) {
+                cooldownMessage += ` ${pickRandom(friendlyCooldownMessages)}`;
+            }
             return cooldownMessage;
         }
     }
