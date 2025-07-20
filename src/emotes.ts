@@ -21,6 +21,7 @@ export const DUEL_DENY_EMOTES = [
     "NoNo",
 ];
 
+export const CONGRATULATIONS_EMOTES = ["EZ Clap", "peepoClap", "clappi", "catClap"];
 export const DUEL_WIN_EMOTES = ["EZ", "Pog", "pogg", "poggSpin", "POGGERS", "POGGIES", "WW", "HOLY", "OOOO", "MUGA", "Cereal", "gg"];
 
 const COOLDOWN_EMOTES = [

@@ -54,11 +54,10 @@ class EmoteFetcher {
                 return [];
             }
             console.debug(`[EmoteFetcher] 7TV fetch and validation succeeded for userId: ${userId}`);
-            return parsed.data.emote_set.emotes.map((emote) => ({ name: emote.name, id: emote.id, provider: "7tv", data: emote }));
+            return parsed.data.emote_set.emotes.map(emote => ({ name: emote.name, id: emote.id, provider: "7tv", data: emote }));
         } catch (error) {
             console.error(`[EmoteFetcher] Error fetching 7TV emotes for userId ${userId}:`, error);
             return [];
-
         }
     }
 
@@ -82,14 +81,13 @@ class EmoteFetcher {
             for (const setId in sets) {
                 const set = sets[setId];
                 if (set && Array.isArray(set.emoticons)) {
-                    emotes = emotes.concat(set.emoticons.map((emote) => ({ name: emote.name, id: emote.id, provider: "ffz", data: emote })));
+                    emotes = emotes.concat(set.emoticons.map(emote => ({ name: emote.name, id: emote.id, provider: "ffz", data: emote })));
                 }
             }
             return emotes;
         } catch (error) {
             console.error(`[EmoteFetcher] Error fetching FFZ emotes for userId ${userId}:`, error);
             return [];
-
         }
     }
 
@@ -119,7 +117,6 @@ class EmoteFetcher {
         } catch (error) {
             console.error(`[EmoteFetcher] Error fetching BTTV emotes for userId ${userId}:`, error);
             return [];
-
         }
     }
 

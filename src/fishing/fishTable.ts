@@ -38,7 +38,7 @@ export const fishTable: CatchDetails[] = [
     {
         sellValue: RARITY_POINTS.Legendary * 15,
         name: "Fuslie",
-        emote: () => pickRandom(["fus7", "fusW", "fusBald", "fusFarm", "fusLurks", "fusUnprepared", "periodt", "WOWMOM"]),
+        emote: () => pickRandom(["fus7", "fusW", "fusBald", "fusFarm", "fusLurks", "fusUnprepared", "periodt", "WOWMOM", "fusJR"]),
         rarity: "Legendary",
         size: 170,
         weight: 60,
@@ -59,6 +59,7 @@ export const fishTable: CatchDetails[] = [
     { sellValue: RARITY_POINTS.Epic, name: "Anglerfish ", rarity: "Epic", size: 100, weight: 20 },
     { sellValue: RARITY_POINTS.Epic, name: "Napoleon Wrasse", rarity: "Epic", size: 250, weight: 150 },
     { sellValue: RARITY_POINTS.Epic, name: "Lion's Mane Jellyfish", rarity: "Epic", size: 200, weight: 100 },
+    { sellValue: RARITY_POINTS.Epic, name: "Dorado", rarity: "Epic", size: 140, weight: 20 },
 
     // Rare fish - large sizes
     { sellValue: RARITY_POINTS.Rare, name: "Swordfish", rarity: "Rare", size: 350, weight: 540 },
@@ -77,6 +78,8 @@ export const fishTable: CatchDetails[] = [
     { sellValue: RARITY_POINTS.Rare, name: "Lingcod", rarity: "Rare", size: 120, weight: 14 },
     { sellValue: RARITY_POINTS.Rare, name: "Orca", rarity: "Rare", size: 600, weight: 300 },
     { sellValue: RARITY_POINTS.Rare, name: "Penguin", rarity: "Rare", size: 100, weight: 20 },
+    { sellValue: RARITY_POINTS.Rare, name: "Arowana", rarity: "Rare", size: 100, weight: 30 },
+    { sellValue: RARITY_POINTS.Rare, name: "Arapaima", rarity: "Rare", size: 300, weight: 200 },
 
     // Fine fish - above average sizes
     { sellValue: RARITY_POINTS.Fine, name: "King Salmon", rarity: "Fine", size: 150, weight: 45 },
@@ -102,6 +105,8 @@ export const fishTable: CatchDetails[] = [
     { sellValue: RARITY_POINTS.Fine, name: "Sea Urchin", rarity: "Fine", size: 15, weight: 0.3 },
     { sellValue: RARITY_POINTS.Fine, name: "Dolphin", rarity: "Fine", size: 250, weight: 200 },
     { sellValue: RARITY_POINTS.Fine, name: "Triggerfish", rarity: "Fine", size: 50, weight: 3 },
+    { sellValue: RARITY_POINTS.Fine, name: "Snapping Turtle", rarity: "Fine", size: 50, weight: 150 },
+    { sellValue: RARITY_POINTS.Fine, name: "Barred Knifejaw", rarity: "Fine", size: 80, weight: 7 },
 
     // Uncommon fish - medium sizes
     { sellValue: RARITY_POINTS.Uncommon, name: "Blue Marlin", rarity: "Uncommon", size: 280, weight: 170 },
@@ -122,6 +127,8 @@ export const fishTable: CatchDetails[] = [
     { sellValue: RARITY_POINTS.Uncommon, name: "Red Mullet", rarity: "Uncommon", size: 30, weight: 0.7 },
     { sellValue: RARITY_POINTS.Uncommon, name: "Tilapia", rarity: "Uncommon", size: 60, weight: 3 },
     { sellValue: RARITY_POINTS.Uncommon, name: "Piranha", rarity: "Uncommon", size: 25, weight: 0.5 },
+    { sellValue: RARITY_POINTS.Uncommon, name: "Surgeonfish", rarity: "Uncommon", size: 35, weight: 6, emote: () => "fusDory" },
+    { sellValue: RARITY_POINTS.Uncommon, name: "Sea Horse", rarity: "Uncommon", size: 20, weight: 0.5 },
 
     // Common fish - small sizes
     { sellValue: RARITY_POINTS.Common, name: "Snail", rarity: "Common", size: 4, weight: 0.2 },
@@ -149,6 +156,11 @@ export const fishTable: CatchDetails[] = [
     { sellValue: RARITY_POINTS.Common, name: "Bream", rarity: "Common", size: 50, weight: 3.2 },
     { sellValue: RARITY_POINTS.Common, name: "Chub", rarity: "Common", size: 40, weight: 2.7 },
     { sellValue: RARITY_POINTS.Common, name: "Clam", rarity: "Common", size: 10, weight: 0.2 },
+    { sellValue: RARITY_POINTS.Common, name: "Sweetfish", rarity: "Common", size: 70, weight: 4 },
+    { sellValue: RARITY_POINTS.Common, name: "Rainbowfish", rarity: "Common", size: 20, weight: 0.2 },
+    { sellValue: RARITY_POINTS.Common, name: "Loach", rarity: "Common", size: 50, weight: 3 },
+    { sellValue: RARITY_POINTS.Common, name: "Killifish", rarity: "Common", size: 5, weight: 0.05 },
+    { sellValue: RARITY_POINTS.Common, name: "Dace", rarity: "Common", size: 15, weight: 0.15 },
 
     // Trash items - minimal sizes
     { sellValue: RARITY_POINTS.Trash, name: "Bone", rarity: "Trash", size: 15, weight: 0.2 },
@@ -165,4 +177,5 @@ export const fishTable: CatchDetails[] = [
     { sellValue: RARITY_POINTS.Trash, name: "Plastic Bottle", rarity: "Trash", size: 20, weight: 0.3 },
     { sellValue: RARITY_POINTS.Trash, name: "Old Shoe", rarity: "Trash", size: 25, weight: 0.4 },
     { sellValue: RARITY_POINTS.Trash, name: "Cigarette Butt", rarity: "Trash", size: 1, weight: 0.001 },
+    { sellValue: RARITY_POINTS.Trash, name: "Bottle Cap", rarity: "Trash", size: 2, weight: 0.001 },
 ];

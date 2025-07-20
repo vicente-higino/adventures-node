@@ -12,7 +12,7 @@ export class EmoteTracker {
     private channelEmotes: Map<string, Map<string, Emote>> = new Map(); // channel login -> emotes
     // private emoteUsage: Map<string, Map<string, number>> = new Map(); // channel login -> emote name -> count
 
-    constructor(private bot: Bot) { }
+    constructor(private bot: Bot) {}
 
     async initialize() {
         const config = getBotConfig();
@@ -43,7 +43,7 @@ export class EmoteTracker {
                 .map(word => word.trim())
                 .filter(word => word.length > 0);
 
-            const emoteEvents: { id: string, channelProviderId: string; emoteName: string; userId: string }[] = [];
+            const emoteEvents: { id: string; channelProviderId: string; emoteName: string; userId: string }[] = [];
 
             for (const word of words) {
                 if (!word) continue;

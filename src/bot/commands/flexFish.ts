@@ -12,21 +12,21 @@ dayjs.extend(relativeTime);
 dayjs.extend(utc);
 dayjs.extend(calendar);
 
-
 const fishRecordsInclude = Prisma.validator<Prisma.FishInclude>()({
-    HeaviestRecord: true, LargestRecord: true, LightestRecord: true, SmallestRecord: true
+    HeaviestRecord: true,
+    LargestRecord: true,
+    LightestRecord: true,
+    SmallestRecord: true,
 });
 
-type FishWithRecords = Prisma.FishGetPayload<{
-    include: typeof fishRecordsInclude;
-}>;
+type FishWithRecords = Prisma.FishGetPayload<{ include: typeof fishRecordsInclude }>;
 
 // Returns the user's single most valuable fish (highest value, most recent if tie)
 async function getUserMostValuableFish(userId: string, channelProviderId: string) {
     const fish = await prisma.fish.findFirst({
         where: { userId, channelProviderId },
         orderBy: [{ value: "desc" }, { createdAt: "desc" }],
-        include: fishRecordsInclude
+        include: fishRecordsInclude,
     });
     return fish;
 }

@@ -20,16 +20,20 @@ export const refreshEmotesCommand = createBotCommand(
     },
     { aliases: ["re"], offlineOnly: false },
 );
-export const refreshEmotesAdminCommand = createAdminBotCommand("refreshemotesfor", async (params, ctx) => {
-    let { say, broadcasterName, msg } = ctx;
-    for (const p of params) {
-        const name = nameSchema.safeParse(p);
-        broadcasterName = name.success ? name.data : broadcasterName;
-    }
-    if (!emoteTracker) {
-        say("Emote tracking is not enabled.");
-        return;
-    }
-    const total = await emoteTracker.refreshEmotes(broadcasterName);
-    say(`Emotes refreshed for ${broadcasterName}. ${total} emotes in total.`);
-}, { aliases: ["ref"] });
+export const refreshEmotesAdminCommand = createAdminBotCommand(
+    "refreshemotesfor",
+    async (params, ctx) => {
+        let { say, broadcasterName, msg } = ctx;
+        for (const p of params) {
+            const name = nameSchema.safeParse(p);
+            broadcasterName = name.success ? name.data : broadcasterName;
+        }
+        if (!emoteTracker) {
+            say("Emote tracking is not enabled.");
+            return;
+        }
+        const total = await emoteTracker.refreshEmotes(broadcasterName);
+        say(`Emotes refreshed for ${broadcasterName}. ${total} emotes in total.`);
+    },
+    { aliases: ["ref"] },
+);

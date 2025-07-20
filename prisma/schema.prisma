@@ -28,6 +28,7 @@ model User {
     DuelChallenger Duel[]      @relation("Challenger")
     DuelChallenged Duel[]      @relation("Challenged")
     unitSystem     UnitSystem  @default(metric)
+    FishDex        FishDex[]
 }
 
 model Balance {
@@ -222,6 +223,19 @@ model EmoteUsageEventV2 {
     usedAt            DateTime @default(now()) @db.Timestamptz()
 
     @@index([channelProviderId, emoteName, usedAt])
+}
+
+model FishDex {
+    id                Int      @id @default(autoincrement())
+    user              User     @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
+    userId            String
+    channelProviderId String
+    fishName          String
+    rarity            Rarity
+    firstCaughtAt     DateTime @default(now())
+
+    @@unique([channelProviderId, userId, fishName])
+    @@index([channelProviderId, userId, rarity, fishName])
 }
 
 enum DuelStatus {

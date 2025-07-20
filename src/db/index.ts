@@ -1,4 +1,4 @@
-import { FishStats, Prisma, PrismaClient } from "@prisma/client";
+import { FishDex, FishStats, Prisma, PrismaClient, Rarity } from "@prisma/client";
 
 export async function findOrCreateBalance(
     db: dbClient,
@@ -284,3 +284,31 @@ export async function addBonusToUserStats(
 }
 
 type dbClient = PrismaClient | Prisma.TransactionClient;
+
+/**
+ * Finds an existing FishDex record for a user, channel, and fish name, or creates a new one if it doesn't exist.
+ *
+ * @param prisma The dbClient instance.
+ * @param channelProviderId The provider ID of the channel.
+ * @param userProviderId The provider ID of the user.
+ * @param fishName The name of the fish.
+ * @returns A Promise that resolves to the found or created FishDex record.
+ */
+export async function findOrCreateFishDex(
+    prisma: dbClient,
+    channelProviderId: string,
+    userProviderId: string,
+    fishName: string,
+    rarity: Rarity,
+): Promise<{ fishDex: FishDex; created: boolean }> {
+    let fishDex = await prisma.fishDex.findUnique({
+        where: { channelProviderId_userId_fishName: { channelProviderId, userId: userProviderId, fishName } },
+    });
+
+    if (!fishDex) {
+        fishDex = await prisma.fishDex.create({ data: { channelProviderId, userId: userProviderId, fishName, rarity } });
+        return { fishDex, created: true };
+    }
+
+    return { fishDex, created: false };
+}

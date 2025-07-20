@@ -1,11 +1,12 @@
 import { Prisma, PrismaClient, Rarity } from "@prisma/client";
 import dayjs from "dayjs";
-import { findOrCreateBalance, findOrCreateFishStats, increaseBalance } from "@/db";
+import { findOrCreateBalance, findOrCreateFishStats, increaseBalance, findOrCreateFishDex } from "@/db";
 import { getFish, getValueEmote } from "@/fishing";
 import { formatTimeToWithSeconds } from "@/utils/time";
 import { boxMullerTransform, delay, pickRandom, sendActionToAllChannel, sendActionToChannel, sendMessageToChannel } from "@/utils/misc";
-import { FISH_COOLDOWN_EMOTES, FISH_FINE_EMOTES, PAUSE_EMOTES } from "@/emotes";
+import { CONGRATULATIONS_EMOTES, FISH_COOLDOWN_EMOTES, FISH_FINE_EMOTES, PAUSE_EMOTES } from "@/emotes";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { fishTable } from "@/fishing/fishTable";
 dayjs.extend(relativeTime);
 
 const wrongPlaces = [
@@ -211,10 +212,71 @@ export async function fishForUser({
         promises.push(prisma.fishStats.update({ where: { id: fishStats.id }, data: fishStatsUpdateData }));
     }
 
+    // Add to FishDex and check if it's a new entry
+    let fishDexMessage = "";
+    const { fishDex, created } = await findOrCreateFishDex(prisma, channelProviderId, userProviderId, fish.name, fish.rarity);
+    if (created) {
+        // This is a new entry (just created)
+        fishDexMessage = `New entry in your FishDex!`;
+
+        // Check if FishDex is now completed for this rarity
+        const completed = await isFishDexCompletedForRarity(prisma, channelProviderId, userProviderId, fish.rarity);
+        if (completed) {
+            const bonus = FISHDEX_COMPLETION_BONUS[fish.rarity] ?? 0;
+            if (bonus > 0) {
+                await increaseBalance(prisma, balance.id, bonus);
+            }
+            setTimeout(
+                () =>
+                    sendActionToChannel(
+                        channelLogin,
+                        `@${userDisplayName} has completed the FishDex for [${fish.rarity}] rarity and earned a bonus of ${bonus} silver! ${pickRandom(CONGRATULATIONS_EMOTES)}`,
+                    ),
+                1000,
+            );
+        }
+    }
+
     Promise.all(promises);
 
     const totalValueMessage = bonus > 0 ? `${fish.sellValue} + ${bonus} (Bonus) = ${fish.sellValue + bonus}` : `${fish.sellValue}`;
     const valueEmote = bonus > 0 ? getValueEmote(fish.sellValue + bonus) : fish.rarityEmote;
-    const resText = `@${userDisplayName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} #${createdFish.id} ${fish.formatedSize} ${fish.formatedWeight}! It sold for ${totalValueMessage} silver! ${recordMessage} ${valueEmote}`;
+    const resText = `@${userDisplayName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} #${createdFish.id} ${fish.formatedSize} ${fish.formatedWeight}!
+                    It sold for ${totalValueMessage} silver! ${recordMessage} ${fishDexMessage} ${valueEmote}`;
     return resText;
 }
+
+/**
+ * Checks if the user has completed the FishDex for a given rarity in a channel.
+ * @param prisma PrismaClient instance
+ * @param channelProviderId Channel provider ID
+ * @param userProviderId User provider ID
+ * @param rarity Rarity string (e.g. "Epic")
+ * @returns Promise<boolean>
+ */
+export async function isFishDexCompletedForRarity(
+    prisma: PrismaClient,
+    channelProviderId: string,
+    userProviderId: string,
+    rarity: Rarity,
+): Promise<boolean> {
+    // Get all fish names of this rarity from the fishTable
+    const allFishNames = new Set(fishTable.filter(f => f.rarity === rarity).map(f => f.name));
+    if (allFishNames.size === 0) return false;
+
+    // Get all fish names of this rarity the user has caught in this channel
+    const userFishDex = await prisma.fishDex.count({ where: { channelProviderId, userId: userProviderId, rarity } });
+
+    return userFishDex === allFishNames.size;
+}
+
+// Bonus table for FishDex completion per rarity
+const FISHDEX_COMPLETION_BONUS: Record<Rarity, number> = {
+    Common: 2500,
+    Uncommon: 5000,
+    Fine: 7500,
+    Rare: 10000,
+    Epic: 25000,
+    Trash: 50000,
+    Legendary: 100000,
+};
