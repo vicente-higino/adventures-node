@@ -96,5 +96,5 @@ export const flexFishCommand = createBotCommand(
         }
         say(`${userDisplayName} ${flexLabel}: ${formatFishDisplay(fish)}. EZ`);
     },
-    { ignoreCase: true },
+    { ignoreCase: true, aliases: ["fishflex", "ff"] },
 );

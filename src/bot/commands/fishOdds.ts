@@ -8,5 +8,5 @@ export const fishOddsCommand = createBotCommand(
         // Zod schema for validation
         say(`Fishing odds: ${formatRarityWeightDisplay()}`);
     },
-    { ignoreCase: true },
+    { ignoreCase: true, aliases: ["fishodds", "fishingodd", "fo"] },
 );
