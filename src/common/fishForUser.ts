@@ -4,7 +4,7 @@ import { findOrCreateBalance, findOrCreateFishStats, increaseBalance, findOrCrea
 import { getFish, getValueEmote } from "@/fishing";
 import { formatTimeToWithSeconds } from "@/utils/time";
 import { boxMullerTransform, delay, pickRandom, sendActionToAllChannel, sendActionToChannel, sendMessageToChannel } from "@/utils/misc";
-import { CONGRATULATIONS_EMOTES, FISH_COOLDOWN_EMOTES, FISH_FINE_EMOTES, PAUSE_EMOTES } from "@/emotes";
+import { CONGRATULATIONS_EMOTES, CONGRATULATIONS_TRASH_FISH_DEX_EMOTES, FISH_COOLDOWN_EMOTES, FISH_FINE_EMOTES, PAUSE_EMOTES } from "@/emotes";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { fishTable } from "@/fishing/fishTable";
 dayjs.extend(relativeTime);
@@ -253,14 +253,19 @@ export async function fishForUser({
             if (bonus > 0) {
                 await increaseBalance(prisma, balance.id, bonus);
             }
-            setTimeout(
-                () =>
+            setTimeout(() => {
+                if (fish.rarity === Rarity.Trash) {
+                    sendActionToChannel(
+                        channelLogin,
+                        `@${userDisplayName} completed the Trash FishDex and earned ${bonus} silver! EarthDay Thanks for cleaning up the ocean and helping nature! ${pickRandom(CONGRATULATIONS_TRASH_FISH_DEX_EMOTES)}`,
+                    );
+                } else {
                     sendActionToChannel(
                         channelLogin,
                         `@${userDisplayName} has completed the FishDex for [${fish.rarity}] rarity and earned a bonus of ${bonus} silver! ${pickRandom(CONGRATULATIONS_EMOTES)}`,
-                    ),
-                1000,
-            );
+                    );
+                }
+            }, 1000);
         }
     }
 
