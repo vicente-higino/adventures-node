@@ -87,7 +87,7 @@ export const fishDexCommand = createBotCommand(
 
         say(`@${targetDisplayName} FishDex: ${summary}`);
     },
-    { ignoreCase: true },
+    { ignoreCase: true, aliases: ["fd"] },
 );
 
 export const fishDexGlobalCommand = createBotCommand(
@@ -109,5 +109,5 @@ export const fishDexGlobalCommand = createBotCommand(
 
         say(`Global FishDex: ${summary}`);
     },
-    { ignoreCase: true },
+    { ignoreCase: true, aliases: ["fdg"] },
 );
