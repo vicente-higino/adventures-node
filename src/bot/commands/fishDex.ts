@@ -21,7 +21,7 @@ function getAllFishNamesByRarityFromTable() {
 // Returns a mapping: rarity -> Set of unique fish names the user has caught (using FishDex)
 async function getUserFishNamesByRarity(userId: string, channelProviderId: string) {
     // Fetch all FishDex entries for this user and channel, including rarity
-    const userFishDex = await prisma.fishDex.findMany({ where: { userId, channelProviderId }, select: { fishName: true, rarity: true } });
+    const userFishDex = await prisma.fishDexEntry.findMany({ where: { userId, channelProviderId }, select: { fishName: true, rarity: true } });
 
     const map = new Map<string, Set<string>>();
     for (const rarity of RARITY_ORDER) {

@@ -4,7 +4,7 @@ import {
     findOrCreateBalance,
     findOrCreateFishStats,
     increaseBalance,
-    findOrCreateFishDex,
+    findOrCreateFishDexEntry,
     createFishDexCompletion,
     hasFishDexCompletion,
 } from "@/db";
@@ -249,7 +249,7 @@ export async function fishForUser({
 
     // Add to FishDex and check if it's a new entry
     let fishDexMessage = "";
-    const { fishDex, created } = await findOrCreateFishDex(prisma, channelProviderId, userProviderId, fish.name, fish.rarity);
+    const { fishDexEntry, created } = await findOrCreateFishDexEntry(prisma, channelProviderId, userProviderId, fish.name, fish.rarity);
     if (created) {
         // This is a new entry (just created)
         fishDexMessage = `New entry in your FishDex!`;
@@ -311,7 +311,7 @@ export async function isFishDexCompletedForRarity(
     if (allFishNames.size === 0) return false;
 
     // Get all fish names of this rarity the user has caught in this channel
-    const userFishDex = await prisma.fishDex.count({ where: { channelProviderId, userId: userProviderId, rarity } });
+    const userFishDex = await prisma.fishDexEntry.count({ where: { channelProviderId, userId: userProviderId, rarity } });
 
     return userFishDex === allFishNames.size;
 }
