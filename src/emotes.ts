@@ -23,8 +23,8 @@ export const DUEL_DENY_EMOTES = [
 
 export const CONGRATULATIONS_EMOTES = ["EZ Clap", "peepoClap", "clappi", "catClap", "HOLY", "OOOO", "MUGA", "Pog"];
 export const CONGRATULATIONS_TRASH_FISH_DEX_EMOTES = ["peepoClap", "clappi", "catClap", "Pog", "WW"];
-export const DUEL_WIN_EMOTES = ["EZ", "Pog", "pogg", "poggSpin", "POGGERS", "POGGIES", "WW", "HOLY", "OOOO", "MUGA", "Cereal", "gg"];
-export const FACTS_EMOTES = ["fusNotes", "NERD", "mhm", "Nerdge", "yapping", "YAPPP", "YAPPERScouncil", "fusG"];
+export const DUEL_WIN_EMOTES = ["EZ", "EZ Clap", "Pog", "pogg", "poggSpin", "POGGERS", "POGGIES", "WW", "HOLY", "OOOO", "MUGA", "Cereal", "gg"];
+export const FACTS_EMOTES = ["fusNotes", "NERD", "mhm", "Nerdge", "yapping", "YAPPP", "YAPPERScouncil", "fusG", "peepoTalk", "CatNerd", "PepoG"];
 
 const COOLDOWN_EMOTES = [
     "Waiting",
@@ -45,6 +45,17 @@ const COOLDOWN_EMOTES = [
     "stara",
     "staree",
     "SphealChillinInDaWater",
+    "bla",
+    "NowWot",
+    "ogo",
+    "peepoSit",
+    "PepeDadBod",
+    "cuteSit",
+    "peepoCute",
+    "cuteSitFriendship",
+    "xd",
+    "FurretWalk",
+    "wooperJam",
 ];
 
 export const ADVENTURE_COOLDOWN_EMOTES = COOLDOWN_EMOTES;
@@ -69,5 +80,8 @@ export const FISH_FINE_EMOTES = [
     "BLUBBERS",
     "BLUBBERSWTF",
     "Sadding",
+    "Sigh",
+    "peepoSitMad",
+    "Pointless",
     "Sigh",
 ];

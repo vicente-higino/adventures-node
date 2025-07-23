@@ -107,11 +107,14 @@ export async function fishForUser({
             const timeUntilNext = dayjs(nextAvailable);
             let cooldownMessage = `@${userDisplayName}, you can only fish again in ${formatTimeToWithSeconds(timeUntilNext.toDate())}.`;
             if (Math.random() < 0.25) {
-                return cooldownMessage + pickRandom([
-                    ` ${pickRandom(FISH_COOLDOWN_EMOTES)} ${pickRandom(friendlyCooldownMessages)}`,
-                    ` peepoInterview ${pickRandom(fishingFriendlyQuestions)}`,
-                    ` ${pickRandom(FACTS_EMOTES)} ${pickRandom(fishingFacts)}`,
-                ]);
+                return (
+                    cooldownMessage +
+                    pickRandom([
+                        ` ${pickRandom(FISH_COOLDOWN_EMOTES)} ${pickRandom(friendlyCooldownMessages)}`,
+                        ` peepoInterview ${pickRandom(fishingFriendlyQuestions)}`,
+                        ` ${pickRandom(FACTS_EMOTES)} ${pickRandom(fishingFacts)}`,
+                    ])
+                );
             }
             return `${cooldownMessage} ${pickRandom(FISH_COOLDOWN_EMOTES)}`;
         }
