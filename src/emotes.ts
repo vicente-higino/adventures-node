@@ -84,4 +84,6 @@ export const FISH_FINE_EMOTES = [
     "peepoSitMad",
     "Pointless",
     "Sigh",
+    "waaa",
+    "WAJAJA"
 ];
