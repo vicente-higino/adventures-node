@@ -14,21 +14,22 @@ enum UnitSystem {
 }
 
 model User {
-    id             Int         @id() @default(autoincrement())
-    providerId     String      @unique
-    login          String      @unique
-    displayName    String      @unique
-    createdAt      DateTime    @default(now())
-    updatedAt      DateTime    @updatedAt
-    balances       Balance[]
-    Player         Player[]
-    Fish           Fish[]
-    UserStats      UserStats[]
-    FishStats      FishStats[]
-    DuelChallenger Duel[]      @relation("Challenger")
-    DuelChallenged Duel[]      @relation("Challenged")
-    unitSystem     UnitSystem  @default(metric)
-    FishDex        FishDex[]
+    id                Int                 @id() @default(autoincrement())
+    providerId        String              @unique
+    login             String              @unique
+    displayName       String              @unique
+    createdAt         DateTime            @default(now())
+    updatedAt         DateTime            @updatedAt
+    balances          Balance[]
+    Player            Player[]
+    Fish              Fish[]
+    UserStats         UserStats[]
+    FishStats         FishStats[]
+    DuelChallenger    Duel[]              @relation("Challenger")
+    DuelChallenged    Duel[]              @relation("Challenged")
+    unitSystem        UnitSystem          @default(metric)
+    FishDex           FishDex[]
+    FishDexCompletion FishDexCompletion[]
 }
 
 model Balance {
@@ -161,10 +162,10 @@ model FishRecord {
     channelProviderId String
     channel           String
     fishName          String
-    largestFish       Fish     @relation("LargestFish", fields: [largestFishId], references: [id])
-    smallestFish      Fish     @relation("SmallestFish", fields: [smallestFishId], references: [id])
-    heaviestFish      Fish     @relation("HeaviestFish", fields: [heaviestFishId], references: [id])
-    lightestFish      Fish     @relation("LightestFish", fields: [lightestFishId], references: [id])
+    largestFish       Fish     @relation("LargestFish", fields: [largestFishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    smallestFish      Fish     @relation("SmallestFish", fields: [smallestFishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    heaviestFish      Fish     @relation("HeaviestFish", fields: [heaviestFishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    lightestFish      Fish     @relation("LightestFish", fields: [lightestFishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
     largestFishId     Int
     smallestFishId    Int
     heaviestFishId    Int
@@ -236,6 +237,19 @@ model FishDex {
 
     @@unique([channelProviderId, userId, fishName])
     @@index([channelProviderId, userId, rarity, fishName])
+}
+
+model FishDexCompletion {
+    id                Int      @id @default(autoincrement())
+    user              User     @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
+    userId            String
+    channelProviderId String
+    rarity            Rarity
+    completedAt       DateTime @default(now())
+    reward            Int
+
+    @@unique([channelProviderId, userId, rarity])
+    @@index([channelProviderId, userId, rarity])
 }
 
 enum DuelStatus {

@@ -312,3 +312,20 @@ export async function findOrCreateFishDex(
 
     return { fishDex, created: false };
 }
+
+export async function createFishDexCompletion(
+    prisma: dbClient,
+    channelProviderId: string,
+    userProviderId: string,
+    rarity: Rarity,
+    reward: number,
+): Promise<void> {
+    await prisma.fishDexCompletion.create({ data: { channelProviderId, userId: userProviderId, rarity, reward } });
+}
+
+export async function hasFishDexCompletion(prisma: dbClient, channelProviderId: string, userProviderId: string, rarity: Rarity): Promise<boolean> {
+    const completion = await prisma.fishDexCompletion.findUnique({
+        where: { channelProviderId_userId_rarity: { channelProviderId, userId: userProviderId, rarity } },
+    });
+    return !!completion;
+}

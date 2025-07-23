@@ -1,6 +1,13 @@
 import { Prisma, PrismaClient, Rarity } from "@prisma/client";
 import dayjs from "dayjs";
-import { findOrCreateBalance, findOrCreateFishStats, increaseBalance, findOrCreateFishDex } from "@/db";
+import {
+    findOrCreateBalance,
+    findOrCreateFishStats,
+    increaseBalance,
+    findOrCreateFishDex,
+    createFishDexCompletion,
+    hasFishDexCompletion,
+} from "@/db";
 import { getFish, getValueEmote } from "@/fishing";
 import { formatTimeToWithSeconds } from "@/utils/time";
 import { boxMullerTransform, delay, pickRandom, sendActionToAllChannel, sendActionToChannel, sendMessageToChannel } from "@/utils/misc";
@@ -250,23 +257,29 @@ export async function fishForUser({
         // Check if FishDex is now completed for this rarity
         const completed = await isFishDexCompletedForRarity(prisma, channelProviderId, userProviderId, fish.rarity);
         if (completed) {
-            const bonus = FISHDEX_COMPLETION_BONUS[fish.rarity] ?? 0;
-            if (bonus > 0) {
-                await increaseBalance(prisma, balance.id, bonus);
-            }
-            setTimeout(() => {
-                if (fish.rarity === Rarity.Trash) {
-                    sendActionToChannel(
-                        channelLogin,
-                        `@${userDisplayName} completed the Trash FishDex and earned ${bonus} silver! EarthDay Thanks for cleaning up the ocean and helping nature! ${pickRandom(CONGRATULATIONS_TRASH_FISH_DEX_EMOTES)}`,
-                    );
-                } else {
-                    sendActionToChannel(
-                        channelLogin,
-                        `@${userDisplayName} has completed the FishDex for [${fish.rarity}] rarity and earned a bonus of ${bonus} silver! ${pickRandom(CONGRATULATIONS_EMOTES)}`,
-                    );
+            // Check if user already has completion record
+            const hasCompletion = await hasFishDexCompletion(prisma, channelProviderId, userProviderId, fish.rarity);
+            if (!hasCompletion) {
+                // Create completion record and award bonus only if this is the first time
+                const bonus = FISHDEX_COMPLETION_BONUS[fish.rarity] ?? 0;
+                await createFishDexCompletion(prisma, channelProviderId, userProviderId, fish.rarity, bonus);
+                if (bonus > 0) {
+                    await increaseBalance(prisma, balance.id, bonus);
                 }
-            }, 1000);
+                setTimeout(() => {
+                    if (fish.rarity === Rarity.Trash) {
+                        sendActionToChannel(
+                            channelLogin,
+                            `@${userDisplayName} completed the Trash FishDex and earned ${bonus} silver! EarthDay Thanks for cleaning up the ocean and helping nature! ${pickRandom(CONGRATULATIONS_TRASH_FISH_DEX_EMOTES)}`,
+                        );
+                    } else {
+                        sendActionToChannel(
+                            channelLogin,
+                            `@${userDisplayName} has completed the FishDex for [${fish.rarity}] rarity and earned a bonus of ${bonus} silver! ${pickRandom(CONGRATULATIONS_EMOTES)}`,
+                        );
+                    }
+                }, 1000);
+            }
         }
     }
 
