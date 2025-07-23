@@ -78,12 +78,13 @@ export async function fishForUser({
 
         if (secondsLeft > 0) {
             const timeUntilNext = dayjs(nextAvailable);
-            let cooldownMessage = `@${userDisplayName}, you can only fish again in ${formatTimeToWithSeconds(timeUntilNext.toDate())}. ${pickRandom(FISH_COOLDOWN_EMOTES)}`;
+            let cooldownMessage = `@${userDisplayName}, you can only fish again in ${formatTimeToWithSeconds(timeUntilNext.toDate())}.`;
             // 10% chance to add a friendly message
             if (Math.random() < 0.25) {
-                cooldownMessage += ` ${pickRandom(friendlyCooldownMessages)}`;
+                cooldownMessage += ` peepoInterview ${pickRandom(friendlyCooldownMessages)}`;
+                return cooldownMessage;
             }
-            return cooldownMessage;
+            return `${cooldownMessage} ${pickRandom(FISH_COOLDOWN_EMOTES)}`;
         }
     }
 
