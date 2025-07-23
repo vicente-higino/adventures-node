@@ -213,15 +213,15 @@ function scheduleAdventureWarnings(prisma: PrismaClient, channelLogin: string, a
     const warnings = [
         {
             delay: 30 * 60 * 1000,
-            message: `⚠️ 30 minutes have passed since the adventure started! Don't forget to end the adventure with !adventureend or !advend to claim your rewards!`,
+            message: `Alarm 30 minutes have passed since the adventure started! Don't forget to end the adventure with !adventureend or !advend to claim your rewards!`,
         },
         {
             delay: 40 * 60 * 1000,
-            message: `⚠️ Ending the adventure in 5 minutes! Join now or update your silver with !adventure|adv to participate! dinkDonk`,
+            message: `Alarm Ending the adventure in 5 minutes! Join now or update your silver with !adventure|adv to participate! dinkDonk`,
         },
         {
             delay: 43 * 60 * 1000,
-            message: `⚠️ Ending the adventure in 2 minutes! Join now or update your silver with !adventure|adv to participate! dinkDonk`,
+            message: `Alarm Ending the adventure in 2 minutes! Join now or update your silver with !adventure|adv to participate! dinkDonk`,
         },
         { delay: 45 * 60 * 1000, message: `!adventureend` },
     ];
