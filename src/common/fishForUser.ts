@@ -11,9 +11,17 @@ import {
 import { getFish, getValueEmote } from "@/fishing";
 import { formatTimeToWithSeconds } from "@/utils/time";
 import { boxMullerTransform, delay, pickRandom, sendActionToAllChannel, sendActionToChannel, sendMessageToChannel } from "@/utils/misc";
-import { CONGRATULATIONS_EMOTES, CONGRATULATIONS_TRASH_FISH_DEX_EMOTES, FISH_COOLDOWN_EMOTES, FISH_FINE_EMOTES, PAUSE_EMOTES } from "@/emotes";
+import {
+    CONGRATULATIONS_EMOTES,
+    CONGRATULATIONS_TRASH_FISH_DEX_EMOTES,
+    FACTS_EMOTES,
+    FISH_COOLDOWN_EMOTES,
+    FISH_FINE_EMOTES,
+    PAUSE_EMOTES,
+} from "@/emotes";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { fishTable } from "@/fishing/fishTable";
+import { fishingFacts } from "@/fishing/facts";
 dayjs.extend(relativeTime);
 
 const wrongPlaces = [
@@ -35,19 +43,31 @@ const wrongPlaces = [
 ];
 
 const friendlyCooldownMessages = [
+    "Hope you're having a great day!",
+    "Stay patient, the big one is coming!",
+    "Hope you get a legendary next time!",
+    "Remember to stay hydrated out there!",
+    "Nice work! Take a breather—great catches need patience.",
+    "Chill for a bit, the fish are just warming up for you.",
+    "Good things come to those who wait—relax and enjoy the calm.",
+    "Hold tight, your next big catch is on its way!",
+    "Cooling down now—use this moment to get ready for the next cast.",
+    "Patience pays off—take a moment to soak in the peaceful vibes.",
+    "Rest your rod, the fish are gathering just for you.",
+    "Keep calm and cool down—the waters will reward you soon.",
+    "Pause, breathe, and get ready for your next winning cast.",
+    "You're doing great! Sometimes the best catch comes after a little wait.",
+];
+const fishingFriendlyQuestions = [
     "How are you doing today?",
     "Caught any big ones lately?",
-    "Hope you're having a great day!",
     "What's your favorite fish?",
     "Any fishing tips to share?",
     "Did you remember to bring bait?",
-    "Stay patient, the big one is coming!",
     "Ever tried fishing at night?",
     "What's your lucky fishing spot?",
-    "Hope you get a legendary next time!",
     "Do you prefer rivers or lakes for fishing?",
     "What's the weirdest thing you've ever caught?",
-    "Remember to stay hydrated out there!",
     "Do you fish alone or with friends?",
     "What's your dream fishing destination?",
     "Ever tried fly fishing?",
@@ -88,7 +108,15 @@ export async function fishForUser({
             let cooldownMessage = `@${userDisplayName}, you can only fish again in ${formatTimeToWithSeconds(timeUntilNext.toDate())}.`;
             // 10% chance to add a friendly message
             if (Math.random() < 0.25) {
-                cooldownMessage += ` peepoInterview ${pickRandom(friendlyCooldownMessages)}`;
+                cooldownMessage += ` ${pickRandom(FISH_COOLDOWN_EMOTES)} ${pickRandom(friendlyCooldownMessages)}`;
+                return cooldownMessage;
+            }
+            if (Math.random() < 0.25) {
+                cooldownMessage += ` peepoInterview ${pickRandom(fishingFriendlyQuestions)}`;
+                return cooldownMessage;
+            }
+            if (Math.random() < 0.25) {
+                cooldownMessage += ` ${pickRandom(FACTS_EMOTES)} ${pickRandom(fishingFacts)}`;
                 return cooldownMessage;
             }
             return `${cooldownMessage} ${pickRandom(FISH_COOLDOWN_EMOTES)}`;
