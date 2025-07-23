@@ -99,10 +99,7 @@ export const emoteRankCommand = createBotCommand(
                 .filter(e => !usedEmoteNames.has(e))
                 .map(e => ({ name: e, count: 0 }));
             // Only add as many as needed to fill up to 'count'
-            const remaining = count - usage.length;
-            if (remaining > 0) {
-                usage = usage.concat(missingEmotes.slice(0, remaining));
-            }
+            usage = usage.concat(missingEmotes);
         }
 
         // Sort again after adding missing emotes
