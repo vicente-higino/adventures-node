@@ -27,6 +27,7 @@ import { bearerAuth } from "hono/bearer-auth";
 import { startCron } from "./cron";
 import { authMiddleware } from "@/middleware/authMiddleware";
 import { ignoreMiddleware } from "./middleware/ignoreUsers";
+import { trollMiddleware } from "./middleware/trollUsers";
 // Start a Hono app
 const hono = new Hono<HonoEnv>();
 const honoWithAuth = new Hono<HonoEnv>();
@@ -67,6 +68,7 @@ app.use("/auth/twitch/login", bearerAuth({ token: env.TWTICH_EVENTSUB_SECRET }))
 app.get("/auth/twitch/login", AuthTwitchRedirect);
 
 app.use("*", bearerAuth({ token: env.TWITCH_CLIENT_SECRET }));
+app.use("*", trollMiddleware);
 // Register OpenAPI endpoints
 app.get("/api/points/:userId", Point);
 authenticatedRoute.get("/api/points/update/:userId/:newBalance", PointUpdate);
