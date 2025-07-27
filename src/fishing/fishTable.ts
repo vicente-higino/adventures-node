@@ -128,7 +128,7 @@ export const fishTable: CatchDetails[] = [
     { sellValue: RARITY_POINTS.Uncommon, name: "Tilapia", rarity: "Uncommon", size: 60, weight: 3 },
     { sellValue: RARITY_POINTS.Uncommon, name: "Piranha", rarity: "Uncommon", size: 25, weight: 0.5 },
     { sellValue: RARITY_POINTS.Uncommon, name: "Surgeonfish", rarity: "Uncommon", size: 35, weight: 6, emote: () => "fusDory" },
-    { sellValue: RARITY_POINTS.Uncommon, name: "Sea Horse", rarity: "Uncommon", size: 20, weight: 0.5 },
+    { sellValue: RARITY_POINTS.Uncommon, name: "Char", rarity: "Uncommon", size: 40, weight: 4 },
 
     // Common fish - small sizes
     { sellValue: RARITY_POINTS.Common, name: "Snail", rarity: "Common", size: 4, weight: 0.2 },
