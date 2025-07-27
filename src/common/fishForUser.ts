@@ -60,21 +60,21 @@ const friendlyCooldownMessages = [
 ];
 const fishingFriendlyQuestions = [
     "How are you doing today?",
-    "Caught any big ones lately?",
-    "What's your favorite fish?",
-    "Any fishing tips to share?",
-    "Did you remember to bring bait?",
-    "Ever tried fishing at night?",
-    "What's your lucky fishing spot?",
-    "Do you prefer rivers or lakes for fishing?",
-    "What's the weirdest thing you've ever caught?",
-    "Do you fish alone or with friends?",
-    "What's your dream fishing destination?",
-    "Ever tried fly fishing?",
-    "Do you have a favorite fishing story?",
-    "What's your go-to fishing snack?",
-    "Any plans for a fishing trip soon?",
-    "Do you listen to music while fishing?",
+    "How's your day going so far?",
+    "What's new with you today?",
+    "How are things on your end?",
+    "Everything okay with you lately?",
+    "How are you feeling today?",
+    "How's life treating you right now?",
+    "Got any good vibes going on today?",
+    "What kind of mood are we in today?",
+    "You doing alright over there?",
+    "How's the weather in your world today?",
+    "What's been the highlight of your day so far?",
+    "Are you taking care of yourself?",
+    "How's your energy level today?",
+    "What's the vibe today?",
+    "Got anything exciting going on?"
 ];
 
 interface FishForUserParams {
