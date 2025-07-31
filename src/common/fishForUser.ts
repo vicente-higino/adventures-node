@@ -74,7 +74,7 @@ const fishingFriendlyQuestions = [
     "Are you taking care of yourself?",
     "How's your energy level today?",
     "What's the vibe today?",
-    "Got anything exciting going on?"
+    "Got anything exciting going on?",
 ];
 
 interface FishForUserParams {

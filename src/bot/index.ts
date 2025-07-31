@@ -2,23 +2,11 @@ import { RefreshingAuthProvider } from "@twurple/auth";
 import { promises as fs, readFileSync } from "fs";
 import env from "@/env";
 import { Bot } from "@twurple/easy-bot";
-import { fishCommand } from "./commands/fish";
-import { silverCommand } from "./commands/silver";
 import { z } from "zod";
 import { apiClient } from "@/twitch/api";
 import { listener } from "@/twitch/eventsub";
-import { setRarityWeightCommand } from "./commands/setFishWeight";
-import { resetRarityWeightCommand } from "./commands/resetFishWeight";
-
-import { fishOddsCommand } from "./commands/fishOdds";
-import { flexFishCommand } from "./commands/flexFish";
-import { fishGalleryCommand } from "./commands/fishGallery";
-import { fishDexCommand, fishDexGlobalCommand } from "./commands/fishDex";
-import { fishCountCommand } from "./commands/fishCount";
-import { fishRecordsCommand } from "./commands/fishRecords";
 import { EmoteTracker } from "./emote-tracker";
-import { emoteCountCommand, emoteRankCommand, myEmoteCountCommand, myEmoteRankCommand } from "./commands/emoteCount";
-import { refreshEmotesAdminCommand, refreshEmotesCommand } from "./commands/refreshEmotesCommand";
+import { commands } from "./commands";
 const clientId = env.TWITCH_CLIENT_ID;
 const clientSecret = env.TWITCH_CLIENT_SECRET;
 
@@ -138,25 +126,7 @@ export const createBot = async () => {
             debug: botConfig.debug,
             emitCommandMessageEvents: true,
             chatClientOptions: { isAlwaysMod: botConfig.isAlwaysMod },
-            commands: [
-                fishCommand,
-                silverCommand,
-                setRarityWeightCommand,
-                resetRarityWeightCommand,
-                fishOddsCommand,
-                flexFishCommand,
-                fishGalleryCommand,
-                fishDexCommand,
-                fishDexGlobalCommand,
-                fishCountCommand,
-                fishRecordsCommand,
-                emoteRankCommand,
-                emoteCountCommand,
-                myEmoteCountCommand,
-                myEmoteRankCommand,
-                refreshEmotesCommand,
-                refreshEmotesAdminCommand,
-            ],
+            commands,
         });
         bot.onAuthenticationSuccess(() => {
             bot?.api.users
