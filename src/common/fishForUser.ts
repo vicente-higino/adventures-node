@@ -312,7 +312,8 @@ export async function fishForUser({
 
     const totalValueMessage = bonus > 0 ? `${fish.sellValue} + ${bonus} (Bonus) = ${fish.sellValue + bonus}` : `${fish.sellValue}`;
     const valueEmote = bonus > 0 ? getValueEmote(fish.sellValue + bonus) : fish.rarityEmote;
-    const resText = `@${userDisplayName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} #${createdFish.id} ${fish.formatedSize} ${fish.formatedWeight}!
+    const useAction = fish.rarity == Rarity.Legendary ? "/me " : "";
+    const resText = `${useAction}@${userDisplayName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} #${createdFish.id} ${fish.formatedSize} ${fish.formatedWeight}!
                     It sold for ${totalValueMessage} silver! ${recordMessage} ${fishDexMessage} ${valueEmote}`;
     return resText;
 }
@@ -349,5 +350,5 @@ const FISHDEX_COMPLETION_BONUS: Record<Rarity, number> = {
     Rare: 10000,
     Epic: 25000,
     Trash: 50000,
-    Legendary: 100000,
+    Legendary: 500000,
 };
