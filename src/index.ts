@@ -68,7 +68,7 @@ app.use("/auth/twitch/login", bearerAuth({ token: env.TWTICH_EVENTSUB_SECRET }))
 app.get("/auth/twitch/login", AuthTwitchRedirect);
 
 app.use("*", bearerAuth({ token: env.TWITCH_CLIENT_SECRET }));
-app.use("*", trollMiddleware);
+// app.use("*", trollMiddleware);
 // Register OpenAPI endpoints
 app.get("/api/points/:userId", Point);
 authenticatedRoute.get("/api/points/update/:userId/:newBalance", PointUpdate);
