@@ -18,10 +18,12 @@ export const VALUE_EMOTES: { threshold: number; emote: string }[] = [
     { threshold: 100, emote: "poggSpin" }, //  < 100
     { threshold: 140, emote: "YIPPIE" }, //  < 140
     { threshold: 300, emote: "POGGIES" }, //  < 300
-    { threshold: 600, emote: "Cereal" }, //  < 600
+    { threshold: 600, emote: "POGGERS" }, //  < 600
     { threshold: 800, emote: "Pog" }, //  < 800
-    { threshold: 1001, emote: "HOLY" }, //  < 1001
-    { threshold: Infinity, emote: "OOOO" }, // >= 1001
+    { threshold: 1000, emote: "HOLY" }, //  < 1000
+    { threshold: 2500, emote: "Cereal" }, //  < 2500
+    { threshold: 5000, emote: "MUGA" }, //  < 5000
+    { threshold: Infinity, emote: "OOOO" }, // >= 5000
 ];
 
 // Define rarity weights
