@@ -22,60 +22,8 @@ import {
 import relativeTime from "dayjs/plugin/relativeTime";
 import { fishTable } from "@/fishing/fishTable";
 import { fishingFacts } from "@/fishing/facts";
+import { friendlyCooldownMessages, fishingFriendlyQuestions, wrongPlaces, motivationalQuotes } from "./phrases";
 dayjs.extend(relativeTime);
-
-const wrongPlaces = [
-    "the neighbour's koi pond",
-    "a restricted military zone",
-    "the city fountain",
-    "a private aquarium",
-    "a wishing well",
-    "the mall's decorative pond",
-    "the general's swimming pool",
-    "a children's inflatable pool",
-    "a water treatment plant",
-    "a historical landmark's moat",
-    "a science lab's fish tank",
-    "a theme park's water ride",
-    "a hotel's luxury pool",
-    "a zoo's penguin exhibit",
-    "a public restroom's sink",
-];
-
-const friendlyCooldownMessages = [
-    "Hope you're having a great day!",
-    "Stay patient, the big one is coming!",
-    "Hope you get a legendary next time!",
-    "Remember to stay hydrated out there!",
-    "Nice work! Take a breather, great catches need patience.",
-    "Chill for a bit, the fish are just warming up for you.",
-    "Good things come to those who wait, relax and enjoy the calm.",
-    "Hold tight, your next big catch is on its way!",
-    "Cooling down now, use this moment to get ready for the next cast.",
-    "Patience pays off, take a moment to soak in the peaceful vibes.",
-    "Rest your rod, the fish are gathering just for you.",
-    "Keep calm and cool down, the waters will reward you soon.",
-    "Pause, breathe, and get ready for your next winning cast.",
-    "You're doing great! Sometimes the best catch comes after a little wait.",
-];
-const fishingFriendlyQuestions = [
-    "How are you doing today?",
-    "How's your day going so far?",
-    "What's new with you today?",
-    "How are things on your end?",
-    "Everything okay with you lately?",
-    "How are you feeling today?",
-    "How's life treating you right now?",
-    "Got any good vibes going on today?",
-    "What kind of mood are we in today?",
-    "You doing alright over there?",
-    "How's the weather in your world today?",
-    "What's been the highlight of your day so far?",
-    "Are you taking care of yourself?",
-    "How's your energy level today?",
-    "What's the vibe today?",
-    "Got anything exciting going on?",
-];
 
 interface FishForUserParams {
     prisma: PrismaClient;
@@ -106,11 +54,12 @@ export async function fishForUser({
         if (secondsLeft > 0) {
             const timeUntilNext = dayjs(nextAvailable);
             let cooldownMessage = `@${userDisplayName}, you can only fish again in ${formatTimeToWithSeconds(timeUntilNext.toDate())}.`;
-            if (Math.random() < 0.25) {
+            if (Math.random() < 0.33) {
                 return (
                     cooldownMessage +
                     pickRandom([
                         ` ${pickRandom(FISH_COOLDOWN_EMOTES)} ${pickRandom(friendlyCooldownMessages)}`,
+                        ` ${pickRandom(FISH_COOLDOWN_EMOTES)} ${pickRandom(motivationalQuotes)}`,
                         ` peepoInterview ${pickRandom(fishingFriendlyQuestions)}`,
                         ` ${pickRandom(FACTS_EMOTES)} ${pickRandom(fishingFacts)}`,
                     ])
