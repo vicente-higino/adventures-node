@@ -11,6 +11,7 @@ import { refreshEmotesCommand, refreshEmotesAdminCommand } from "./refreshEmotes
 import { resetRarityWeightCommand } from "./resetFishWeight";
 import { setRarityWeightCommand } from "./setFishWeight";
 import { silverCommand } from "./silver";
+import { forceEndAdventureCommand } from "./forceEndAdventure";
 
 export const commands: BotCommand[] = [
     fishCommand,
@@ -30,4 +31,5 @@ export const commands: BotCommand[] = [
     myEmoteRankCommand,
     refreshEmotesCommand,
     refreshEmotesAdminCommand,
+    forceEndAdventureCommand,
 ];

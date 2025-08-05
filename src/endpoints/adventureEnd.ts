@@ -5,6 +5,9 @@ import { increaseBalanceWithChannelID, updateUserAdventureStats, addBonusToUserS
 import { runGroupAdventure } from "@/adventures";
 import { calculateWinStreakBonus, calculateLoseStreakBonus, formatSilver, limitMessageLength, limitAdvMessage } from "@/utils/misc";
 import { Mutex } from "async-mutex";
+import dayjs from "dayjs";
+import { formatTimeToWithSeconds } from "@/utils/time";
+import { getBotConfig } from "@/bot";
 export const advEndMutex = new Mutex();
 interface ResultArrItem {
     displayName: string;
@@ -33,8 +36,10 @@ export class AdventureEnd extends OpenAPIRoute {
         const timeDiff = Date.now() - adv.createdAt.getTime();
         const timeLimit = 1000 * 60 * 10;
 
-        if (timeDiff < timeLimit && adv.name !== userProviderId) {
-            return c.text(`@${userDisplayName}, only the owner can end the adventure in the first 10 minutes.`);
+        if (timeDiff < timeLimit && userProviderId !== getBotConfig().userId) {
+            const nextAvailable = new Date(adv.createdAt.getTime() + timeLimit);
+            let cooldownMessage = `@${userDisplayName}, hold tight! The adventure is locked for ${formatTimeToWithSeconds(nextAvailable)} to allow others to join.`;
+            return c.text(cooldownMessage);
         }
         const locked = advEndMutex.isLocked();
         if (locked) {
