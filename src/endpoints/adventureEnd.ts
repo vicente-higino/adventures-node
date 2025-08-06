@@ -74,7 +74,7 @@ export class AdventureEnd extends OpenAPIRoute {
                 // Convert winner operations to promises
                 for (const p of winners) {
                     const winAmount = Math.ceil(p.buyin * payoutRate);
-                    const profit = Math.ceil(p.buyin * (payoutRate - 1));
+                    const profit = winAmount - p.buyin;
 
                     promises.push(
                         (async () => {
