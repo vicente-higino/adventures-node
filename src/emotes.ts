@@ -24,7 +24,8 @@ export const DUEL_DENY_EMOTES = [
 export const CONGRATULATIONS_EMOTES = ["EZ Clap", "peepoClap", "clappi", "catClap", "HOLY", "OOOO", "MUGA", "Pog"];
 export const CONGRATULATIONS_TRASH_FISH_DEX_EMOTES = ["peepoClap", "clappi", "catClap", "Pog", "WW"];
 export const DUEL_WIN_EMOTES = ["EZ", "EZ Clap", "Pog", "pogg", "poggSpin", "POGGERS", "POGGIES", "WW", "HOLY", "OOOO", "MUGA", "Cereal", "gg"];
-export const FACTS_EMOTES = ["fusNotes", "NERD", "mhm", "Nerdge", "yapping", "YAPPP", "YAPPERScouncil", "fusG", "peepoTalk", "CatNerd", "PepoG"];
+export const FACTS_EMOTES = ["fusNotes", "NERD", "mhm", "Nerdge", "yapping", "YAPPP", "fusG", "peepoTalk", "CatNerd", "PepoG"];
+export const QUOTES_EMOTES = ["fusNotes", "NERD", "mhm", "Nerdge", "yapping", "YAPPP", "fusG", "peepoTalk", "CatNerd", "PepoG", "Life", "Gaze"];
 
 const COOLDOWN_EMOTES = [
     "Waiting",

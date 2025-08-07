@@ -18,6 +18,7 @@ import {
     FISH_COOLDOWN_EMOTES,
     FISH_FINE_EMOTES,
     PAUSE_EMOTES,
+    QUOTES_EMOTES,
 } from "@/emotes";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { fishTable } from "@/fishing/fishTable";
@@ -59,7 +60,7 @@ export async function fishForUser({
                     cooldownMessage +
                     pickRandom([
                         ` ${pickRandom(FISH_COOLDOWN_EMOTES)} ${pickRandom(friendlyCooldownMessages)}`,
-                        ` ${pickRandom(FISH_COOLDOWN_EMOTES)} ${pickRandom(motivationalQuotes)}`,
+                        ` ${pickRandom(QUOTES_EMOTES)} ${pickRandom(motivationalQuotes)}`,
                         ` peepoInterview ${pickRandom(fishingFriendlyQuestions)}`,
                         ` ${pickRandom(FACTS_EMOTES)} ${pickRandom(fishingFacts)}`,
                     ])
