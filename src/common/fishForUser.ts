@@ -50,7 +50,7 @@ export async function fishForUser({
         const lastFishedAt = fishStats.updatedAt;
         const nextAvailable = new Date(lastFishedAt.getTime() + 1000 * 60 * 60 * cooldownHours);
         const now = new Date();
-        const secondsLeft = Math.ceil((nextAvailable.getTime() - now.getTime()) / 1000);
+        const secondsLeft = Math.floor((nextAvailable.getTime() - now.getTime()) / 1000);
 
         if (secondsLeft > 0) {
             const timeUntilNext = dayjs(nextAvailable);
