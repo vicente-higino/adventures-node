@@ -52,7 +52,7 @@ export async function fishForUser({
         const now = new Date();
         const secondsLeft = Math.floor((nextAvailable.getTime() - now.getTime()) / 1000);
 
-        if (secondsLeft > 0) {
+        if (secondsLeft >= 1) {
             const timeUntilNext = dayjs(nextAvailable);
             let cooldownMessage = `@${userDisplayName}, you can only fish again in ${formatTimeToWithSeconds(timeUntilNext.toDate())}.`;
             if (Math.random() < 0.33) {

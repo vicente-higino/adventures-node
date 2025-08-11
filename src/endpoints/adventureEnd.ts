@@ -35,9 +35,11 @@ export class AdventureEnd extends OpenAPIRoute {
         }
         const timeDiff = Date.now() - adv.createdAt.getTime();
         const timeLimit = 1000 * 60 * 10;
+        const now = new Date();
+        const nextAvailable = new Date(adv.createdAt.getTime() + timeLimit);
+        const secondsLeft = Math.floor((nextAvailable.getTime() - now.getTime()) / 1000);
 
-        if (timeDiff < timeLimit && userProviderId !== getBotConfig().userId) {
-            const nextAvailable = new Date(adv.createdAt.getTime() + timeLimit);
+        if (secondsLeft >= 1 && userProviderId !== getBotConfig().userId) {
             let cooldownMessage = `@${userDisplayName}, hold tight! The adventure is locked for ${formatTimeToWithSeconds(nextAvailable)} to allow others to join.`;
             return c.text(cooldownMessage);
         }
