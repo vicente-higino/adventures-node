@@ -61,7 +61,6 @@ export async function fishForUser({
                     pickRandom([
                         ` ${pickRandom(FISH_COOLDOWN_EMOTES)} ${pickRandom(friendlyCooldownMessages)}`,
                         ` ${pickRandom(QUOTES_EMOTES)} ${pickRandom(motivationalQuotes)}`,
-                        ` peepoInterview ${pickRandom(fishingFriendlyQuestions)}`,
                         ` ${pickRandom(FACTS_EMOTES)} ${pickRandom(fishingFacts)}`,
                     ])
                 );
