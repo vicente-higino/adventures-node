@@ -85,7 +85,11 @@ export const fishDexCommand = createBotCommand(
             return `${rarity}: ${caught}/${total}`;
         }).join(" | ");
 
-        say(`@${targetDisplayName} FishDex: ${summary}`);
+        // Totals across all rarities
+        const totalAll = Array.from(allFishMap.values()).reduce((acc, s) => acc + s.size, 0);
+        const totalCaught = Array.from(userFishMap.values()).reduce((acc, s) => acc + s.size, 0);
+
+        say(`@${targetDisplayName} FishDex: ${summary} | Total: ${totalCaught}/${totalAll}`);
     },
     { ignoreCase: true, aliases: ["fd"] },
 );
@@ -107,7 +111,11 @@ export const fishDexGlobalCommand = createBotCommand(
             return `${rarity}: ${caught}/${total}`;
         }).join(" | ");
 
-        say(`Global FishDex: ${summary}`);
+        // Totals across all rarities
+        const totalAll = Array.from(allFishMap.values()).reduce((acc, s) => acc + s.size, 0);
+        const totalCaught = Array.from(channelFishMap.values()).reduce((acc, s) => acc + s.size, 0);
+
+        say(`Global FishDex: ${summary} | Total: ${totalCaught}/${totalAll}`);
     },
     { ignoreCase: true, aliases: ["fdg"] },
 );
