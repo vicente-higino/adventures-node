@@ -3,6 +3,7 @@ import { prisma } from "@/prisma";
 import { fishTable } from "@/fishing/fishTable";
 import { z } from "zod";
 import { getUserByUsername } from "@/twitch/api";
+import { findOrCreateFishStats } from "@/db";
 
 const RARITY_ORDER = ["Legendary", "Epic", "Rare", "Fine", "Uncommon", "Common", "Trash"];
 
@@ -55,12 +56,13 @@ async function getChannelFishNamesByRarity(channelProviderId: string) {
 export const fishDexCommand = createBotCommand(
     "fishdex",
     async (params, ctx) => {
-        const { userId, userDisplayName, broadcasterId, say } = ctx;
+        const { userId, userDisplayName, userName, broadcasterId, broadcasterName, say } = ctx;
 
         // Zod: allow optional username as first param, must be at least 3 chars if present
         const schema = z.array(z.string().min(3)).max(1);
         let targetUserId = userId;
         let targetDisplayName = userDisplayName;
+        let targetName = userName;
 
         if (params.length > 0 && schema.safeParse(params).success) {
             const username = params[0].replace(/^@/, "").toLowerCase();
@@ -71,6 +73,7 @@ export const fishDexCommand = createBotCommand(
             }
             targetUserId = user.id;
             targetDisplayName = user.displayName;
+            targetName = user.login;
         }
 
         // Get all unique fish names by rarity (from fishTable)
@@ -85,11 +88,21 @@ export const fishDexCommand = createBotCommand(
             return `${rarity}: ${caught}/${total}`;
         }).join(" | ");
 
-        // Totals across all rarities
-        const totalAll = Array.from(allFishMap.values()).reduce((acc, s) => acc + s.size, 0);
-        const totalCaught = Array.from(userFishMap.values()).reduce((acc, s) => acc + s.size, 0);
+        // Total fish caught by the user (counts, includes duplicates) — use prisma count like fishCountSummary
+        const fishStats = await findOrCreateFishStats(prisma, broadcasterName, broadcasterId, targetUserId, targetName, targetDisplayName);
+        const fishCountsByRarity = [
+            { count: fishStats.legendaryFishCount },
+            { count: fishStats.epicFishCount },
+            { count: fishStats.rareFishCount },
+            { count: fishStats.fineFishCount },
+            { count: fishStats.uncommonFishCount },
+            { count: fishStats.commonFishCount },
+            { count: fishStats.trashFishCount },
+        ];
 
-        say(`@${targetDisplayName} FishDex: ${summary} | Total: ${totalCaught}/${totalAll}`);
+        const totalCount = fishCountsByRarity.reduce((acc, curr) => acc + curr.count, 0);
+
+        say(`@${targetDisplayName} FishDex: ${summary} | Total: ${totalCount} Fish Caught`);
     },
     { ignoreCase: true, aliases: ["fd"] },
 );
