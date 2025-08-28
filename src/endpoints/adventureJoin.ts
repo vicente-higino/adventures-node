@@ -9,7 +9,7 @@ import { pickRandom, roundToDecimalPlaces, calculateAmount, sendActionToChannel 
 import { formatTimeToWithSeconds } from "@/utils/time";
 import { ADVENTURE_COOLDOWN_EMOTES } from "@/emotes";
 import { Mutex } from "async-mutex";
-import { advEndMutex } from "./adventureEnd";
+import { getChannelMutex as getAdvEndMutex } from "./adventureEnd";
 import { scheduleAdventureWarnings } from "@/common/helpers/schedule";
 dayjs.extend(relativeTime);
 
@@ -39,7 +39,7 @@ export function generatePayoutRate(): number {
         return 1.3 + Math.random() * 0.1;
     }
 }
-const mutex = new Mutex();
+
 // Store timers per adventure to allow clearing if adventure ends early
 export class AdventureJoin extends OpenAPIRoute {
     schema = {
@@ -75,7 +75,14 @@ export class AdventureJoin extends OpenAPIRoute {
         const userProviderId = data.headers["x-fossabot-message-userproviderid"];
         const userLogin = data.headers["x-fossabot-message-userlogin"];
         const userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
+
+        // Prevent join if adventureEnd mutex is locked for this channel
+        const advEndMutex = getAdvEndMutex(channelProviderId);
         if (advEndMutex.isLocked()) return c.text(`@${userDisplayName}, the adventure has ended.`);
+
+        // Use per-channel join mutex for adventure creation/join logic
+        const joinMutex = getAdvJoinMutex(channelProviderId);
+
         const advDone = await prisma.adventure.findFirst({
             where: { channelProviderId: channelProviderId, name: "DONE" },
             orderBy: { createdAt: "desc" },
@@ -110,12 +117,11 @@ export class AdventureJoin extends OpenAPIRoute {
             if (newBuyin <= 0) {
                 return c.text(`@${userDisplayName} you need at least 1 silver to start an adventure.`);
             }
-            const locked = mutex.isLocked();
-            // const lockRes = await lock.lock(lockName);
+            const locked = joinMutex.isLocked();
             if (locked) {
                 return c.text(`${userDisplayName}, there is already a adventure running. Try joining again.`);
             }
-            await mutex.acquire();
+            const release = await joinMutex.acquire();
 
             const [_, adventure] = await Promise.all([
                 setBalance(prisma, balance.id, newBalanceValue),
@@ -129,7 +135,7 @@ export class AdventureJoin extends OpenAPIRoute {
                     },
                 }),
             ]);
-            mutex.release();
+            release();
 
             scheduleAdventureWarnings(prisma, channelLogin, adventure.id);
 
@@ -196,4 +202,13 @@ export class AdventureJoin extends OpenAPIRoute {
         }
         return c.text(`@${userDisplayName} already joined the adventure with ${player.buyin} silver.`);
     }
+}
+
+// Per-channel mutex for adventureJoin
+const advJoinMutexMap: Map<string, Mutex> = new Map();
+function getAdvJoinMutex(channelProviderId: string): Mutex {
+    if (!advJoinMutexMap.has(channelProviderId)) {
+        advJoinMutexMap.set(channelProviderId, new Mutex());
+    }
+    return advJoinMutexMap.get(channelProviderId)!;
 }

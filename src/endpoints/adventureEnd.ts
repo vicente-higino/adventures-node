@@ -8,7 +8,16 @@ import { Mutex } from "async-mutex";
 import dayjs from "dayjs";
 import { formatTimeToWithSeconds } from "@/utils/time";
 import { getBotConfig } from "@/bot";
-export const advEndMutex = new Mutex();
+
+// Replace single mutex with a map of mutexes per channel
+const advEndMutexMap: Map<string, Mutex> = new Map();
+export function getChannelMutex(channelProviderId: string): Mutex {
+    if (!advEndMutexMap.has(channelProviderId)) {
+        advEndMutexMap.set(channelProviderId, new Mutex());
+    }
+    return advEndMutexMap.get(channelProviderId)!;
+}
+
 interface ResultArrItem {
     displayName: string;
     profit: number;
@@ -43,11 +52,13 @@ export class AdventureEnd extends OpenAPIRoute {
             let cooldownMessage = `@${userDisplayName}, hold tight! The adventure is locked for ${formatTimeToWithSeconds(nextAvailable)} to allow others to join.`;
             return c.text(cooldownMessage);
         }
-        const locked = advEndMutex.isLocked();
+        // Use per-channel mutex
+        const channelMutex = getChannelMutex(channelProviderId);
+        const locked = channelMutex.isLocked();
         if (locked) {
             return c.text("");
         }
-        const release = await advEndMutex.acquire();
+        const release = await channelMutex.acquire();
         try {
             const players = await prisma.player.findMany({
                 where: { adventureId: adv.id },
