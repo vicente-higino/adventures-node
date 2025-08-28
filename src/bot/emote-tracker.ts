@@ -1,7 +1,7 @@
 import { getBotConfig } from "./index";
 import { getUserByUsername } from "@/twitch/api";
 import { EmoteFetcher, Emote } from "@/common/emotes";
-import { Bot } from "@twurple/easy-bot";
+import { Bot, MessageEvent } from "@twurple/easy-bot";
 import { prisma } from "@/prisma";
 import cron from "node-cron";
 import { uuidv7 } from "uuidv7";
@@ -12,7 +12,7 @@ export class EmoteTracker {
     private channelEmotes: Map<string, Map<string, Emote>> = new Map(); // channel login -> emotes
     // private emoteUsage: Map<string, Map<string, number>> = new Map(); // channel login -> emote name -> count
 
-    constructor(private bot: Bot) {}
+    constructor(private bot: Bot) { }
 
     async initialize() {
         const config = getBotConfig();
@@ -28,6 +28,26 @@ export class EmoteTracker {
         this.startRefreshAllEmotesCronjobTask();
     }
 
+    private extractNativeTwitchEmotes(ctx: MessageEvent): Map<string, string[]> {
+        // ctx.emoteOffsets: { [emoteId: string]: [start, end][] }
+        // Returns Map<emoteName, string[]> where string[] are index ranges
+        const emoteMap = new Map<string, string[]>();
+        if (!ctx.emoteOffsets.size) return emoteMap;
+        for (const [emoteId, ranges] of ctx.emoteOffsets) {
+            for (const range of ranges) {
+
+                const [start, end] = range.split("-").map(Number);
+
+                const emoteName = ctx.text.substring(start, end + 1);
+                if (!emoteMap.has(emoteName)) {
+                    emoteMap.set(emoteName, []);
+                }
+                emoteMap.get(emoteName)!.push(`${start}-${end}`);
+            }
+        }
+        return emoteMap;
+    }
+
     private listenToChat() {
         this.bot.onMessage(async ctx => {
             const channel = ctx.broadcasterName;
@@ -36,7 +56,8 @@ export class EmoteTracker {
             const text = ctx.text;
             const emotes = this.channelEmotes.get(channel);
             if (!emotes) return;
-            // const usage = this.emoteUsage.get(channel)!;
+
+            const nativeEmotes = this.extractNativeTwitchEmotes(ctx);
 
             const words = text
                 .split(" ")
@@ -45,12 +66,10 @@ export class EmoteTracker {
 
             const emoteEvents: { id: string; channelProviderId: string; emoteName: string; userId: string }[] = [];
 
+            // Check both native Twitch emotes and custom emotes
             for (const word of words) {
                 if (!word) continue;
-                if (emotes.has(word)) {
-                    // const t = (usage.get(word) || 0) + 1;
-                    // usage.set(word, t);
-
+                if (emotes.has(word) || nativeEmotes.has(word)) {
                     emoteEvents.push({ id: uuidv7(), channelProviderId: channelId, emoteName: word, userId });
                 }
             }
