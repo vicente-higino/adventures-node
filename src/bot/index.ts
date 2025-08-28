@@ -106,10 +106,10 @@ let currentBotUserId: string | null = null; // Track the userId for the singleto
 export let emoteTracker: EmoteTracker | null = null; // Placeholder for emote tracker
 export const GetBot = () => bot;
 
-export const createBot = async () => {
+export const createBot = async (forceRecreate?: boolean) => {
     await loadBotConfig();
 
-    if (bot && currentBotUserId === botConfig.userId) {
+    if (bot && currentBotUserId === botConfig.userId && !forceRecreate) {
         return; // Return existing bot if userId matches
     }
     fetchLiveChannels();
