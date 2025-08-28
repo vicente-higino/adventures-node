@@ -1,4 +1,4 @@
-import { GetBot, getBotConfig } from "@/bot";
+import { GetBot, getBotConfig, isChannelLive } from "@/bot";
 import Qty from "js-quantities";
 
 export function pickRandom<T>(arr: T[]): T {
@@ -301,11 +301,12 @@ export function sendMessageToAllChannel(message: string) {
             });
     }
 }
-export function sendActionToAllChannel(message: string) {
+export function sendActionToAllChannel(message: string, onlyOffline = true) {
     // Placeholder function to send a message to a channel
     // Replace with actual implementation
     const { channels } = getBotConfig();
     for (const channel of channels) {
+        if (onlyOffline && isChannelLive(channel)) continue;
         console.log(`Sending message to ${channel}: ${message}`);
         GetBot()
             ?.action(channel, message)

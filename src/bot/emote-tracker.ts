@@ -12,7 +12,7 @@ export class EmoteTracker {
     private channelEmotes: Map<string, Map<string, Emote>> = new Map(); // channel login -> emotes
     // private emoteUsage: Map<string, Map<string, number>> = new Map(); // channel login -> emote name -> count
 
-    constructor(private bot: Bot) { }
+    constructor(private bot: Bot) {}
 
     async initialize() {
         const config = getBotConfig();
@@ -35,7 +35,6 @@ export class EmoteTracker {
         if (!ctx.emoteOffsets.size) return emoteMap;
         for (const [emoteId, ranges] of ctx.emoteOffsets) {
             for (const range of ranges) {
-
                 const [start, end] = range.split("-").map(Number);
 
                 const emoteName = ctx.text.substring(start, end + 1);

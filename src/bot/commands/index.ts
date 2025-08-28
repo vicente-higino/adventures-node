@@ -13,6 +13,7 @@ import { setRarityWeightCommand } from "./setFishWeight";
 import { silverCommand } from "./silver";
 import { forceEndAdventureCommand } from "./forceEndAdventure";
 import { reloadCommand } from "./reload";
+import { startEventCommand } from "./startEvent";
 
 export const commands: BotCommand[] = [
     fishCommand,
@@ -34,4 +35,5 @@ export const commands: BotCommand[] = [
     refreshEmotesAdminCommand,
     forceEndAdventureCommand,
     reloadCommand,
+    startEventCommand,
 ];
