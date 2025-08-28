@@ -22,12 +22,14 @@ import { LastFish } from "@/endpoints/lastFish";
 import env from "@/env";
 import { createBot } from "@/bot";
 import { prisma } from "@/prisma";
-import { AuthTwitch, AuthTwitchRedirect } from "./endpoints/authTwitch";
+import { AuthTwitch, AuthTwitchRedirect } from "@/endpoints/authTwitch";
 import { bearerAuth } from "hono/bearer-auth";
-import { startCron } from "./cron";
+import { startCron } from "@/cron";
 import { authMiddleware } from "@/middleware/authMiddleware";
 import { ignoreMiddleware } from "./middleware/ignoreUsers";
 import { trollMiddleware } from "./middleware/trollUsers";
+import { restartAdventureWarnings } from "@/common/helpers/schedule";
+import { delay } from "@/utils/misc";
 // Start a Hono app
 const hono = new Hono<HonoEnv>();
 const honoWithAuth = new Hono<HonoEnv>();
@@ -38,7 +40,12 @@ const honoWithAuth = new Hono<HonoEnv>();
 const app = fromHono(hono);
 const authenticatedRoute = fromHono(honoWithAuth);
 
-createBot().catch(e => console.error);
+createBot()
+    .then(async () => {
+        await delay(5000); // wait for the bot to be ready
+        restartAdventureWarnings();
+    })
+    .catch(e => console.error);
 app.use(logger());
 
 // Add validation middleware before routes

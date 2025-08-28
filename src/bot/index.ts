@@ -7,6 +7,7 @@ import { apiClient } from "@/twitch/api";
 import { listener } from "@/twitch/eventsub";
 import { EmoteTracker } from "./emote-tracker";
 import { commands } from "./commands";
+import { restartAdventureWarnings } from "@/common/helpers/schedule";
 const clientId = env.TWITCH_CLIENT_ID;
 const clientSecret = env.TWITCH_CLIENT_SECRET;
 
@@ -89,6 +90,7 @@ async function createEventsubListeners(users: string[]) {
                     liveChannels.delete(lc);
                 }
             }
+            restartAdventureWarnings(user.id);
             console.log(`${e.broadcasterDisplayName} just went offline`);
             console.log(
                 "Live channels:",
@@ -138,6 +140,7 @@ export const createBot = async () => {
                     console.error("Error fetching user:", err);
                 });
         });
+
         bot.onMessage(ctx => {
             const { broadcasterName, text } = ctx;
             const temuBotslieRegex = /temu botslie/i;
