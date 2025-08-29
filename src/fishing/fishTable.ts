@@ -43,6 +43,14 @@ export const fishTable: CatchDetails[] = [
         size: 170,
         weight: 60,
     },
+    {
+        sellValue: RARITY_POINTS.Legendary * 15,
+        name: "Fukura",
+        emote: () => pickRandom(["NatePOG", "CLIPSS", "C47"]),
+        rarity: "Legendary",
+        size: 180,
+        weight: 70,
+    },
 
     // Epic fish - very large sizes
     { sellValue: RARITY_POINTS.Epic, name: "Giant Tuna", rarity: "Epic", size: 300, weight: 500 },
