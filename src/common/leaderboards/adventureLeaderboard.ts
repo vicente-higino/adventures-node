@@ -83,5 +83,5 @@ export async function handleAdventure(
             }
         });
 
-    return { formattedLeaderboard, metricDisplay: metric };
+    return { formattedLeaderboard, metricDisplay: metric, leaderboardType: "Adventure" };
 }

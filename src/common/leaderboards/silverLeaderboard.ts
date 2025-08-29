@@ -26,5 +26,5 @@ export async function handleSilver(
             return `${index}. ${entry.name}: ${formatSilver(entry.value)} Silver`;
         });
 
-    return { formattedLeaderboard, metricDisplay: "silver" }; // Changed metricDisplay from "points" to "silver"
+    return { formattedLeaderboard, metricDisplay: "silver", leaderboardType: "Silver" };
 }

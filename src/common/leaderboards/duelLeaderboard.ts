@@ -86,5 +86,5 @@ export async function handleDuel(
             }
         });
 
-    return { formattedLeaderboard, metricDisplay: metric };
+    return { formattedLeaderboard, metricDisplay: metric, leaderboardType: "Duel" };
 }

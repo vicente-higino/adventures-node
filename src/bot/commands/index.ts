@@ -16,6 +16,7 @@ import { reloadCommand } from "./reload";
 import { startEventCommand } from "./startEvent";
 import { giveSilverCommand } from "./giveSilver";
 import { statsCommand } from "./stats";
+import { leaderboardCommand } from "./leaderboard";
 
 export const commands: BotCommand[] = [
     fishCommand,
@@ -40,4 +41,5 @@ export const commands: BotCommand[] = [
     startEventCommand,
     giveSilverCommand,
     statsCommand,
+    leaderboardCommand,
 ];
