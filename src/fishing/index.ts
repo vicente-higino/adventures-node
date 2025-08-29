@@ -10,6 +10,10 @@ dayjs.extend(duration);
 dayjs.extend(relativeTime);
 let rarityWeights: Record<Rarity, number> = RARITY_WEIGHTS_DEFAULT;
 
+// Track if a Legendary event is currently active
+let legendaryEventActive = false;
+let legendaryEventTimeout: NodeJS.Timeout | null = null;
+
 export function setRarityWeights(weights: Record<Rarity, number>) {
     rarityWeights = { ...RARITY_WEIGHTS_DEFAULT, ...weights };
 }
@@ -187,12 +191,28 @@ export function formatRarityWeightDisplay(weights: Record<Rarity, number> = rari
         .join(", ");
 }
 
+function endLegendaryEvent() {
+    if (!legendaryEventActive) return;
+    legendaryEventActive = false;
+    resetRarityWeights();
+    sendActionToAllChannel("⏰ The Legendary Fishing Event has ended. Legendary fish odds are back to normal.");
+    if (legendaryEventTimeout) {
+        clearTimeout(legendaryEventTimeout);
+        legendaryEventTimeout = null;
+    }
+}
+
 export const legendaryEventTaskPerChannel = (channels: string[]) =>
     cron.createTask("*/1 * * * *", c => {
+        if (legendaryEventActive) {
+            console.log(`[${c.dateLocalIso}] Legendary event already active, skipping random event.`);
+            return;
+        }
         console.log(`[${c.dateLocalIso}] Running legendary event task for channels: ${channels.join(", ")}`);
         const chance = 5 / (7 * 24 * 60);
         const shouldRun = chance > Math.random();
         if (shouldRun) {
+            legendaryEventActive = true;
             // Temporarily boost Legendary rarity
             const legendaryChanceBefore = getChanceByRarity("Legendary");
             modifyRarityWeights({ Legendary: Math.round(boxMullerTransform(25, 10, 20)) });
@@ -202,10 +222,9 @@ export const legendaryEventTaskPerChannel = (channels: string[]) =>
                 `🌟 A Legendary Fishing Event has started! Legendary fish are much more likely for the next 90 minutes! ${chanceStr} 🎣`,
             );
             c.task?.stop();
-            setTimeout(
+            legendaryEventTimeout = setTimeout(
                 () => {
-                    resetRarityWeights();
-                    sendActionToAllChannel("⏰ The Legendary Fishing Event has ended. Legendary fish odds are back to normal.");
+                    endLegendaryEvent();
                     c.task?.start();
                 },
                 90 * 60 * 1000,
@@ -219,6 +238,11 @@ export const legendaryEventTaskPerChannel = (channels: string[]) =>
  * @param durationMs Duration of the event in milliseconds
  */
 export function manualLegendaryEventTask(legendaryWeight: number, durationMs: number): void {
+    if (legendaryEventActive) {
+        sendActionToAllChannel("A Legendary Fishing Event is already active. Please wait until it ends.");
+        return;
+    }
+    legendaryEventActive = true;
     const legendaryChanceBefore = getChanceByRarity("Legendary");
     modifyRarityWeights({ Legendary: legendaryWeight });
     const legendaryChanceAfter = getChanceByRarity("Legendary");
@@ -226,9 +250,8 @@ export function manualLegendaryEventTask(legendaryWeight: number, durationMs: nu
     sendActionToAllChannel(
         `🌟 A Legendary Fishing Event has started! Legendary fish are much more likely for the next ${dayjs.duration(durationMs).asMinutes()} minutes! ${chanceStr} 🎣`,
     );
-    setTimeout(() => {
-        resetRarityWeights();
-        sendActionToAllChannel("⏰ The Legendary Fishing Event has ended. Legendary fish odds are back to normal.");
+    legendaryEventTimeout = setTimeout(() => {
+        endLegendaryEvent();
     }, durationMs);
 }
 
