@@ -30,7 +30,7 @@ export const leaderboardCommand = createBotCommand(
             return;
         }
 
-        const direction = sortBy.includes("-asc") ? "Bottom" : "Top";
+        const direction = result.order === "asc" ? "Bottom" : "Top";
         say(`${result.leaderboardType} ${direction} ${amount} by ${result.metricDisplay.replace(/_/g, " ")}:`);
         say(result.formattedLeaderboard.join(" | "));
     },

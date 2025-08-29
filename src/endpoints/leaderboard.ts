@@ -26,7 +26,7 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
             return c.text(`No data found for leaderboard.`);
         }
 
-        const direction = data.params.sortBy.includes("-asc") ? "Bottom" : "Top";
+        const direction = result.order === "asc" ? "Bottom" : "Top";
         return c.text(
             `${result.leaderboardType} ${direction} ${data.params.amount} By ${result.metricDisplay.replace(/_/g, " ")}:$(newline)${result.formattedLeaderboard.join(" | ")}`,
         );
