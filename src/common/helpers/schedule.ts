@@ -64,10 +64,23 @@ export async function restartAdventureWarnings(channelProviderId?: string) {
     // Find all adventures that are not DONE and not ended
     const adventures = await prisma.adventure.findMany({ where: { name: { not: "DONE" }, channelProviderId } });
     for (const adv of adventures) {
-        console.log("Rescheduleing adventure warning for channel: ", adv.channel);
-        // You may want to check for additional conditions, e.g. if the adventure is active
-        // and not ended by other means
-        scheduleAdventureWarnings(prisma, adv.channel, adv.id, RESTART_WARNINGS);
-        // await delay(1000);
+        console.log("Rescheduling adventure warning for channel: ", adv.channel);
+
+        // Calculate the elapsed time since the adventure started
+        const startTime = new Date(adv.createdAt).getTime();
+        const currentTime = Date.now();
+        const elapsedTime = currentTime - startTime;
+
+        const totalDuration = 30 * 60 * 1000;
+
+        // Determine the delayOffset or use default delays if the adventure has passed the end time
+        const adjustedWarnings = elapsedTime >= totalDuration
+            ? RESTART_WARNINGS // Use default delays if the adventure has passed the end time
+            : RESTART_WARNINGS.map(warning => ({
+                ...warning,
+                delay: warning.delay + Math.max(0, totalDuration - elapsedTime), // Add the delayOffset
+            }));
+
+        scheduleAdventureWarnings(prisma, adv.channel, adv.id, adjustedWarnings);
     }
 }
