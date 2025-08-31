@@ -28,10 +28,10 @@ export class EmoteTracker {
         this.startRefreshAllEmotesCronjobTask();
     }
 
-    private extractNativeTwitchEmotes(ctx: MessageEvent): Map<string, string[]> {
+    private extractNativeTwitchEmotes(ctx: MessageEvent): Map<string, Emote> {
         // ctx.emoteOffsets: { [emoteId: string]: [start, end][] }
         // Returns Map<emoteName, string[]> where string[] are index ranges
-        const emoteMap = new Map<string, string[]>();
+        const emoteMap = new Map<string, Emote>();
         if (!ctx.emoteOffsets.size) return emoteMap;
         for (const [emoteId, ranges] of ctx.emoteOffsets) {
             for (const range of ranges) {
@@ -39,9 +39,8 @@ export class EmoteTracker {
 
                 const emoteName = ctx.text.substring(start, end + 1);
                 if (!emoteMap.has(emoteName)) {
-                    emoteMap.set(emoteName, []);
+                    emoteMap.set(emoteName, { name: emoteName, id: emoteId, provider: "native", data: null });
                 }
-                emoteMap.get(emoteName)!.push(`${start}-${end}`);
             }
         }
         return emoteMap;

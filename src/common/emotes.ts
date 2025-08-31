@@ -36,7 +36,7 @@ export const senventvResSchema = z.object({
     emote_set: z.object({ id: z.string(), emotes: z.array(z.object({ id: z.string(), name: z.string() })) }),
 });
 
-export type Emote = { name: string; id: string | number; provider: "7tv" | "ffz" | "bttv"; data: any; sources?: string[] };
+export type Emote = { name: string; id: string | number; provider: "7tv" | "ffz" | "bttv" | "native"; data: any; sources?: string[] };
 
 class EmoteFetcher {
     async fetch7TV(userId: string): Promise<Emote[]> {
