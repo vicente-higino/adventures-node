@@ -16,10 +16,7 @@ export async function getLeaderboard(
     prisma: PrismaClient,
     channelProviderId: string,
     params: z.infer<typeof leaderboardSchema>,
-): Promise<LeaderboardResult & {
-    order: "asc" | "desc";
-
-} | string> {
+): Promise<(LeaderboardResult & { order: "asc" | "desc" }) | string> {
     const { amount, sortBy } = params;
 
     const sortParts = sortBy

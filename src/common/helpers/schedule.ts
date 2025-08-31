@@ -74,12 +74,13 @@ export async function restartAdventureWarnings(channelProviderId?: string) {
         const totalDuration = 30 * 60 * 1000;
 
         // Determine the delayOffset or use default delays if the adventure has passed the end time
-        const adjustedWarnings = elapsedTime >= totalDuration
-            ? RESTART_WARNINGS // Use default delays if the adventure has passed the end time
-            : RESTART_WARNINGS.map(warning => ({
-                ...warning,
-                delay: warning.delay + Math.max(0, totalDuration - elapsedTime), // Add the delayOffset
-            }));
+        const adjustedWarnings =
+            elapsedTime >= totalDuration
+                ? RESTART_WARNINGS // Use default delays if the adventure has passed the end time
+                : RESTART_WARNINGS.map(warning => ({
+                      ...warning,
+                      delay: warning.delay + Math.max(0, totalDuration - elapsedTime), // Add the delayOffset
+                  }));
 
         scheduleAdventureWarnings(prisma, adv.channel, adv.id, adjustedWarnings);
     }
