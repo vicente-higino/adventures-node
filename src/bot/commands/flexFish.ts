@@ -38,11 +38,11 @@ function getRecords(fish: FishWithRecords): string {
     if (fish.LightestRecord.length) records.push("Lightest");
     if (fish.SmallestRecord.length) records.push("Smallest");
     if (records.length === 0) return "";
-    if (records.length === 1) return `🏆 ${records[0]} record holder`;
-    if (records.length === 2) return `🏆 ${records[0]} & ${records[1]} record holder`;
+    if (records.length === 1) return `🏆 ${records[0]} record holder,`;
+    if (records.length === 2) return `🏆 ${records[0]} & ${records[1]} record holder,`;
     // For 3 or 4 records, Oxford comma style
     const last = records.pop();
-    return `🏆 ${records.join(", ")} & ${last} record holder`;
+    return `🏆 ${records.join(", ")} & ${last} record holder,`;
 }
 
 // Formats a fish object for display in chat
@@ -60,7 +60,7 @@ function formatFishDisplay(fish: FishWithRecords) {
         sameElse: "DD/MM/YYYY", // Everything else ( 17/10/2011 )
     });
     const records = getRecords(fish);
-    return `[${fish.rarity}] ${fish.prefix} ${fish.name} (${weightStr}, ${sizeStr}), ${records}, worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
+    return `[${fish.rarity}] ${fish.prefix} ${fish.name} (${weightStr}, ${sizeStr}), ${records} worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
 }
 
 export const flexFishCommand = createBotCommand(
