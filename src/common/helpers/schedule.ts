@@ -36,24 +36,19 @@ export const RESTART_WARNINGS: AdventureWarning[] = [
     { delay: 15 * 60 * 1000, message: `!adventureend` },
 ];
 
-export function scheduleAdventureWarnings(
-    prisma: PrismaClient,
-    channelLogin: string,
-    adventureId: number,
-    warnings: AdventureWarning[] = DEFAULT_WARNINGS,
-) {
+export function scheduleAdventureWarnings(prisma: PrismaClient, adventureId: number, warnings: AdventureWarning[] = DEFAULT_WARNINGS) {
     const timers: NodeJS.Timeout[] = [];
     for (const { delay, message } of warnings) {
         const timer = setTimeout(async () => {
             const adv = await prisma.adventure.findUnique({ where: { id: adventureId } });
-            if (!adv || adv.name === "DONE" || isChannelLive(channelLogin)) {
+            if (!adv || adv.name === "DONE" || isChannelLive(adv.channelProviderId)) {
                 for (const t of timers) {
                     clearTimeout(t);
                     console.log("clear timeout #", t);
                 }
                 return;
             }
-            sendActionToChannel(channelLogin, message);
+            if (!isChannelLive(adv.channelProviderId)) sendActionToChannel(adv.channel, message);
         }, delay);
         timer.unref();
         timers.push(timer);
@@ -82,6 +77,6 @@ export async function restartAdventureWarnings(channelProviderId?: string) {
                       delay: warning.delay + Math.max(0, totalDuration - elapsedTime), // Add the delayOffset
                   }));
 
-        scheduleAdventureWarnings(prisma, adv.channel, adv.id, adjustedWarnings);
+        scheduleAdventureWarnings(prisma, adv.id, adjustedWarnings);
     }
 }

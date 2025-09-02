@@ -137,7 +137,7 @@ export class AdventureJoin extends OpenAPIRoute {
             ]);
             release();
 
-            scheduleAdventureWarnings(prisma, channelLogin, adventure.id);
+            scheduleAdventureWarnings(prisma, adventure.id);
 
             return c.text(
                 `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "!adventure|adv [silver(K/M/B)|%|all|to:X|k:X]" to join in!
