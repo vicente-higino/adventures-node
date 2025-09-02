@@ -1,7 +1,7 @@
 import { BotCommand } from "@twurple/easy-bot";
 import { emoteRankCommand, emoteCountCommand, myEmoteCountCommand, myEmoteRankCommand } from "./emoteCount";
 import { fishCommand } from "./fish";
-import { fishCountCommand } from "./fishCount";
+import { fishCountCommand, fishCountGlobalCommand } from "./fishCount";
 import { fishDexCommand, fishDexGlobalCommand } from "./fishDex";
 import { fishGalleryCommand } from "./fishGallery";
 import { fishOddsCommand } from "./fishOdds";
@@ -29,6 +29,7 @@ export const commands: BotCommand[] = [
     fishDexCommand,
     fishDexGlobalCommand,
     fishCountCommand,
+    fishCountGlobalCommand,
     fishRecordsCommand,
     emoteRankCommand,
     emoteCountCommand,

@@ -25,5 +25,24 @@ export const fishCountCommand = createBotCommand(
         });
         say(summary);
     },
-    { aliases: ["fishstats"], ignoreCase: true },
+    { aliases: ["fishstats", "fc"], ignoreCase: true },
+);
+
+// New global fish count command using getFishCountSummary
+export const fishCountGlobalCommand = createBotCommand(
+    "fishcountglobal",
+    async (_params, ctx) => {
+        const { broadcasterId, broadcasterName, say } = ctx;
+        // Use getFishCountSummary with userProviderId = null to get channel stats
+        const summary = await getFishCountSummary({
+            prisma,
+            channelLogin: broadcasterName,
+            channelProviderId: broadcasterId,
+            userProviderId: null,
+            userLogin: null,
+            userDisplayName: broadcasterName,
+        });
+        say(summary);
+    },
+    { aliases: ["fishstatsglobal", "fcg"], ignoreCase: true },
 );
