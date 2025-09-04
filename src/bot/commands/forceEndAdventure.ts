@@ -11,5 +11,5 @@ export const forceEndAdventureCommand = createBotCommand(
         }
         say(`!adventureend`);
     },
-    { aliases: ["fea"], ignoreCase: true },
+    { aliases: ["fea", "forceadventureend"], ignoreCase: true },
 );
