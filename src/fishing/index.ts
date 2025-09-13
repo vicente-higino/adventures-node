@@ -215,7 +215,8 @@ export const legendaryEventTaskPerChannel = (channels: string[]) =>
             legendaryEventActive = true;
             // Temporarily boost Legendary rarity
             const legendaryChanceBefore = getChanceByRarity("Legendary");
-            modifyRarityWeights({ Legendary: Math.round(boxMullerTransform(25, 10, 20)) });
+            const legendaryWeight = Math.round(boxMullerTransform(25, 10, 20));
+            modifyRarityWeights({ Legendary: legendaryWeight, Common: w => w - legendaryWeight });
             const legendaryChanceAfter = getChanceByRarity("Legendary");
             const chanceStr = `${legendaryChanceBefore.toFixed(2)}% -> ${legendaryChanceAfter.toFixed(2)}%`;
             sendActionToAllChannel(
@@ -237,14 +238,13 @@ export const legendaryEventTaskPerChannel = (channels: string[]) =>
  * @param legendaryWeight Legendary rarity weight to set during the event
  * @param durationMs Duration of the event in milliseconds
  */
-export function manualLegendaryEventTask(legendaryWeight: number, durationMs: number): void {
+export function manualLegendaryEventTask(legendaryWeight: number, durationMs: number): boolean {
     if (legendaryEventActive) {
-        sendActionToAllChannel("A Legendary Fishing Event is already active. Please wait until it ends.");
-        return;
+        return false;
     }
     legendaryEventActive = true;
     const legendaryChanceBefore = getChanceByRarity("Legendary");
-    modifyRarityWeights({ Legendary: legendaryWeight });
+    modifyRarityWeights({ Legendary: legendaryWeight, Common: w => w - legendaryWeight });
     const legendaryChanceAfter = getChanceByRarity("Legendary");
     const chanceStr = `${legendaryChanceBefore.toFixed(2)}% -> ${legendaryChanceAfter.toFixed(2)}%`;
     sendActionToAllChannel(
@@ -253,6 +253,7 @@ export function manualLegendaryEventTask(legendaryWeight: number, durationMs: nu
     legendaryEventTimeout = setTimeout(() => {
         endLegendaryEvent();
     }, durationMs);
+    return true;
 }
 
 export function startLegendaryTasks(): void {
