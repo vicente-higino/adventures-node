@@ -60,7 +60,7 @@ function formatFishDisplay(fish: FishWithRecords) {
         sameElse: "DD/MM/YYYY", // Everything else ( 17/10/2011 )
     });
     const records = getRecords(fish);
-    return `[${fish.rarity}] ${fish.prefix} ${fish.name} (${weightStr}, ${sizeStr}), ${records} worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
+    return `[${fish.rarity}] ${fish.prefix} ${fish.name} #${fish.id} ${sizeStr} ${weightStr}, ${records} worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
 }
 
 export const flexFishCommand = createBotCommand(
