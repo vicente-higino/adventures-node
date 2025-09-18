@@ -299,5 +299,5 @@ const FISHDEX_COMPLETION_BONUS: Record<Rarity, number> = {
     Rare: 10000,
     Epic: 25000,
     Trash: 50000,
-    Legendary: 500000,
+    Legendary: 1000000,
 };
