@@ -88,12 +88,19 @@ export class AdventureJoin extends OpenAPIRoute {
             orderBy: { createdAt: "desc" },
         });
 
-        if (advDone && dayjs(advDone.createdAt).isAfter(cooldown(c))) {
-            const timeUntilNext = dayjs(advDone.createdAt).add(coolDownMinutes(c), "minutes");
-            return c.text(
-                `@${userDisplayName}, adventure is in cooldown, please wait ${formatTimeToWithSeconds(timeUntilNext.toDate())} before starting a new one. 
-                ${pickRandom(ADVENTURE_COOLDOWN_EMOTES)}`,
-            );
+        if (advDone) {
+            const lastEndedAt = advDone.createdAt;
+            const nextAvailable = new Date(lastEndedAt.getTime() + 1000 * 60 * coolDownMinutes(c));
+            const now = new Date();
+            const secondsLeft = Math.floor((nextAvailable.getTime() - now.getTime()) / 1000);
+
+            if (secondsLeft >= 1) {
+                const timeUntilNext = dayjs(nextAvailable);
+                return c.text(
+                    `@${userDisplayName}, adventure is in cooldown, please wait ${formatTimeToWithSeconds(timeUntilNext.toDate())} before starting a new one. 
+                    ${pickRandom(ADVENTURE_COOLDOWN_EMOTES)}`,
+                );
+            }
         }
         const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);
         const amountParam = data.params.amount.trim();
