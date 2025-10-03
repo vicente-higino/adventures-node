@@ -99,3 +99,11 @@ export const getUserById = async (
         // Note: profilePictureUrl and description are not stored/returned in this simplified DbUser type
     };
 };
+
+export async function sendChatMessageToChannel(broadcaster_id: string, sender_id: string, message: string) {
+    const res = await handleApiRequest(() => apiClient.chat.sendChatMessageAsApp(sender_id, broadcaster_id, message), authProvider);
+    if (!res) {
+        console.error(`Failed to send message to channel ID: ${broadcaster_id}`);
+    }
+    return res;
+}
