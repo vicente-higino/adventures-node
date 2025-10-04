@@ -16,13 +16,13 @@ export const Task = z.object({
 });
 
 export const FossaHeaders = z.object({
-    "x-fossabot-channellogin": Str(),
+    "x-fossabot-channellogin": z.string(),
     "x-fossabot-channelprovider": z.enum(["twitch", "discord", "youtube"]),
-    "x-fossabot-channelproviderid": Str(),
-    "x-fossabot-message-userlogin": Str(),
-    "x-fossabot-message-userdisplayname": Str(),
-    "x-fossabot-message-userproviderid": Str(),
-    "x-fossabot-customapitoken": Str(),
+    "x-fossabot-channelproviderid": z.string(),
+    "x-fossabot-message-userlogin": z.string(),
+    "x-fossabot-message-userdisplayname": z.string().transform(name => decodeURIComponent(name)),
+    "x-fossabot-message-userproviderid": z.string(),
+    "x-fossabot-customapitoken": z.string(),
 });
 
 export const numbersOrAll = (s: z.ZodString) =>
