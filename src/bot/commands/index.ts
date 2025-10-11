@@ -17,6 +17,7 @@ import { startEventCommand } from "./startEvent";
 import { giveSilverCommand } from "./giveSilver";
 import { statsCommand } from "./stats";
 import { leaderboardCommand } from "./leaderboard";
+import { showAllEmotesCommand } from "./showAllEmotes";
 
 export const commands: BotCommand[] = [
     fishCommand,
@@ -43,4 +44,5 @@ export const commands: BotCommand[] = [
     giveSilverCommand,
     statsCommand,
     leaderboardCommand,
+    showAllEmotesCommand,
 ];
