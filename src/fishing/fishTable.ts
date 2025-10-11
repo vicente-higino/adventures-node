@@ -46,7 +46,6 @@ export const fishTable: CatchDetails[] = [
     {
         sellValue: RARITY_POINTS.Legendary * 15,
         name: "Fukura",
-        emote: () => pickRandom(["NatePOG", "CLIPSS", "C47"]),
         rarity: "Legendary",
         size: 180,
         weight: 70,
@@ -109,7 +108,7 @@ export const fishTable: CatchDetails[] = [
     { sellValue: RARITY_POINTS.Fine, name: "Shad", rarity: "Fine", size: 60, weight: 4 },
     { sellValue: RARITY_POINTS.Fine, name: "Butterfly Fish", rarity: "Fine", size: 20, weight: 0.5 },
     { sellValue: RARITY_POINTS.Fine, name: "Dab", rarity: "Fine", size: 30, weight: 1 },
-    { sellValue: RARITY_POINTS.Fine, name: "Frog", rarity: "Fine", size: 10, weight: 0.2, emote: () => pickRandom(["FROG", "Pog"]) },
+    { sellValue: RARITY_POINTS.Fine, name: "Frog", rarity: "Fine", size: 10, weight: 0.2, emote: () => pickRandom(["FROG", "Pog", "frogJam"]) },
     { sellValue: RARITY_POINTS.Fine, name: "Sea Urchin", rarity: "Fine", size: 15, weight: 0.3 },
     { sellValue: RARITY_POINTS.Fine, name: "Dolphin", rarity: "Fine", size: 250, weight: 200 },
     { sellValue: RARITY_POINTS.Fine, name: "Triggerfish", rarity: "Fine", size: 50, weight: 3 },
@@ -140,7 +139,7 @@ export const fishTable: CatchDetails[] = [
 
     // Common fish - small sizes
     { sellValue: RARITY_POINTS.Common, name: "Snail", rarity: "Common", size: 4, weight: 0.2 },
-    { sellValue: RARITY_POINTS.Common, name: "Crab", rarity: "Common", size: 20, weight: 0.65, emote: () => "YEECLAW" },
+    { sellValue: RARITY_POINTS.Common, name: "Crab", rarity: "Common", size: 20, weight: 0.65 },
     { sellValue: RARITY_POINTS.Common, name: "Tadpole", rarity: "Common", size: 5, weight: 0.01 },
     { sellValue: RARITY_POINTS.Common, name: "Goldfish", rarity: "Common", size: 10, weight: 0.1 },
     { sellValue: RARITY_POINTS.Common, name: "Pond Smelt", rarity: "Common", size: 8, weight: 0.05 },
