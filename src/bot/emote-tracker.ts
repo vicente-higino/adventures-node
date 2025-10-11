@@ -61,7 +61,6 @@ export class EmoteTracker {
             if (!emotes) return;
 
             const nativeEmotes = this.extractNativeTwitchEmotes(ctx);
-
             const words = text
                 .split(" ")
                 .map(word => word.trim())
@@ -69,17 +68,35 @@ export class EmoteTracker {
 
             const emoteEvents: Prisma.EmoteUsageEventV2CreateInput[] = [];
 
-            // Check both native Twitch emotes and custom emotes
+            // Split words into native, channel, and global emotes
             for (const word of words) {
                 if (!word) continue;
-                if (emotes.has(word) || nativeEmotes.has(word)) {
+                if (nativeEmotes.has(word)) {
                     emoteEvents.push({
                         id: uuidv7(),
                         channelProviderId: channelId,
                         emoteName: word,
                         userId,
-                        provider: emotes.has(word) ? emotes.get(word)!.provider : nativeEmotes.get(word)!.provider,
-                        emoteId: emotes.has(word) ? emotes.get(word)!.id : nativeEmotes.get(word)!.id,
+                        provider: nativeEmotes.get(word)!.provider,
+                        emoteId: nativeEmotes.get(word)!.id,
+                    });
+                } else if (emotes.has(word)) {
+                    emoteEvents.push({
+                        id: uuidv7(),
+                        channelProviderId: channelId,
+                        emoteName: word,
+                        userId,
+                        provider: emotes.get(word)!.provider,
+                        emoteId: emotes.get(word)!.id,
+                    });
+                } else if (this.globalEmotes.has(word)) {
+                    emoteEvents.push({
+                        id: uuidv7(),
+                        channelProviderId: channelId,
+                        emoteName: word,
+                        userId,
+                        provider: this.globalEmotes.get(word)!.provider,
+                        emoteId: this.globalEmotes.get(word)!.id,
                     });
                 }
             }
