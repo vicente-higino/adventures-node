@@ -41,23 +41,9 @@ export const senventvResSchema = z.object({
 });
 
 // Add zod schemas for global responses
-export const seventvGlobalSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    emotes: z.array(z.object({ id: z.string(), name: z.string() })),
-});
-export const ffzGlobalSchema = z.object({
-    sets: z.record(z.string(), z.object({
-        emoticons: z.array(z.object({ id: z.number(), name: z.string() })),
-    })),
-});
-export const bttvGlobalSchema = z.array(z.object({
-    id: z.string(),
-    code: z.string(),
-    imageType: z.string(),
-    userId: z.string().optional(),
-    animated: z.boolean().optional(),
-}));
+export const seventvGlobalSchema = senventvResSchema.shape.emote_set;
+export const ffzGlobalSchema = z.object({ sets: ffzResSchema.shape.sets });
+export const bttvGlobalSchema = bbtvResSchema.shape.sharedEmotes;
 
 export type Emote = { name: string; id: string; provider: EmoteProvider; data: any; sources?: string[] };
 
@@ -185,8 +171,7 @@ class EmoteFetcher {
                 return [];
             }
             let emotes: Emote[] = [];
-            for (const setId in parsed.data.sets) {
-                const set = parsed.data.sets[setId];
+            for (const [setId, set] of Object.entries(parsed.data.sets)) {
                 if (set && Array.isArray(set.emoticons)) {
                     emotes = emotes.concat(
                         set.emoticons.map((emote) => ({ name: emote.name, id: emote.id.toString(), provider: EmoteProvider.FFZ, data: emote })),
