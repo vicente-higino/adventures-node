@@ -3,6 +3,8 @@ import { emoteTracker, getBotConfig } from "@/bot";
 import { prisma } from "@/prisma";
 import { getUserByUsername } from "@/twitch/api";
 import { z } from "zod";
+import { parseProviders } from "@/utils/params";
+import { parse, format } from "ms";
 const TOP_EMOTES_COUNT = 15;
 
 const ChannelSchema = z.string().min(3, "Broadcaster name required").optional();
@@ -13,40 +15,13 @@ const ParamsSchema = z.tuple([DurationSchema, SortSchema, ChannelSchema]);
 // Add a schema for the count parameter (optional, default to TOP_EMOTES_COUNT)
 const CountSchema = z.coerce.number().optional();
 
-const RankParamsSchema = z.tuple([CountSchema, DurationSchema, SortSchema, ChannelSchema]);
+const ProvidersSchema = z.string().optional();
+
+const RankParamsSchema = z.tuple([CountSchema, DurationSchema, ProvidersSchema, SortSchema, ChannelSchema]);
 
 // Helper to parse duration strings like "24h", "1w", "30m", "7d"
-function getStartDate(duration: string | undefined): Date {
-    if (!duration) duration = "24h";
-    const now = new Date();
-    const match = duration.match(/^(\d+)?([mhdwy])$/i);
-    if (!match) return new Date();
-    let value = parseInt(match[1], 10);
-    if (isNaN(value)) value = 1;
-    const unit = match[2].toLowerCase();
-    let ms = 0;
-    switch (unit) {
-        // case "s": ms = value * 1000; break;
-        // case "m": ms = value * 60 * 1000; break;
-        case "h":
-            ms = value * 60 * 60 * 1000;
-            break;
-        case "d":
-            ms = value * 24 * 60 * 60 * 1000;
-            break;
-        case "w":
-            ms = value * 7 * 24 * 60 * 60 * 1000;
-            break;
-        case "m":
-            ms = value * 30 * 24 * 60 * 60 * 1000;
-            break;
-        case "y":
-            ms = value * 365 * 24 * 60 * 60 * 1000;
-            break;
-        default:
-            ms = value * 24 * 60 * 60 * 1000;
-    }
-    return new Date(now.getTime() - ms);
+function getStartDate(duration: string = "24h"): Date {
+    return new Date(new Date().getTime() - parse(duration));
 }
 
 export const emoteRankCommand = createBotCommand(
@@ -55,19 +30,27 @@ export const emoteRankCommand = createBotCommand(
         let { say, broadcasterName, broadcasterId, msg } = ctx;
         const { isBroadcaster, isMod } = msg.userInfo;
         if (!isBroadcaster && !isMod) return;
-        // Params: [count, duration, sort, channel]
+        // Params: [count, duration, sort, channel, providers]
         let count: number = TOP_EMOTES_COUNT;
         let channel: string | undefined;
         let range: string | undefined;
         let sort: "asc" | "desc" | undefined;
+        let providers: string | undefined;
         try {
-            const parsed = RankParamsSchema.parse([params[0] ?? TOP_EMOTES_COUNT, params[1] ?? "24h", params[2] ?? "desc", params[3]]);
+            const parsed = RankParamsSchema.parse([
+                params[0] ?? TOP_EMOTES_COUNT,
+                params[1] ?? "24h",
+                params[2],
+                params[3] ?? "desc",
+                params[4],
+            ]);
             if (parsed[0]) count = parsed[0];
-            range = parsed[1];
-            sort = parsed[2];
-            channel = parsed[3];
+            range = format(parse(parsed[1] ?? "24h"), { long: true });
+            providers = parsed[2];
+            sort = parsed[3];
+            channel = parsed[4];
         } catch (e) {
-            say(`Usage: ${getBotConfig().prefix}emoterank [count] [duration] [asc|desc]`);
+            say(`Usage: ${getBotConfig().prefix}emoterank [count] [duration] [7tv|ffz|bttv|twitch] [asc|desc] `);
             return;
         }
 
@@ -78,9 +61,13 @@ export const emoteRankCommand = createBotCommand(
 
         const startDate = getStartDate(range);
         const channelEmotes = emoteTracker?.getChannelEmotes(channel ?? broadcasterName);
+        // Parse providers filter
+        let filterProviders = providers ? parseProviders(providers.split(",")) : null;
+
         const emotes = await prisma.emoteUsageEventV2.groupBy({
             by: ["emoteName"],
             _count: { emoteName: true },
+            _max: { provider: true },
             where: { channelProviderId: broadcasterId, usedAt: { gte: startDate } },
             orderBy: { _count: { emoteName: sort } },
         });
@@ -89,7 +76,7 @@ export const emoteRankCommand = createBotCommand(
             return;
         }
         let usage = emotes
-            .map(e => ({ name: e.emoteName, count: e._count.emoteName }))
+            .map(e => ({ name: e.emoteName, count: e._count.emoteName, provider: e._max.provider ?? null }))
             .sort((a, b) => (sort === "asc" ? a.count - b.count : b.count - a.count));
 
         // Add missing emotes from channelEmotes (Map) with count 0
@@ -97,11 +84,13 @@ export const emoteRankCommand = createBotCommand(
             const usedEmoteNames = new Set(usage.map(e => e.name));
             const missingEmotes = Array.from(channelEmotes.keys())
                 .filter(e => !usedEmoteNames.has(e))
-                .map(e => ({ name: e, count: 0 }));
+                .map(e => ({ name: e, count: 0, provider: channelEmotes.get(e)?.provider ?? null }));
             // Only add as many as needed to fill up to 'count'
             usage = usage.concat(missingEmotes);
         }
-
+        if (filterProviders) {
+            usage = usage.filter(e => e.provider ? filterProviders.includes(e.provider) : false);
+        }
         // Sort again after adding missing emotes
         usage = usage
             .sort((a, b) => {
@@ -117,7 +106,7 @@ export const emoteRankCommand = createBotCommand(
             return;
         }
         const res = usage.map((e, i) => `${e.name} (${e.count})`).join(" ");
-        say(`Top ${count} emotes${range ? ` ${range}` : ""} (${sort}):`);
+        say(`Top ${count} emotes${range ? ` ${range}` : ""} (${sort}${filterProviders ? `, ${filterProviders.join(",")}` : ""}):`);
         say(`${res}`);
     },
     { aliases: ["er"] },
@@ -137,7 +126,7 @@ export const emoteCountCommand = createBotCommand(
         let emoteName: string | undefined;
         let channel: string | undefined;
         try {
-            [emoteName, range, channel] = EmoteParamsSchema.parse([params[0], params[1] ?? "24h", params[2]]);
+            [emoteName, range, channel] = EmoteParamsSchema.parse([params[0], format(parse(params[1] ?? "24h"), { long: true }), params[2]]);
         } catch (e) {
             say(`Usage: ${getBotConfig().prefix}emotecount <emote> [duration]`);
             return;
@@ -171,7 +160,7 @@ export const myEmoteRankCommand = createBotCommand(
         let range: string | undefined;
         let sort: "asc" | "desc" | undefined;
         try {
-            [range, sort] = ParamsSchema.parse([params[0] ?? "24h", params[1] ?? "desc", undefined]);
+            [range, sort] = ParamsSchema.parse([format(parse(params[0] ?? "24h"), { long: true }), params[1] ?? "desc", undefined]);
         } catch (e) {
             say(`Usage: ${getBotConfig().prefix}myemoterank [duration] [asc|desc]`);
             return;
@@ -216,7 +205,7 @@ export const myEmoteCountCommand = createBotCommand(
         let emoteName: string | undefined;
         let range: string | undefined;
         try {
-            [emoteName, range] = EmoteParamsSchema.parse([params[0], params[1] ?? "24h"]);
+            [emoteName, range] = EmoteParamsSchema.parse([params[0], format(parse(params[1] ?? "24h"), { long: true })]);
         } catch (e) {
             say(`Usage: ${getBotConfig().prefix}myemotecount <emote> [duration]`);
             return;
