@@ -5,6 +5,7 @@ import { Bot, MessageEvent } from "@twurple/easy-bot";
 import { prisma } from "@/prisma";
 import cron from "node-cron";
 import { uuidv7 } from "uuidv7";
+import { EmoteProvider, Prisma } from "@prisma/client";
 
 // Tracks emote usage per channel
 export class EmoteTracker {
@@ -12,7 +13,7 @@ export class EmoteTracker {
     private channelEmotes: Map<string, Map<string, Emote>> = new Map(); // channel login -> emotes
     // private emoteUsage: Map<string, Map<string, number>> = new Map(); // channel login -> emote name -> count
 
-    constructor(private bot: Bot) {}
+    constructor(private bot: Bot) { }
 
     async initialize() {
         const config = getBotConfig();
@@ -39,7 +40,7 @@ export class EmoteTracker {
 
                 const emoteName = ctx.text.substring(start, end + 1);
                 if (!emoteMap.has(emoteName)) {
-                    emoteMap.set(emoteName, { name: emoteName, id: emoteId, provider: "native", data: null });
+                    emoteMap.set(emoteName, { name: emoteName, id: emoteId, provider: EmoteProvider.Twitch, data: null });
                 }
             }
         }
@@ -62,13 +63,17 @@ export class EmoteTracker {
                 .map(word => word.trim())
                 .filter(word => word.length > 0);
 
-            const emoteEvents: { id: string; channelProviderId: string; emoteName: string; userId: string }[] = [];
+            const emoteEvents: Prisma.EmoteUsageEventV2CreateInput[] = [];
 
             // Check both native Twitch emotes and custom emotes
             for (const word of words) {
                 if (!word) continue;
                 if (emotes.has(word) || nativeEmotes.has(word)) {
-                    emoteEvents.push({ id: uuidv7(), channelProviderId: channelId, emoteName: word, userId });
+                    emoteEvents.push({
+                        id: uuidv7(), channelProviderId: channelId, emoteName: word, userId,
+                        provider: emotes.has(word) ? emotes.get(word)!.provider : nativeEmotes.get(word)!.provider,
+                        emoteId: emotes.has(word) ? emotes.get(word)!.id : nativeEmotes.get(word)!.id,
+                    });
                 }
             }
 

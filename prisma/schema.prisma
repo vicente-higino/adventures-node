@@ -1,6 +1,5 @@
 generator client {
-    provider        = "prisma-client-js"
-    previewFeatures = ["driverAdapters"]
+    provider = "prisma-client-js"
 }
 
 datasource db {
@@ -206,6 +205,13 @@ model EmoteUsage {
     @@index([channelProviderId, emoteName])
 }
 
+enum EmoteProvider {
+    Twitch
+    BTTV
+    FFZ
+    SevenTV
+}
+
 model EmoteUsageEvent {
     id                Int      @id @default(autoincrement())
     channelProviderId String
@@ -217,11 +223,13 @@ model EmoteUsageEvent {
 }
 
 model EmoteUsageEventV2 {
-    id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     channelProviderId String
     emoteName         String
     userId            String
-    usedAt            DateTime @default(now()) @db.Timestamptz()
+    usedAt            DateTime       @default(now()) @db.Timestamptz()
+    provider          EmoteProvider?
+    emoteId           String?
 
     @@index([channelProviderId, emoteName, usedAt])
 }

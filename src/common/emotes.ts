@@ -1,3 +1,4 @@
+import { EmoteProvider } from "@prisma/client";
 import { z } from "zod";
 
 const SEVENTV_URL = (userId: string) => `https://7tv.io/v3/users/twitch/${userId}`;
@@ -36,7 +37,7 @@ export const senventvResSchema = z.object({
     emote_set: z.object({ id: z.string(), emotes: z.array(z.object({ id: z.string(), name: z.string() })) }),
 });
 
-export type Emote = { name: string; id: string | number; provider: "7tv" | "ffz" | "bttv" | "native"; data: any; sources?: string[] };
+export type Emote = { name: string; id: string; provider: EmoteProvider; data: any; sources?: string[] };
 
 class EmoteFetcher {
     async fetch7TV(userId: string): Promise<Emote[]> {
@@ -54,7 +55,7 @@ class EmoteFetcher {
                 return [];
             }
             console.debug(`[EmoteFetcher] 7TV fetch and validation succeeded for userId: ${userId}`);
-            return parsed.data.emote_set.emotes.map(emote => ({ name: emote.name, id: emote.id, provider: "7tv", data: emote }));
+            return parsed.data.emote_set.emotes.map(emote => ({ name: emote.name, id: emote.id, provider: EmoteProvider.SevenTV, data: emote }));
         } catch (error) {
             console.error(`[EmoteFetcher] Error fetching 7TV emotes for userId ${userId}:`, error);
             return [];
@@ -81,7 +82,7 @@ class EmoteFetcher {
             for (const setId in sets) {
                 const set = sets[setId];
                 if (set && Array.isArray(set.emoticons)) {
-                    emotes = emotes.concat(set.emoticons.map(emote => ({ name: emote.name, id: emote.id, provider: "ffz", data: emote })));
+                    emotes = emotes.concat(set.emoticons.map(emote => ({ name: emote.name, id: emote.id.toString(), provider: EmoteProvider.FFZ, data: emote })));
                 }
             }
             return emotes;
@@ -108,10 +109,10 @@ class EmoteFetcher {
             console.debug(`[EmoteFetcher] BTTV fetch and validation succeeded for userId: ${userId}`);
             const emotes: Emote[] = [];
             if (Array.isArray(parsed.data.channelEmotes)) {
-                emotes.push(...parsed.data.channelEmotes.map(emote => ({ name: emote.code, id: emote.id, provider: "bttv" as const, data: emote })));
+                emotes.push(...parsed.data.channelEmotes.map(emote => ({ name: emote.code, id: emote.id, provider: EmoteProvider.BTTV, data: emote })));
             }
             if (Array.isArray(parsed.data.sharedEmotes)) {
-                emotes.push(...parsed.data.sharedEmotes.map(emote => ({ name: emote.code, id: emote.id, provider: "bttv" as const, data: emote })));
+                emotes.push(...parsed.data.sharedEmotes.map(emote => ({ name: emote.code, id: emote.id, provider: EmoteProvider.BTTV, data: emote })));
             }
             return emotes;
         } catch (error) {
