@@ -4,6 +4,9 @@ import { z } from "zod";
 const SEVENTV_URL = (userId: string) => `https://7tv.io/v3/users/twitch/${userId}`;
 const FFZ_URL = (userId: string) => `https://api.frankerfacez.com/v1/room/id/${userId}`;
 const BBTV_URL = (userId: string) => `https://api.betterttv.net/3/cached/users/twitch/${userId}`;
+const SEVENTV_GLOBAL_URL = "https://7tv.io/v3/emote-sets/global";
+const FFZ_GLOBAL_URL = "https://api.frankerfacez.com/v1/set/global";
+const BTTV_GLOBAL_URL = "https://api.betterttv.net/3/cached/emotes/global";
 
 export const ffzResSchema = z.object({
     room: z.object({
@@ -82,7 +85,9 @@ class EmoteFetcher {
             for (const setId in sets) {
                 const set = sets[setId];
                 if (set && Array.isArray(set.emoticons)) {
-                    emotes = emotes.concat(set.emoticons.map(emote => ({ name: emote.name, id: emote.id.toString(), provider: EmoteProvider.FFZ, data: emote })));
+                    emotes = emotes.concat(
+                        set.emoticons.map(emote => ({ name: emote.name, id: emote.id.toString(), provider: EmoteProvider.FFZ, data: emote })),
+                    );
                 }
             }
             return emotes;
@@ -109,10 +114,14 @@ class EmoteFetcher {
             console.debug(`[EmoteFetcher] BTTV fetch and validation succeeded for userId: ${userId}`);
             const emotes: Emote[] = [];
             if (Array.isArray(parsed.data.channelEmotes)) {
-                emotes.push(...parsed.data.channelEmotes.map(emote => ({ name: emote.code, id: emote.id, provider: EmoteProvider.BTTV, data: emote })));
+                emotes.push(
+                    ...parsed.data.channelEmotes.map(emote => ({ name: emote.code, id: emote.id, provider: EmoteProvider.BTTV, data: emote })),
+                );
             }
             if (Array.isArray(parsed.data.sharedEmotes)) {
-                emotes.push(...parsed.data.sharedEmotes.map(emote => ({ name: emote.code, id: emote.id, provider: EmoteProvider.BTTV, data: emote })));
+                emotes.push(
+                    ...parsed.data.sharedEmotes.map(emote => ({ name: emote.code, id: emote.id, provider: EmoteProvider.BTTV, data: emote })),
+                );
             }
             return emotes;
         } catch (error) {
@@ -121,9 +130,86 @@ class EmoteFetcher {
         }
     }
 
+    async fetch7TVGlobal(): Promise<Emote[]> {
+        try {
+            console.debug(`[EmoteFetcher] Fetching 7TV global emotes`);
+            const res = await fetch(SEVENTV_GLOBAL_URL);
+            if (!res.ok) {
+                console.debug(`[EmoteFetcher] 7TV global fetch failed`);
+                return [];
+            }
+            const data = await res.json();
+            // 7TV global returns an emote set object with emotes array
+            if (!data || !Array.isArray(data.emotes)) {
+                console.debug(`[EmoteFetcher] 7TV global emotes format invalid`);
+                return [];
+            }
+            return data.emotes.map((emote: any) => ({ name: emote.name, id: emote.id, provider: EmoteProvider.SevenTV, data: emote }));
+        } catch (error) {
+            console.error(`[EmoteFetcher] Error fetching 7TV global emotes:`, error);
+            return [];
+        }
+    }
+
+    async fetchFFZGlobal(): Promise<Emote[]> {
+        try {
+            console.debug(`[EmoteFetcher] Fetching FFZ global emotes`);
+            const res = await fetch(FFZ_GLOBAL_URL);
+            if (!res.ok) {
+                console.debug(`[EmoteFetcher] FFZ global fetch failed`);
+                return [];
+            }
+            const data = await res.json();
+            // FFZ global returns { sets: { [setId]: { emoticons: [...] } } }
+            if (!data || !data.sets) {
+                console.debug(`[EmoteFetcher] FFZ global emotes format invalid`);
+                return [];
+            }
+            let emotes: Emote[] = [];
+            for (const setId in data.sets) {
+                const set = data.sets[setId];
+                if (set && Array.isArray(set.emoticons)) {
+                    emotes = emotes.concat(
+                        set.emoticons.map((emote: any) => ({ name: emote.name, id: emote.id.toString(), provider: EmoteProvider.FFZ, data: emote })),
+                    );
+                }
+            }
+            return emotes;
+        } catch (error) {
+            console.error(`[EmoteFetcher] Error fetching FFZ global emotes:`, error);
+            return [];
+        }
+    }
+
+    async fetchBTTVGlobal(): Promise<Emote[]> {
+        try {
+            console.debug(`[EmoteFetcher] Fetching BTTV global emotes`);
+            const res = await fetch(BTTV_GLOBAL_URL);
+            if (!res.ok) {
+                console.debug(`[EmoteFetcher] BTTV global fetch failed`);
+                return [];
+            }
+            const data = await res.json();
+            // BTTV global returns an array of emotes
+            if (!Array.isArray(data)) {
+                console.debug(`[EmoteFetcher] BTTV global emotes format invalid`);
+                return [];
+            }
+            return data.map((emote: any) => ({ name: emote.code, id: emote.id, provider: EmoteProvider.BTTV, data: emote }));
+        } catch (error) {
+            console.error(`[EmoteFetcher] Error fetching BTTV global emotes:`, error);
+            return [];
+        }
+    }
+
     async fetchAll(userId: string): Promise<Map<string, Emote>> {
         const [seventv, ffz, bttv] = await Promise.all([this.fetch7TV(userId), this.fetchFFZ(userId), this.fetchBTTV(userId)]);
         return this.mergeEmotes([seventv, ffz, bttv], userId);
+    }
+
+    async fetchAllGlobal(): Promise<Map<string, Emote>> {
+        const [seventv, ffz, bttv] = await Promise.all([this.fetch7TVGlobal(), this.fetchFFZGlobal(), this.fetchBTTVGlobal()]);
+        return this.mergeEmotes([seventv, ffz, bttv], "global");
     }
 
     mergeEmotes(emoteLists: Emote[][], userId: string): Map<string, Emote> {

@@ -11,13 +11,15 @@ import { EmoteProvider, Prisma } from "@prisma/client";
 export class EmoteTracker {
     private emoteFetcher = new EmoteFetcher();
     private channelEmotes: Map<string, Map<string, Emote>> = new Map(); // channel login -> emotes
+    private globalEmotes: Map<string, Emote> = new Map();
     // private emoteUsage: Map<string, Map<string, number>> = new Map(); // channel login -> emote name -> count
 
-    constructor(private bot: Bot) { }
+    constructor(private bot: Bot) {}
 
     async initialize() {
         const config = getBotConfig();
         const channels = config.channels;
+        this.globalEmotes = await this.emoteFetcher.fetchAllGlobal();
         for (const channel of channels) {
             const user = await getUserByUsername(prisma, channel);
             if (!user) continue;
@@ -70,7 +72,10 @@ export class EmoteTracker {
                 if (!word) continue;
                 if (emotes.has(word) || nativeEmotes.has(word)) {
                     emoteEvents.push({
-                        id: uuidv7(), channelProviderId: channelId, emoteName: word, userId,
+                        id: uuidv7(),
+                        channelProviderId: channelId,
+                        emoteName: word,
+                        userId,
                         provider: emotes.has(word) ? emotes.get(word)!.provider : nativeEmotes.get(word)!.provider,
                         emoteId: emotes.has(word) ? emotes.get(word)!.id : nativeEmotes.get(word)!.id,
                     });
@@ -95,6 +100,10 @@ export class EmoteTracker {
         return this.channelEmotes.get(channel) || new Map();
     }
 
+    getGlobalEmotes(): Map<string, Emote> {
+        return this.globalEmotes;
+    }
+
     async refreshEmotes(channel: string) {
         const user = await getUserByUsername(prisma, channel);
         if (!user) return 0;
@@ -107,6 +116,7 @@ export class EmoteTracker {
 
     async refreshAllEmotes() {
         const config = getBotConfig();
+        this.globalEmotes = await this.emoteFetcher.fetchAllGlobal();
         let total = 0;
         for (const channel of config.channels) {
             total += await this.refreshEmotes(channel);

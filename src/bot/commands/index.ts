@@ -18,6 +18,8 @@ import { giveSilverCommand } from "./giveSilver";
 import { statsCommand } from "./stats";
 import { leaderboardCommand } from "./leaderboard";
 import { showAllEmotesCommand } from "./showAllEmotes";
+import { showChannelEmotesCommand } from "./showChannelEmotes";
+import { showGlobalEmotesCommand } from "./showGlobalEmotes";
 
 export const commands: BotCommand[] = [
     fishCommand,
@@ -45,4 +47,6 @@ export const commands: BotCommand[] = [
     statsCommand,
     leaderboardCommand,
     showAllEmotesCommand,
+    showChannelEmotesCommand,
+    showGlobalEmotesCommand,
 ];
