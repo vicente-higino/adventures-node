@@ -38,7 +38,7 @@ class LiveChannel {
     constructor(
         public userId: string,
         public userName: string,
-    ) {}
+    ) { }
 
     matches(channel: string) {
         return this.userId === channel || this.userName.toLowerCase() === channel.toLowerCase();
@@ -149,7 +149,6 @@ export const createBot = async (forceRecreate?: boolean) => {
             }
         });
         emoteTracker = new EmoteTracker(bot);
-        emoteTracker.initialize();
         currentBotUserId = userId; // Update the current userId
     } catch (err) {
         console.error(err);

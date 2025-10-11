@@ -14,7 +14,9 @@ export class EmoteTracker {
     private globalEmotes: Map<string, Emote> = new Map();
     // private emoteUsage: Map<string, Map<string, number>> = new Map(); // channel login -> emote name -> count
 
-    constructor(private bot: Bot) {}
+    constructor(private bot: Bot) {
+        this.initialize();
+    }
 
     async initialize() {
         const config = getBotConfig();
