@@ -149,7 +149,7 @@ class EmoteFetcher {
                 console.debug(`[EmoteFetcher] 7TV global emotes format invalid`);
                 return [];
             }
-            return parsed.data.emotes.map((emote) => ({ name: emote.name, id: emote.id, provider: EmoteProvider.SevenTV, data: emote }));
+            return parsed.data.emotes.map(emote => ({ name: emote.name, id: emote.id, provider: EmoteProvider.SevenTV, data: emote }));
         } catch (error) {
             console.error(`[EmoteFetcher] Error fetching 7TV global emotes:`, error);
             return [];
@@ -174,7 +174,7 @@ class EmoteFetcher {
             for (const [setId, set] of Object.entries(parsed.data.sets)) {
                 if (set && Array.isArray(set.emoticons)) {
                     emotes = emotes.concat(
-                        set.emoticons.map((emote) => ({ name: emote.name, id: emote.id.toString(), provider: EmoteProvider.FFZ, data: emote })),
+                        set.emoticons.map(emote => ({ name: emote.name, id: emote.id.toString(), provider: EmoteProvider.FFZ, data: emote })),
                     );
                 }
             }
@@ -199,7 +199,7 @@ class EmoteFetcher {
                 console.debug(`[EmoteFetcher] BTTV global emotes format invalid`);
                 return [];
             }
-            return parsed.data.map((emote) => ({ name: emote.code, id: emote.id, provider: EmoteProvider.BTTV, data: emote }));
+            return parsed.data.map(emote => ({ name: emote.code, id: emote.id, provider: EmoteProvider.BTTV, data: emote }));
         } catch (error) {
             console.error(`[EmoteFetcher] Error fetching BTTV global emotes:`, error);
             return [];

@@ -37,13 +37,7 @@ export const emoteRankCommand = createBotCommand(
         let sort: "asc" | "desc" | undefined;
         let providers: string | undefined;
         try {
-            const parsed = RankParamsSchema.parse([
-                params[0] ?? TOP_EMOTES_COUNT,
-                params[1] ?? "24h",
-                params[2],
-                params[3] ?? "desc",
-                params[4],
-            ]);
+            const parsed = RankParamsSchema.parse([params[0] ?? TOP_EMOTES_COUNT, params[1] ?? "24h", params[2], params[3] ?? "desc", params[4]]);
             if (parsed[0]) count = parsed[0];
             range = format(parse(parsed[1] ?? "24h"), { long: true });
             providers = parsed[2];
@@ -89,7 +83,7 @@ export const emoteRankCommand = createBotCommand(
             usage = usage.concat(missingEmotes);
         }
         if (filterProviders) {
-            usage = usage.filter(e => e.provider ? filterProviders.includes(e.provider) : false);
+            usage = usage.filter(e => (e.provider ? filterProviders.includes(e.provider) : false));
         }
         // Sort again after adding missing emotes
         usage = usage

@@ -101,9 +101,11 @@ export const getUserById = async (
 };
 
 export async function sendChatMessageToChannel(broadcaster_id: string, sender_id: string, message: string) {
-    const res = await handleApiRequest(() => apiClient.chat.sendChatMessageAsApp(sender_id, broadcaster_id, message), authProvider);
-    if (!res) {
-        console.error(`Failed to send message to channel ID: ${broadcaster_id}`);
+    try {
+        const res = await apiClient.chat.sendChatMessageAsApp(sender_id, broadcaster_id, message);
+        return res;
+    } catch (error) {
+        console.error("Error sending chat message:", error);
+        return null;
     }
-    return res;
 }

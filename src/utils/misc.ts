@@ -292,7 +292,6 @@ export async function sendMessageToChannelWithAPI(channel: string, message: stri
     if (res?.isSent) {
         return;
     }
-    console.error(`Message not sent to channel: ${channel} - ${res?.dropReasonMessage ?? "unknown reason"}`);
     GetBot()
         ?.say(channel, message)
         .catch(err => {
