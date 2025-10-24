@@ -1,10 +1,15 @@
 {
     "channels": [
-        "v_cn_t"
+        "v_cn_t",
+        "vicente_higino"
     ],
-    "prefix": "$",
+    "modChannels": [
+        "v_cn_t",
+        "vicente_higino"
+    ],
+    "prefix": "#",
     "userId": "152784713",
-    "debug": true,
+    "debug": false,
     "isAlwaysMod": false,
     "superUserId": "152784713"
 }

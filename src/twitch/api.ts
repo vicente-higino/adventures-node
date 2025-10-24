@@ -105,7 +105,17 @@ export async function sendChatMessageToChannel(broadcaster_id: string, sender_id
         const res = await apiClient.chat.sendChatMessageAsApp(sender_id, broadcaster_id, message);
         return res;
     } catch (error) {
-        console.error("Error sending chat message:", error);
+        console.error(`Error sending chat ${message} to channel ${broadcaster_id}`, error);
         return null;
+    }
+}
+
+export async function getChannelsModForUser(userId: string, api: ApiClient): Promise<string[]> {
+    try {
+        const mods = await api.moderation.getModeratedChannelsPaginated(userId).getAll();
+        return mods.map(mod => mod.name);
+    } catch (error) {
+        console.error(`Error fetching mod channels for user ${userId}`, error);
+        return [];
     }
 }

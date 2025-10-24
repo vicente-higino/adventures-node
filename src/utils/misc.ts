@@ -287,16 +287,7 @@ export async function sendMessageToChannelWithAPI(channel: string, message: stri
         console.error(`User not found: ${channel}`);
         return;
     }
-    const res = await sendChatMessageToChannel(broadcaster.id, getBotConfig().userId, message);
-
-    if (res?.isSent) {
-        return;
-    }
-    GetBot()
-        ?.say(channel, message)
-        .catch(err => {
-            console.error(`Error sending message to ${channel}:`, err);
-        });
+    await sendChatMessageToChannel(broadcaster.id, getBotConfig().userId, message);
 }
 export function sendActionToChannel(channel: string, message: string) {
     // Placeholder function to send a message to a channel

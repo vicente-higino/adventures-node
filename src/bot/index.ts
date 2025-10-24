@@ -3,17 +3,19 @@ import { promises as fs, readFileSync } from "fs";
 import env from "@/env";
 import { Bot } from "@twurple/easy-bot";
 import { z } from "zod";
-import { apiClient } from "@/twitch/api";
+import { apiClient, getChannelsModForUser } from "@/twitch/api";
 import { listener } from "@/twitch/eventsub";
 import { EmoteTracker } from "./emote-tracker";
 import { commands } from "./commands";
 import { restartAdventureWarnings } from "@/common/helpers/schedule";
+import { sendMessageToChannelWithAPI } from "@/utils/misc";
 const clientId = env.TWITCH_CLIENT_ID;
 const clientSecret = env.TWITCH_CLIENT_SECRET;
 
 // Validate bot config
 const BotConfigSchema = z.object({
     channels: z.array(z.string().min(3).toLowerCase()).min(1),
+    modChannels: z.array(z.string().min(3).toLowerCase()).min(1),
     prefix: z.string(),
     userId: z.string(),
     debug: z.boolean(),
@@ -114,7 +116,6 @@ export const createBot = async (forceRecreate?: boolean) => {
     }
     fetchLiveChannels();
     createEventsubListeners(botConfig.channels);
-
     const tokenFile = `./secrets/tokens.${botConfig.userId}.json`;
     bot?.chat.quit();
     try {
@@ -130,11 +131,28 @@ export const createBot = async (forceRecreate?: boolean) => {
             chatClientOptions: { isAlwaysMod: botConfig.isAlwaysMod },
             commands,
         });
+        bot.say = async (channel: string, message: string) => {
+            if (getBotConfig().modChannels.includes(channel)) {
+                sendMessageToChannelWithAPI(channel, message);
+            } else {
+                bot?.chat.say(channel, message);
+            }
+        };
+        bot.action = async (channel: string, message: string) => {
+            if (getBotConfig().modChannels.includes(channel)) {
+                sendMessageToChannelWithAPI(channel, `/me ${message}`);
+            } else {
+                bot?.chat.action(channel, message);
+            }
+        };
         bot.onAuthenticationSuccess(() => {
             bot?.api.users
                 .getAuthenticatedUser(userId)
                 .then(user => {
                     console.log(`Logged in as ${user.name}`);
+                    getChannelsModForUser(user.id, bot!.api).then(modChannels => {
+                        console.log(`Bot is mod in channels: ${modChannels.join(", ")}`);
+                    });
                 })
                 .catch(err => {
                     console.error("Error fetching user:", err);
