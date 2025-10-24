@@ -8,7 +8,7 @@ import { listener } from "@/twitch/eventsub";
 import { EmoteTracker } from "./emote-tracker";
 import { commands } from "./commands";
 import { restartAdventureWarnings } from "@/common/helpers/schedule";
-import { sendMessageToChannelWithAPI } from "@/utils/misc";
+import { sendActionToChannelWithAPI, sendMessageToChannelWithAPI } from "@/utils/misc";
 const clientId = env.TWITCH_CLIENT_ID;
 const clientSecret = env.TWITCH_CLIENT_SECRET;
 
@@ -40,7 +40,7 @@ class LiveChannel {
     constructor(
         public userId: string,
         public userName: string,
-    ) {}
+    ) { }
 
     matches(channel: string) {
         return this.userId === channel || this.userName.toLowerCase() === channel.toLowerCase();
@@ -140,7 +140,7 @@ export const createBot = async (forceRecreate?: boolean) => {
         };
         bot.action = async (channel: string, message: string) => {
             if (getBotConfig().modChannels.includes(channel)) {
-                sendMessageToChannelWithAPI(channel, `/me ${message}`);
+                sendActionToChannelWithAPI(channel, message);
             } else {
                 bot?.chat.action(channel, message);
             }

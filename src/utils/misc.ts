@@ -279,7 +279,7 @@ export function sendMessageToChannel(channel: string, message: string) {
             console.error(`Error sending message to ${channel}:`, err);
         });
 }
-export async function sendMessageToChannelWithAPI(channel: string, message: string) {
+export async function sendMessageToChannelWithAPI(channel: string, message: string, max_length = 500) {
     // Placeholder function to send a message to a channel
     // Replace with actual implementation
     const broadcaster = await getUserByUsername(prisma, channel);
@@ -287,7 +287,23 @@ export async function sendMessageToChannelWithAPI(channel: string, message: stri
         console.error(`User not found: ${channel}`);
         return;
     }
-    await sendChatMessageToChannel(broadcaster.id, getBotConfig().userId, message);
+    const texts = splitOnSpaces(message, max_length);
+    texts.map(
+        msg =>
+            sendChatMessageToChannel(broadcaster.id, getBotConfig().userId, msg));
+}
+export async function sendActionToChannelWithAPI(channel: string, message: string, max_length = 490) {
+    // Placeholder function to send a message to a channel
+    // Replace with actual implementation
+    const broadcaster = await getUserByUsername(prisma, channel);
+    if (!broadcaster) {
+        console.error(`User not found: ${channel}`);
+        return;
+    }
+    const texts = splitOnSpaces(message, max_length);
+    texts.map(
+        async msg =>
+            await sendChatMessageToChannel(broadcaster.id, getBotConfig().userId, `/me ${msg}`));
 }
 export function sendActionToChannel(channel: string, message: string) {
     // Placeholder function to send a message to a channel
@@ -340,4 +356,34 @@ export function calculateLoseStreakBonus(streak: number, streakWager: number): n
     const baseBonus = Math.min((streak - 2) * 100, 1000);
     const maxStreakWager = Math.floor(streakWager * 0.3);
     return Math.min(baseBonus, maxStreakWager);
+}
+
+export function splitOnSpaces(text: string, maxMsgLength: number): string[] {
+    if (text.length <= maxMsgLength) {
+        return [text];
+    }
+
+    text = text.trim();
+    const res = [];
+
+    let startIndex = 0;
+    let endIndex = maxMsgLength;
+
+    while (startIndex < text.length) {
+        let spaceIndex = text.lastIndexOf(' ', endIndex);
+
+        if (spaceIndex === -1 || spaceIndex <= startIndex || text.length - startIndex + 1 <= maxMsgLength) {
+            spaceIndex = startIndex + maxMsgLength;
+        }
+
+        const textSlice = text.slice(startIndex, spaceIndex).trim();
+        if (textSlice.length) {
+            res.push(textSlice);
+        }
+
+        startIndex = spaceIndex + (text[spaceIndex] === ' ' ? 1 : 0); // to skip the space
+        endIndex = startIndex + maxMsgLength;
+    }
+
+    return res;
 }
