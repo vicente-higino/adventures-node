@@ -3,6 +3,7 @@ import { ApiClient } from "@twurple/api";
 // import { AppTokenAuthProviderWithStore } from "./auth";
 import { AppTokenAuthProvider } from "@twurple/auth";
 import env from "@/env";
+import Queue from "queue";
 const { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = env;
 export function buildUrl(baseUrl: string, params: Record<string, string>): string {
     const url = new URL(baseUrl);
@@ -100,14 +101,30 @@ export const getUserById = async (
     };
 };
 
-export async function sendChatMessageToChannel(broadcaster_id: string, sender_id: string, message: string) {
-    try {
-        const res = await apiClient.chat.sendChatMessageAsApp(sender_id, broadcaster_id, message);
-        return res;
-    } catch (error) {
-        console.error(`Error sending chat ${message} to channel ${broadcaster_id}`, error);
-        return null;
+// Simple per-channel message queue
+const channelQueues: Map<string, Queue> = new Map();
+
+export async function sendChatMessageToChannel(
+    broadcaster_id: string,
+    sender_id: string,
+    message: string
+) {
+    let q = channelQueues.get(broadcaster_id);
+    if (!q) {
+        q = new Queue({ results: [], concurrency: 1, autostart: true });
+        channelQueues.set(broadcaster_id, q);
     }
+
+    q.push(async () => {
+        try {
+            const res = await apiClient.chat.sendChatMessageAsApp(sender_id, broadcaster_id, message);
+            return res;
+        } catch (error) {
+            console.error(`Error sending chat ${message} to channel ${broadcaster_id}`, error);
+            return null;
+        }
+    });
+
 }
 
 export async function getChannelsModForUser(userId: string, api: ApiClient): Promise<string[]> {
