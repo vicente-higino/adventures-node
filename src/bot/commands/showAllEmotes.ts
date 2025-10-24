@@ -3,7 +3,7 @@ import { getBotConfig } from "@/bot";
 import * as emotes from "@/emotes";
 
 export const showAllEmotesCommand = createBotCommand(
-    "showallemotes",
+    "showusedemotes",
     async (params, ctx) => {
         const { say, msg } = ctx;
         const { isMod, isBroadcaster, userId } = msg.userInfo;
@@ -21,5 +21,5 @@ export const showAllEmotesCommand = createBotCommand(
         const uniqueEmotes = Array.from(new Set(allEmotes));
         say(uniqueEmotes.join(" "));
     },
-    { aliases: ["emotesdebug", "emoteslist"], ignoreCase: true },
+    { aliases: ["sue"], ignoreCase: true },
 );
