@@ -141,9 +141,9 @@ export function calculateAmount(amountStr: string, availableAmount: number, curr
     }
 
     // Handle "k:X" syntax (keep X in balance, join with the rest)
-    if (cleanedAmountStr.startsWith("k:")) {
+    if (cleanedAmountStr.startsWith("k:") || cleanedAmountStr.startsWith("keep:")) {
         // Parse the keep value (support K/M/B suffixes)
-        const keepStr = cleanedAmountStr.slice(2);
+        const keepStr = cleanedAmountStr.replace(/^k(eep)?:/, "");
         const match = keepStr.match(/^(\d+(\.\d+)?)([kmb])?$/);
         if (match) {
             let keep = parseFloat(match[1]);

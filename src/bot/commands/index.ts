@@ -20,6 +20,8 @@ import { leaderboardCommand } from "./leaderboard";
 import { showAllEmotesCommand } from "./showAllEmotes";
 import { showChannelEmotesCommand } from "./showChannelEmotes";
 import { showGlobalEmotesCommand } from "./showGlobalEmotes";
+import { adventureEndCommand } from "./adventureEnd";
+import { adventureJoinCommand } from "./adventureJoin";
 
 export const commands: BotCommand[] = [
     fishCommand,
@@ -49,4 +51,6 @@ export const commands: BotCommand[] = [
     showAllEmotesCommand,
     showChannelEmotesCommand,
     showGlobalEmotesCommand,
+    adventureEndCommand,
+    adventureJoinCommand
 ];

@@ -1,20 +1,7 @@
 import { OpenAPIRoute } from "chanfana";
-import { z } from "zod";
 import { HonoEnv, FossaHeaders } from "@/types";
 import { Context } from "hono";
-import { findOrCreateBalance, setBalance } from "@/db";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import { pickRandom, roundToDecimalPlaces, calculateAmount, sendActionToChannel } from "@/utils/misc";
-import { formatTimeToWithSeconds } from "@/utils/time";
-import { ADVENTURE_COOLDOWN_EMOTES } from "@/emotes";
-import { Mutex } from "async-mutex";
-import { getChannelMutex as getAdvEndMutex } from "./adventureEnd";
-import { scheduleAdventureWarnings } from "@/common/helpers/schedule";
-dayjs.extend(relativeTime);
-
-const coolDownMinutes = (c: Context<HonoEnv>) => 60 * c.env.COOLDOWN_ADVENTURE_IN_HOURS;
-const cooldown = (c: Context<HonoEnv>) => new Date(Date.now() - 1000 * 60 * coolDownMinutes(c));
+import { adventureCommandSyntax, AdventureJoinParamsSchema, handleAdventureJoin } from "@/common/handleAdventure";
 
 /**
  * Generates a payout rate for the adventure, with 1.3x being most common
@@ -45,177 +32,30 @@ export class AdventureJoin extends OpenAPIRoute {
     schema = {
         request: {
             headers: FossaHeaders,
-            params: z.object({
-                amount: z
-                    .string({
-                        description: "Silver amount (number, K/M/B, percentage, 'all', 'to:X', 'k:X', or +/-delta)",
-                        invalid_type_error:
-                            "Silver amount must be a number, K/M/B (e.g., 5k), percentage (e.g., 50%), 'all', 'to:X', 'k:X', or a delta (e.g., +1k, -50%)",
-                        required_error: "Silver amount is required",
-                    })
-                    // Updated regex to allow optional +/- prefix, K/M/B suffixes, to:X, and k:X (case-insensitive)
-                    .regex(/^([+-]?(all|\d+(\.\d+)?%|\d+(\.\d+)?[kmb]?|\d+)|to:\d+(\.\d+)?[kmb]?|k:\d+(\.\d+)?[kmb]?)$/i, {
-                        message:
-                            "Amount must be a positive whole number, K/M/B (e.g., 5k), percentage (e.g., 50%), 'all', 'to:X', 'k:X', or a delta (e.g., +1k, -50%)",
-                    }),
-            }),
+            params: AdventureJoinParamsSchema,
         },
         responses: {},
     };
     handleValidationError() {
-        const msg = "Usage: !adventure|adv [silver(K/M/B)|%|all|+/-delta|to:X|k:X]";
-        return new Response(msg, { status: 400 });
+        return new Response(adventureCommandSyntax(), { status: 400 });
     }
     async handle(c: Context<HonoEnv>) {
-        // Get validated data
         const data = await this.getValidatedData<typeof this.schema>();
-        const prisma = c.get("prisma");
         const channelLogin = data.headers["x-fossabot-channellogin"];
         const channelProviderId = data.headers["x-fossabot-channelproviderid"];
         const userProviderId = data.headers["x-fossabot-message-userproviderid"];
         const userLogin = data.headers["x-fossabot-message-userlogin"];
         const userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
-
-        // Prevent join if adventureEnd mutex is locked for this channel
-        const advEndMutex = getAdvEndMutex(channelProviderId);
-        if (advEndMutex.isLocked()) return c.text(`@${userDisplayName}, the adventure has ended.`);
-
-        // Use per-channel join mutex for adventure creation/join logic
-        const joinMutex = getAdvJoinMutex(channelProviderId);
-
-        const advDone = await prisma.adventure.findFirst({
-            where: { channelProviderId: channelProviderId, name: "DONE" },
-            orderBy: { createdAt: "desc" },
-        });
-
-        if (advDone) {
-            const lastEndedAt = advDone.createdAt;
-            const nextAvailable = new Date(lastEndedAt.getTime() + 1000 * 60 * coolDownMinutes(c));
-            const now = new Date();
-            const secondsLeft = Math.floor((nextAvailable.getTime() - now.getTime()) / 1000);
-
-            if (secondsLeft >= 1) {
-                const timeUntilNext = dayjs(nextAvailable);
-                return c.text(
-                    `@${userDisplayName}, adventure is in cooldown, please wait ${formatTimeToWithSeconds(timeUntilNext.toDate())} before starting a new one. 
-                    ${pickRandom(ADVENTURE_COOLDOWN_EMOTES)}`,
-                );
-            }
-        }
-        const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);
         const amountParam = data.params.amount.trim();
-        const adv = await prisma.adventure.findFirst({
-            where: { channelProviderId: channelProviderId, name: { not: "DONE" } },
-            orderBy: { createdAt: "desc" },
-            include: { players: { include: { user: true } } },
+
+        const result = await handleAdventureJoin({
+            channelLogin,
+            channelProviderId,
+            userProviderId,
+            userLogin,
+            userDisplayName,
+            amountParam,
         });
-
-        if (!adv) {
-            // First join: treat as absolute or delta (delta is just the value itself)
-            const payoutRate = roundToDecimalPlaces(generatePayoutRate(), 2);
-            const formattedPayoutRate = payoutRate.toFixed(2);
-            const buyin = calculateAmount(amountParam, balance.value, undefined, true, payoutRate);
-            const newBuyin = Math.min(buyin, balance.value);
-            const newBalanceValue = Math.max(balance.value - newBuyin, 0);
-            // Use newBuyin which is capped at balance.value
-            if (balance.value <= 0) {
-                return c.text(`@${userDisplayName} you have no silver to join the adventure.`);
-            }
-            if (newBuyin <= 0) {
-                return c.text(`@${userDisplayName} you need at least 1 silver to start an adventure.`);
-            }
-            const locked = joinMutex.isLocked();
-            if (locked) {
-                return c.text(`${userDisplayName}, there is already a adventure running. Try joining again.`);
-            }
-            const release = await joinMutex.acquire();
-
-            const [_, adventure] = await Promise.all([
-                setBalance(prisma, balance.id, newBalanceValue),
-                prisma.adventure.create({
-                    data: {
-                        name: `${userProviderId}`,
-                        channel: channelLogin,
-                        channelProviderId: channelProviderId,
-                        payoutRate: payoutRate, // Store the payout rate in the database
-                        players: { create: { buyin: newBuyin, userId: userProviderId } },
-                    },
-                }),
-            ]);
-            release();
-
-            scheduleAdventureWarnings(prisma, adventure.id);
-
-            return c.text(
-                `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "!adventure|adv [silver(K/M/B)|%|all|to:X|k:X]" to join in!
-                This adventure offers a ${formattedPayoutRate}x payout rate! GAMBA
-                $(newline)@${userDisplayName} joined the adventure with ${newBuyin} silver.`,
-            );
-        }
-        if (adv.players.length >= 99) {
-            return c.text(`@${userDisplayName} the adventure is full, please wait for the next one.`);
-        }
-
-        const player = adv.players.find(player => player.userId === userProviderId);
-        if (!player) {
-            // Not joined yet: treat as absolute or delta (delta is just the value itself)
-            // Pass adv.payoutRate for "to:X" support
-            const buyin = calculateAmount(amountParam, balance.value, undefined, true, adv.payoutRate);
-            const newBuyin = Math.min(buyin, balance.value);
-            const newBalanceValue = Math.max(balance.value - newBuyin, 0);
-            // Use newBuyin which is capped at balance.value
-            if (balance.value <= 0) {
-                return c.text(`@${userDisplayName} you have no silver to join the adventure.`);
-            }
-            if (newBuyin <= 0) {
-                return c.text(`@${userDisplayName} you need at least 1 silver to join the adventure.`);
-            }
-
-            await Promise.all([
-                // Use newBalanceValue and newBuyin
-                setBalance(prisma, balance.id, newBalanceValue),
-                prisma.player.create({ data: { buyin: newBuyin, userId: userProviderId, adventureId: adv.id } }), // Use newBuyin
-            ]);
-
-            // Get the payout rate to display in the message
-            const formattedPayoutRate = adv.payoutRate.toFixed(2);
-            return c.text(`@${userDisplayName} joined the adventure with ${newBuyin} silver. Current payout rate: ${formattedPayoutRate}x`);
-        }
-
-        // Allow adjusting silver amount up or down
-        const totalAvailable = balance.value + player.buyin;
-        // Use calculateAmount for adjustment calculation, passing current buyin for delta support
-        // Pass adv.payoutRate for "to:X" support
-        const requestedBuyin = calculateAmount(amountParam, totalAvailable, player.buyin, true, adv.payoutRate);
-
-        // Ensure requestedBuyin is at least 1
-        if (requestedBuyin < 1) {
-            return c.text(`@${userDisplayName} you must keep at least 1 silver in the adventure.`);
-        }
-
-        const updatedBuyin = Math.min(requestedBuyin, totalAvailable); // Cap at total available
-        const newUpdatedBalance = Math.max(totalAvailable - updatedBuyin, 0); // Calculate new balance based on updatedBuyin
-
-        if (updatedBuyin !== player.buyin) {
-            // No need for buyin < 1 check here as it's handled above
-            await Promise.all([
-                setBalance(prisma, balance.id, newUpdatedBalance),
-                prisma.player.update({ where: { id: player.id }, data: { buyin: updatedBuyin } }),
-            ]);
-
-            return c.text(
-                `@${userDisplayName}, you updated your adventure silver from ${player.buyin} to ${updatedBuyin}. You have ${newUpdatedBalance} left.`,
-            );
-        }
-        return c.text(`@${userDisplayName} already joined the adventure with ${player.buyin} silver.`);
+        return c.text(result);
     }
-}
-
-// Per-channel mutex for adventureJoin
-const advJoinMutexMap: Map<string, Mutex> = new Map();
-function getAdvJoinMutex(channelProviderId: string): Mutex {
-    if (!advJoinMutexMap.has(channelProviderId)) {
-        advJoinMutexMap.set(channelProviderId, new Mutex());
-    }
-    return advJoinMutexMap.get(channelProviderId)!;
 }
