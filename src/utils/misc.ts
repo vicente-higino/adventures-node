@@ -288,9 +288,7 @@ export async function sendMessageToChannelWithAPI(channel: string, message: stri
         return;
     }
     const texts = splitOnSpaces(message, max_length);
-    texts.map(
-        msg =>
-            sendChatMessageToChannel(broadcaster.id, getBotConfig().userId, msg));
+    texts.map(msg => sendChatMessageToChannel(broadcaster.id, getBotConfig().userId, msg));
 }
 export async function sendActionToChannelWithAPI(channel: string, message: string, max_length = 490) {
     // Placeholder function to send a message to a channel
@@ -301,9 +299,7 @@ export async function sendActionToChannelWithAPI(channel: string, message: strin
         return;
     }
     const texts = splitOnSpaces(message, max_length);
-    texts.map(
-        async msg =>
-            await sendChatMessageToChannel(broadcaster.id, getBotConfig().userId, `/me ${msg}`));
+    texts.map(async msg => await sendChatMessageToChannel(broadcaster.id, getBotConfig().userId, `/me ${msg}`));
 }
 export function sendActionToChannel(channel: string, message: string) {
     // Placeholder function to send a message to a channel
@@ -370,7 +366,7 @@ export function splitOnSpaces(text: string, maxMsgLength: number): string[] {
     let endIndex = maxMsgLength;
 
     while (startIndex < text.length) {
-        let spaceIndex = text.lastIndexOf(' ', endIndex);
+        let spaceIndex = text.lastIndexOf(" ", endIndex);
 
         if (spaceIndex === -1 || spaceIndex <= startIndex || text.length - startIndex + 1 <= maxMsgLength) {
             spaceIndex = startIndex + maxMsgLength;
@@ -381,7 +377,7 @@ export function splitOnSpaces(text: string, maxMsgLength: number): string[] {
             res.push(textSlice);
         }
 
-        startIndex = spaceIndex + (text[spaceIndex] === ' ' ? 1 : 0); // to skip the space
+        startIndex = spaceIndex + (text[spaceIndex] === " " ? 1 : 0); // to skip the space
         endIndex = startIndex + maxMsgLength;
     }
 

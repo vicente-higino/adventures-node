@@ -46,17 +46,8 @@ export async function handleDuelCreate(params: {
     }
 
     const reverseDuel = await prisma.duel.findUnique({
-        where: {
-            channelProviderId_challengerId_challengedId: {
-                channelProviderId,
-                challengerId: challengedId,
-                challengedId: challengerId,
-            },
-        },
-        include: {
-            challenger: true,
-            challenged: true,
-        },
+        where: { channelProviderId_challengerId_challengedId: { channelProviderId, challengerId: challengedId, challengedId: challengerId } },
+        include: { challenger: true, challenged: true },
     });
 
     if (reverseDuel) {
@@ -151,20 +142,12 @@ export async function handleDuelAccept(params: {
             wagerAmount: duel.wagerAmount,
             winAmount: duel.wagerAmount * 2,
         }),
-        updateUseDuelsStats(prisma, channelLogin, channelProviderId, loserId, {
-            didWin: false,
-            wagerAmount: duel.wagerAmount,
-            winAmount: 0,
-        }),
+        updateUseDuelsStats(prisma, channelLogin, channelProviderId, loserId, { didWin: false, wagerAmount: duel.wagerAmount, winAmount: 0 }),
     ]);
 
     await prisma.duel.delete({
         where: {
-            channelProviderId_challengerId_challengedId: {
-                channelProviderId,
-                challengerId: duel.challengerId,
-                challengedId: duel.challengedId,
-            },
+            channelProviderId_challengerId_challengedId: { channelProviderId, challengerId: duel.challengerId, challengedId: duel.challengedId },
         },
     });
 

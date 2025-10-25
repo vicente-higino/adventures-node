@@ -3,7 +3,6 @@ import { HonoEnv, FossaHeaders } from "@/types";
 import { Context } from "hono";
 import { handleAdventureEnd } from "@/common/handleAdventure";
 
-
 export class AdventureEnd extends OpenAPIRoute {
     schema = { request: { headers: FossaHeaders }, responses: {} };
 
@@ -15,13 +14,7 @@ export class AdventureEnd extends OpenAPIRoute {
         const userProviderId = data.headers["x-fossabot-message-userproviderid"];
         const userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
         const userLogin = data.headers["x-fossabot-message-userlogin"];
-        const result = await handleAdventureEnd({
-            channelLogin,
-            channelProviderId,
-            userProviderId,
-            userLogin,
-            userDisplayName,
-        });
+        const result = await handleAdventureEnd({ channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName });
         return c.text(result);
     }
 }

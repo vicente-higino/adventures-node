@@ -3,7 +3,16 @@ import { getBotConfig } from "@/bot";
 import { updateUserAdventureStats, increaseBalanceWithChannelID, addBonusToUserStats, findOrCreateBalance, setBalance } from "@/db";
 import { ADVENTURE_COOLDOWN_EMOTES } from "@/emotes";
 import { prisma } from "@/prisma";
-import { calculateWinStreakBonus, calculateLoseStreakBonus, formatSilver, limitAdvMessage, limitMessageLength, calculateAmount, pickRandom, roundToDecimalPlaces } from "@/utils/misc";
+import {
+    calculateWinStreakBonus,
+    calculateLoseStreakBonus,
+    formatSilver,
+    limitAdvMessage,
+    limitMessageLength,
+    calculateAmount,
+    pickRandom,
+    roundToDecimalPlaces,
+} from "@/utils/misc";
 import { formatTimeToWithSeconds } from "@/utils/time";
 import { Mutex } from "async-mutex";
 import dayjs from "dayjs";
@@ -93,10 +102,7 @@ export async function handleAdventureEnd(params: {
         const formattedPayoutRate = payoutRate.toFixed(2);
 
         // Combine player data with adventure results
-        const combinedResults = players.map(player => ({
-            ...player,
-            result: advResults.results.find(r => r.player === player.user.displayName),
-        }));
+        const combinedResults = players.map(player => ({ ...player, result: advResults.results.find(r => r.player === player.user.displayName) }));
 
         // Filter winners and losers using the combined data
         const winners = combinedResults.filter(p => p.result?.outcome === "win");
@@ -235,7 +241,8 @@ export const AdventureJoinParamsSchema = z.object({
 
 export const amountParamSchema = AdventureJoinParamsSchema.shape.amount;
 
-export const adventureCommandSyntax = (prefix: string = "!") => `Usage: ${prefix}adventure|adv [silver(K/M/B)|%|all|+/-delta|to:silver(K/M/B)|k(eep):silver(K/M/B)]`;
+export const adventureCommandSyntax = (prefix: string = "!") =>
+    `Usage: ${prefix}adventure|adv [silver(K/M/B)|%|all|+/-delta|to:silver(K/M/B)|k(eep):silver(K/M/B)]`;
 
 export async function handleAdventureJoin(params: {
     channelLogin: string;

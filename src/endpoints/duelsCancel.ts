@@ -7,12 +7,7 @@ import { handleDuelCancel } from "@/common/handleDuels";
 
 export class DuelCancel extends OpenAPIRoute {
     schema = {
-        request: {
-            headers: FossaHeaders,
-            params: z.object({
-                challengedId: createUserIdParam("User id of the other player").optional(),
-            }),
-        },
+        request: { headers: FossaHeaders, params: z.object({ challengedId: createUserIdParam("User id of the other player").optional() }) },
         responses: {},
     };
     handleValidationError(): Response {
@@ -26,12 +21,7 @@ export class DuelCancel extends OpenAPIRoute {
         const userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
         const { challengedId } = data.params;
 
-        const result = await handleDuelCancel({
-            channelProviderId,
-            currentUserId,
-            userDisplayName,
-            challengedId,
-        });
+        const result = await handleDuelCancel({ channelProviderId, currentUserId, userDisplayName, challengedId });
         return c.text(result);
     }
 }

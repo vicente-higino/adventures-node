@@ -7,12 +7,7 @@ import { handleDuelAccept } from "@/common/handleDuels";
 
 export class DuelAccept extends OpenAPIRoute {
     schema = {
-        request: {
-            headers: FossaHeaders,
-            params: z.object({
-                challengerId: createUserIdParam("Challenger user id").optional(),
-            }),
-        },
+        request: { headers: FossaHeaders, params: z.object({ challengerId: createUserIdParam("Challenger user id").optional() }) },
         responses: {},
     };
     handleValidationError(): Response {
@@ -28,14 +23,7 @@ export class DuelAccept extends OpenAPIRoute {
         const userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
         const { challengerId } = data.params;
 
-        const result = await handleDuelAccept({
-            channelLogin,
-            channelProviderId,
-            challengedId,
-            userlogin,
-            userDisplayName,
-            challengerId,
-        });
+        const result = await handleDuelAccept({ channelLogin, channelProviderId, challengedId, userlogin, userDisplayName, challengerId });
         return c.text(result);
     }
 }

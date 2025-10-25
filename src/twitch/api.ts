@@ -104,11 +104,7 @@ export const getUserById = async (
 // Simple per-channel message queue
 const channelQueues: Map<string, Queue> = new Map();
 
-export async function sendChatMessageToChannel(
-    broadcaster_id: string,
-    sender_id: string,
-    message: string
-) {
+export async function sendChatMessageToChannel(broadcaster_id: string, sender_id: string, message: string) {
     let q = channelQueues.get(broadcaster_id);
     if (!q) {
         q = new Queue({ results: [], concurrency: 1, autostart: true });
@@ -124,7 +120,6 @@ export async function sendChatMessageToChannel(
             return null;
         }
     });
-
 }
 
 export async function getChannelsModForUser(userId: string, api: ApiClient): Promise<string[]> {

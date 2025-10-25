@@ -17,12 +17,7 @@ export const duelCancelCommand = createBotCommand(
             }
             challengedId = user.id;
         }
-        const result = await handleDuelCancel({
-            channelProviderId: broadcasterId,
-            currentUserId: userId,
-            userDisplayName,
-            challengedId,
-        });
+        const result = await handleDuelCancel({ channelProviderId: broadcasterId, currentUserId: userId, userDisplayName, challengedId });
         say(result);
     },
     { aliases: ["deny"], ignoreCase: true },

@@ -29,13 +29,7 @@ export function generatePayoutRate(): number {
 
 // Store timers per adventure to allow clearing if adventure ends early
 export class AdventureJoin extends OpenAPIRoute {
-    schema = {
-        request: {
-            headers: FossaHeaders,
-            params: AdventureJoinParamsSchema,
-        },
-        responses: {},
-    };
+    schema = { request: { headers: FossaHeaders, params: AdventureJoinParamsSchema }, responses: {} };
     handleValidationError() {
         return new Response(adventureCommandSyntax(), { status: 400 });
     }
@@ -48,14 +42,7 @@ export class AdventureJoin extends OpenAPIRoute {
         const userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
         const amountParam = data.params.amount.trim();
 
-        const result = await handleAdventureJoin({
-            channelLogin,
-            channelProviderId,
-            userProviderId,
-            userLogin,
-            userDisplayName,
-            amountParam,
-        });
+        const result = await handleAdventureJoin({ channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName, amountParam });
         return c.text(result);
     }
 }

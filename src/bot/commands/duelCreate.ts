@@ -4,7 +4,6 @@ import { getBotConfig } from "..";
 import { getUserByUsername } from "@/twitch/api";
 import { prisma } from "@/prisma";
 
-
 export const duelCreateCommand = createBotCommand(
     "duel",
     async (params, ctx) => {
@@ -33,8 +32,7 @@ export const duelCreateCommand = createBotCommand(
             prefix: getBotConfig().prefix,
         });
         const response = result.split("$(newline)");
-        for (const line of response)
-            say(line);
+        for (const line of response) say(line);
     },
     { aliases: [], ignoreCase: true },
 );

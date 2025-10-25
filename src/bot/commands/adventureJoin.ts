@@ -17,8 +17,7 @@ export const adventureJoinCommand = createBotCommand(
             prefix: getBotConfig().prefix,
         });
         const response = result.split("$(newline)");
-        for (const line of response)
-            say(line);
+        for (const line of response) say(line);
     },
     { aliases: ["adv"], ignoreCase: true },
 );
