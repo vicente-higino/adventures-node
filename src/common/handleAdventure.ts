@@ -253,11 +253,11 @@ export async function handleAdventureJoin(params: {
     amountParam: string;
     prefix?: string;
 }): Promise<string> {
-    const { channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName, amountParam } = params;
+    const { channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName, amountParam, prefix } = params;
     // Validate amountParam
     const parseResult = amountParamSchema.safeParse(amountParam);
     if (!parseResult.success) {
-        return adventureCommandSyntax(params.prefix);
+        return adventureCommandSyntax(prefix);
     }
     // Prevent join if adventureEnd mutex is locked for this channel
     const advEndMutex = getAdvEndMutex(channelProviderId);
@@ -304,7 +304,7 @@ export async function handleAdventureJoin(params: {
         }
         const locked = joinMutex.isLocked();
         if (locked) {
-            return `${userDisplayName}, there is already a adventure running. Try joining again.`;
+            return `@${userDisplayName}, there is already a adventure running. Try joining again.`;
         }
         const release = await joinMutex.acquire();
 
@@ -324,7 +324,7 @@ export async function handleAdventureJoin(params: {
 
         scheduleAdventureWarnings(prisma, adventure.id);
 
-        return `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "!adventure|adv [silver(K/M/B)|%|all|to:X|k:X]" to join in!
+        return `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "${prefix ?? "!"}adventure|adv [silver(K/M/B)|%|all|to:silver|k:silver]" to join in!
                 This adventure offers a ${formattedPayoutRate}x payout rate! GAMBA
                 $(newline)@${userDisplayName} joined the adventure with ${newBuyin} silver.`;
     }
