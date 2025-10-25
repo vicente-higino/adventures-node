@@ -1,7 +1,8 @@
-import { isChannelLive } from "@/bot";
+import { getBotConfig, isChannelLive } from "@/bot";
 import { prisma } from "@/prisma";
-import { delay, sendActionToChannel } from "@/utils/misc";
+import { delay, sendActionToChannel, sendMessageToChannel } from "@/utils/misc";
 import { PrismaClient } from "@prisma/client";
+import { handleAdventureEnd } from "../handleAdventure";
 
 export interface AdventureWarning {
     delay: number; // milliseconds
@@ -48,7 +49,20 @@ export function scheduleAdventureWarnings(prisma: PrismaClient, adventureId: num
                 }
                 return;
             }
-            if (!isChannelLive(adv.channelProviderId)) sendActionToChannel(adv.channel, message);
+            if (!isChannelLive(adv.channelProviderId)) {
+                if (message === "!adventureend" && getBotConfig().modChannels.includes(adv.channel)) {
+                    const result = await handleAdventureEnd({
+                        channelLogin: adv.channel,
+                        channelProviderId: adv.channelProviderId,
+                        userProviderId: getBotConfig().userId,
+                        userLogin: "",
+                        userDisplayName: "",
+                    });
+                    sendMessageToChannel(adv.channel, result);
+                } else {
+                    sendActionToChannel(adv.channel, message);
+                }
+            }
         }, delay);
         timer.unref();
         timers.push(timer);
