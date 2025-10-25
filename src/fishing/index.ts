@@ -208,7 +208,7 @@ export const legendaryEventTaskPerChannel = (channels: string[]) =>
             console.log(`[${c.dateLocalIso}] Legendary event already active, skipping random event.`);
             return;
         }
-        console.log(`[${c.dateLocalIso}] Running legendary event task for channels: ${channels.join(", ")}`);
+        // console.log(`[${c.dateLocalIso}] Running legendary event task for channels: ${channels.join(", ")}`);
         const chance = 5 / (7 * 24 * 60);
         const shouldRun = chance > Math.random();
         if (shouldRun) {
