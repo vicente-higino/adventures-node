@@ -233,7 +233,7 @@ export const AdventureJoinParamsSchema = z.object({
         }),
 });
 
-const amountParamSchema = AdventureJoinParamsSchema.shape.amount;
+export const amountParamSchema = AdventureJoinParamsSchema.shape.amount;
 
 export const adventureCommandSyntax = (prefix: string = "!") => `Usage: ${prefix}adventure|adv [silver(K/M/B)|%|all|+/-delta|to:silver(K/M/B)|k(eep):silver(K/M/B)]`;
 

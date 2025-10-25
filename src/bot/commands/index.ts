@@ -22,6 +22,9 @@ import { showChannelEmotesCommand } from "./showChannelEmotes";
 import { showGlobalEmotesCommand } from "./showGlobalEmotes";
 import { adventureEndCommand } from "./adventureEnd";
 import { adventureJoinCommand } from "./adventureJoin";
+import { duelCreateCommand } from "./duelCreate";
+import { duelAcceptCommand } from "./duelAccept";
+import { duelCancelCommand } from "./duelCancel";
 
 export const commands: BotCommand[] = [
     fishCommand,
@@ -52,5 +55,8 @@ export const commands: BotCommand[] = [
     showChannelEmotesCommand,
     showGlobalEmotesCommand,
     adventureEndCommand,
-    adventureJoinCommand
+    adventureJoinCommand,
+    duelCreateCommand,
+    duelAcceptCommand,
+    duelCancelCommand,
 ];
