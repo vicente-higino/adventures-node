@@ -1,6 +1,6 @@
 // Emote arrays for use with pickRandom
 
-export const DUEL_CREATE_EMOTES = ["GAMBA", "PauseChamp", "PAUSE", "PauseCat", "PausersHype", "monkaStandoff", "DRAMA", "NAILS"];
+export const DUEL_CREATE_EMOTES = ["GAMBA", "PauseChamp", "PAUSE", "PauseCat", "PausersHype", "DRAMA", "NAILS"];
 export const PAUSE_EMOTES = ["PauseChamp", "PAUSE", "PauseCat", "PausersHype"];
 
 export const DUEL_DENY_EMOTES = [
@@ -62,7 +62,6 @@ export const FISH_COOLDOWN_EMOTES = COOLDOWN_EMOTES;
 
 export const FISH_FINE_EMOTES = [
     "Sadge",
-    "bibi",
     "SAJ",
     "CAUGHT",
     "PepeHands",
