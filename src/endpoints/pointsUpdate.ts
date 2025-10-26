@@ -1,10 +1,11 @@
 import { Context } from "hono";
-import { FossaHeaders, HonoEnv } from "@/types"; // Import Env
+import { FossaHeaders, HonoEnv } from "@/types";
 import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
-import { getUserById } from "@/twitch/api"; // Ensure getUserById is imported
-import { findOrCreateBalance } from "@/db"; // Ensure findOrCreateBalance is imported
-import { createUserIdParam } from "@/utils/params"; // Ensure createUserIdParam is imported
+import { getUserById } from "@/twitch/api";
+import { createUserIdParam } from "@/utils/params";
+import { handleUpdateSilver } from "@/common/handleAdventure";
+import { prisma } from "@/prisma";
 
 export class PointUpdate extends OpenAPIRoute {
     schema = {
@@ -25,33 +26,27 @@ export class PointUpdate extends OpenAPIRoute {
         return new Response(msg, { status: 400 });
     }
     async handle(c: Context<HonoEnv>) {
-        // Get validated data
         const data = await this.getValidatedData<typeof this.schema>();
-        const prisma = c.get("prisma");
         const channelLogin = data.headers["x-fossabot-channellogin"];
         const channelProviderId = data.headers["x-fossabot-channelproviderid"];
+        const username = data.headers["x-fossabot-message-userdisplayname"];
         const userProviderId = data.params.userId ?? data.headers["x-fossabot-message-userproviderid"];
-        const user = await getUserById(prisma, userProviderId); // Pass prisma
+        const user = await getUserById(prisma, userProviderId);
         if (!user) {
-            return c.text("user not found", { status: 404 });
+            return c.text(`${username}, user not found`, { status: 404 });
         }
         const userDisplayName = user.displayName;
         const userLogin = user.login;
 
-        const balance = await findOrCreateBalance(
-            prisma,
+        const result = await handleUpdateSilver({
             channelLogin,
             channelProviderId,
             userProviderId,
             userLogin,
             userDisplayName,
-            data.params.newBalance,
-        );
-        const newBalance = await prisma.balance.update({
-            where: { userId: userProviderId, channel: channelLogin, id: balance.id },
-            data: { value: data.params.newBalance },
+            newBalance: data.params.newBalance,
+            prefix: "!",
         });
-
-        return c.text(`Updated @${userDisplayName} silver to ${newBalance.value}.`);
+        return c.text(result);
     }
 }

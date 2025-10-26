@@ -17,7 +17,7 @@ export const forceEndAdventureCommand = createBotCommand(
                 userProviderId: getBotConfig().userId,
                 userLogin: userName,
                 userDisplayName: displayName,
-            })
+            });
             say(res);
             return;
         }
