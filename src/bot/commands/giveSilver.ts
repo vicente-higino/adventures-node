@@ -33,5 +33,5 @@ export const giveSilverCommand = createBotCommand(
         });
         say(result.message);
     },
-    { aliases: ["givepoints"] },
+    { aliases: ["givepoints", "gs", "gift"] },
 );
