@@ -41,7 +41,7 @@ class LiveChannel {
     constructor(
         public userId: string,
         public userName: string,
-    ) { }
+    ) {}
 
     matches(channel: string) {
         return this.userId === channel || this.userName.toLowerCase() === channel.toLowerCase();

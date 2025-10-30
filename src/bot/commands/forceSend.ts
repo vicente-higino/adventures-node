@@ -67,7 +67,7 @@ export const forceSendCommand = createBotCommand(
             say(`Channel ${target} will no longer allow sending messages while live.`);
         } else {
             set.add(target);
-            set.delete(userTarget.id);
+            set.add(userTarget.id);
             await updateBotConfig({ forceSendChannels: Array.from(set) });
             say(`Channel ${target} will now allow sending messages even if live.`);
         }
