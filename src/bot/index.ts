@@ -21,6 +21,7 @@ const BotConfigSchema = z.object({
     debug: z.boolean(),
     isAlwaysMod: z.boolean(),
     superUserId: z.string(),
+    forceSendChannels: z.array(z.string().min(1).toLowerCase()).optional().default([]),
 });
 
 // Load bot config
@@ -40,7 +41,7 @@ class LiveChannel {
     constructor(
         public userId: string,
         public userName: string,
-    ) {}
+    ) { }
 
     matches(channel: string) {
         return this.userId === channel || this.userName.toLowerCase() === channel.toLowerCase();
@@ -49,6 +50,12 @@ class LiveChannel {
 const liveChannels = new Set<LiveChannel>();
 
 export function isChannelLive(channel: string) {
+    // If channel explicitly allowed to receive messages even when live, treat as not live
+    const overrides = botConfig.forceSendChannels ?? [];
+    if (overrides.includes(channel.toLowerCase())) {
+        return false;
+    }
+    // Properly iterate liveChannels and check matches
     for (const live of liveChannels) {
         return live.matches(channel);
     }

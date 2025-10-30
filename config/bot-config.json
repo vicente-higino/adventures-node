@@ -4,12 +4,12 @@
         "vicente_higino"
     ],
     "modChannels": [
-        "v_cn_t",
-        "vicente_higino"
+        "v_cn_t"
     ],
     "prefix": "#",
     "userId": "152784713",
     "debug": false,
     "isAlwaysMod": false,
-    "superUserId": "152784713"
+    "superUserId": "1352480106",
+    "forceSendChannels": []
 }
