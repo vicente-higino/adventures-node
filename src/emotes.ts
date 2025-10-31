@@ -107,3 +107,5 @@ export const VALUE_EMOTES_LIST = [
     "MUGA",      // < 5000
     "OOOO",      // >= 5000
 ];
+
+export const ADVENTURE_GAMBA_EMOTE = "GAMBA";

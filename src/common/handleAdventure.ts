@@ -1,7 +1,7 @@
 import { runGroupAdventure } from "@/adventures";
 import { getBotConfig } from "@/bot";
 import { updateUserAdventureStats, increaseBalanceWithChannelID, addBonusToUserStats, findOrCreateBalance, setBalance } from "@/db";
-import { ADVENTURE_COOLDOWN_EMOTES } from "@/emotes";
+import { ADVENTURE_COOLDOWN_EMOTES, ADVENTURE_GAMBA_EMOTE } from "@/emotes";
 import { prisma } from "@/prisma";
 import {
     calculateWinStreakBonus,
@@ -325,7 +325,7 @@ export async function handleAdventureJoin(params: {
         scheduleAdventureWarnings(prisma, adventure.id);
 
         return `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "${prefix ?? "!"}adventure|adv [silver(K/M/B)|%|all|to:silver|k:silver]" to join in!
-                This adventure offers a ${formattedPayoutRate}x payout rate! GAMBA
+                This adventure offers a ${formattedPayoutRate}x payout rate! ${ADVENTURE_GAMBA_EMOTE}
                 $(newline)@${userDisplayName} joined the adventure with ${newBuyin} silver.`;
     }
     if (adv.players.length >= 99) {
