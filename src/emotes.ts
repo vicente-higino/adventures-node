@@ -85,3 +85,11 @@ export const FISH_FINE_EMOTES = [
     "waaa",
     "WAJAJA",
 ];
+
+export const MUSHY_EMOTES = ["mushyJam", "mushyOk", "mushySit", "mushyWheel"];
+export const SOCKO_EMOTES = ["shocko", "wideSock", "sockTime", "sockZZZ", "sockBday", "sockSludge", "fusSock"];
+export const APRIL_FOOZE_EMOTES = ["fusApril", "fusMoney", "fusVlog"];
+export const FUSLIE_EMOTES = ["fus7", "fusW", "fusBald", "fusFarm", "fusLurks", "WOWMOM", "fusJR"];
+export const FROG_EMOTES = ["FROG", "Pog", "frogJam"];
+export const BLOBFISH_EMOTES = ["FishMoley"];
+export const SURGEONFISH_EMOTES = ["fusDory"];
