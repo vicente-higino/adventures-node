@@ -4,7 +4,6 @@ export const DUEL_CREATE_EMOTES = ["GAMBA", "PauseChamp", "PAUSE", "PauseCat", "
 export const PAUSE_EMOTES = ["PauseChamp", "PAUSE", "PauseCat", "PausersHype"];
 
 export const DUEL_DENY_EMOTES = [
-    "Scaredge",
     "Scared",
     "monkaS",
     "MONKA",
@@ -14,7 +13,6 @@ export const DUEL_DENY_EMOTES = [
     "nope",
     "Awkward",
     "Peace",
-    "!vanish",
     "oopsie",
     "Ermm",
     "Erm",
