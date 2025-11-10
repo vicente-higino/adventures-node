@@ -1,27 +1,18 @@
 import { Context } from "hono";
 import { FossaHeaders, HonoEnv } from "@/types";
-import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
-import { createUserIdParam } from "@/utils/params";
-import { giveSilver } from "@/common/giveSilver";
+import { giveSilver, giveSilverCommandSyntax, giveSilverParamsSchema } from "@/common/giveSilver";
 
 export class PointGive extends OpenAPIRoute {
     schema = {
         request: {
             headers: FossaHeaders,
-            params: z.object({
-                userId: createUserIdParam(),
-                giveAmount: z
-                    .string({ description: "Silver amount to give ('all', number, or percentage)", required_error: "Silver amount is required" })
-                    .regex(/^(all|\d+(\.\d+)?%|\d+(\.\d+)?[kmb]?|\d+)$/i, {
-                        message: "Amount must be a positive whole number, K/M/B (e.g., 5k), percentage (e.g., 50%), or 'all'",
-                    }),
-            }),
+            params: giveSilverParamsSchema,
         },
         responses: {},
     };
     handleValidationError(): Response {
-        const msg = "Usage: !givesilver [username] [silver|K/M/B|%|all]";
+        const msg = giveSilverCommandSyntax();
         return new Response(msg, { status: 400 });
     }
     async handle(c: Context<HonoEnv>) {

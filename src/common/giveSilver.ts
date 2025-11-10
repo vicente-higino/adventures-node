@@ -2,6 +2,8 @@ import { PrismaClient } from "@prisma/client";
 import { getUserById } from "@/twitch/api";
 import { findOrCreateBalance, increaseBalance } from "@/db";
 import { calculateAmount } from "@/utils/misc";
+import z from "zod";
+import { createUserIdParam } from "@/utils/params";
 
 interface GiveSilverParams {
     prisma: PrismaClient;
@@ -14,7 +16,24 @@ interface GiveSilverParams {
     giveAmountStr: string;
     prefix?: string;
 }
+export const giveSilverParamsSchema = z.object({
+    userId: createUserIdParam(),
+    giveAmount: z
+        .string({
+            description: "Silver amount (number, K/M/B, percentage, 'all', 'to:X', 'k:X', or +/-delta)",
+            invalid_type_error:
+                "Silver amount must be a number, K/M/B (e.g., 5k), percentage (e.g., 50%), 'all', 'to:X', 'k:X', or a delta (e.g., +1k, -50%)",
+            required_error: "Silver amount is required",
+        })
+        .regex(/^((all|\d+(\.\d+)?%|\d+(\.\d+)?[kmb]?|\d+)|k(eep)?:\d+(\.\d+)?[kmb]?)$/i, {
+            message:
+                "Amount must be a positive whole number, K/M/B (e.g., 5k), percentage (e.g., 50%), 'all', 'to:X', 'k:X', or a delta (e.g., +1k, -50%)",
+        }),
+});
 
+export const amountParamSchema = giveSilverParamsSchema.shape.giveAmount;
+export const giveSilverCommandSyntax = (prefix: string = "!") =>
+    `Usage: ${prefix}givesilver [username] [silver(K/M/B)|%|all|k(eep):silver(K/M/B)]`;
 export async function giveSilver({
     prisma,
     channelLogin,
@@ -26,6 +45,10 @@ export async function giveSilver({
     giveAmountStr,
     prefix = "!",
 }: GiveSilverParams): Promise<{ message: string; status?: number }> {
+    const parseResult = amountParamSchema.safeParse(giveAmountStr);
+    if (!parseResult.success) {
+        return { message: giveSilverCommandSyntax(prefix), status: 400 };
+    }
     const toUser = await getUserById(prisma, toUserProviderId);
     if (!toUser) {
         return { message: `@${fromUserDisplayName}, user not found`, status: 404 };
