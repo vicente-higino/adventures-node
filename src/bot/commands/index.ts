@@ -28,6 +28,7 @@ import { duelCancelCommand } from "./duelCancel";
 import { updateSilverCommand } from "./updateSilver";
 import { addSilverCommand } from "./addSilver";
 import { forceSendCommand } from "./forceSend";
+import { rankCommand } from "./rank";
 
 export const commands: BotCommand[] = [
     fishCommand,
@@ -65,4 +66,5 @@ export const commands: BotCommand[] = [
     updateSilverCommand,
     addSilverCommand,
     forceSendCommand,
+    rankCommand,
 ];
