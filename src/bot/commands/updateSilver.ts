@@ -10,7 +10,7 @@ export const updateSilverCommand = createBotCommand(
         const { say, broadcasterName, broadcasterId } = ctx;
         const { isMod, isBroadcaster, userId, displayName } = ctx.msg.userInfo;
         if (!isMod && !isBroadcaster && getBotConfig().superUserId !== userId) return;
-        const targetUsername = params[0];
+        let targetUsername = params.shift()?.replaceAll("@", "");
         const newBalance = params[1];
         if (!targetUsername || !newBalance) {
             say(`Usage: ${getBotConfig().prefix}updatesilver <username> <new_balance>`);
@@ -18,7 +18,7 @@ export const updateSilverCommand = createBotCommand(
         }
         const user = await getUserByUsername(prisma, targetUsername);
         if (!user) {
-            say(`@${displayName}, user not found`);
+            say(`@${displayName}, user ${targetUsername} not found`);
             return;
         }
         const result = await handleUpdateSilver({

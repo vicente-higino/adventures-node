@@ -39,7 +39,7 @@ export const getUserByUsername = async (
 ): Promise<DbUser | null> => {
     // Change return type
     // Check DB first
-    username = username.toLowerCase();
+    username = username.toLowerCase().replaceAll("@", "");
     const dbUser = await prisma.user.findUnique({ where: { login: username } });
     if (dbUser) {
         return { id: dbUser.providerId, login: dbUser.login, displayName: dbUser.displayName };
