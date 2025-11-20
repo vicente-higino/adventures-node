@@ -9,7 +9,7 @@ const rankSchema = z.array(z.object({
 
 async function getRank(userId: string, channelProviderId: string) {
     try {
-        const [rank, total] = await Promise.all([
+        const [rank, total, balance] = await Promise.all([
             prisma.$queryRaw`
         SELECT position
         FROM (
@@ -22,11 +22,12 @@ async function getRank(userId: string, channelProviderId: string) {
             WHERE "channelProviderId" = ${channelProviderId}
         ) ranked
         WHERE "userId" = ${userId};`,
-            prisma.balance.count({ where: { channelProviderId } })
+            prisma.balance.count({ where: { channelProviderId } }),
+            prisma.balance.findUnique({ where: { channelProviderId_userId: { userId, channelProviderId } } })
         ]);
         const parsedRank = rankSchema.safeParse(rank);
-        if (parsedRank.success) {
-            return { ...parsedRank.data[0], total };
+        if (parsedRank.success && balance) {
+            return { ...parsedRank.data[0], total, balance: balance.value };
         }
         return null;
     } catch (error) {
@@ -47,10 +48,10 @@ export const rankCommand = createBotCommand(
         }
         const result = await getRank(targetUser.id, broadcasterId);
         if (!result) {
-            say(`@${userDisplayName}, ${targetUser.login} is not on the silver leaderboard.`);
+            say(`@${userDisplayName}, ${targetUser.displayName} is not on the silver leaderboard.`);
             return;
         }
-        say(`@${targetUser.displayName} is rank #${result.position}/${result.total} on the silver leaderboard.`);
+        say(`@${targetUser.displayName} is rank #${result.position}/${result.total} with ${result.balance} silver on the leaderboard.`);
     },
     { aliases: ["rk"] },
 );
