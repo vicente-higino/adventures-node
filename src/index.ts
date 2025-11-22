@@ -30,6 +30,7 @@ import { ignoreMiddleware } from "./middleware/ignoreUsers";
 import { trollMiddleware } from "./middleware/trollUsers";
 import { restartAdventureWarnings } from "@/common/helpers/schedule";
 import { delay } from "@/utils/misc";
+import { emotesRank } from "./endpoints/emotesRank";
 // Start a Hono app
 const hono = new Hono<HonoEnv>();
 const honoWithAuth = new Hono<HonoEnv>();
@@ -94,6 +95,7 @@ app.get("/api/duel/accept/:challengerId", DuelAccept);
 app.get("/api/duel/cancel/:challengedId", DuelCancel);
 
 app.get("/api/leaderboard/:amount/:sortBy", ConsolidatedLeaderboard);
+app.get("/api/emotes/rank", emotesRank);
 
 app.route("/", authenticatedRoute);
 // Add the last fish endpoint
