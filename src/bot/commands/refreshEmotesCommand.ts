@@ -16,7 +16,7 @@ export const refreshEmotesCommand = createBotCommand(
             return;
         }
         const total = await emoteTracker.refreshEmotes(broadcasterName);
-        say(`Emotes refreshed for ${broadcasterName}. ${total} emotes in total.`);
+        say(`Emotes refreshed for ${broadcasterName} channel. ${total} emotes in total.`);
     },
     { aliases: ["re"], offlineOnly: false },
 );
@@ -33,7 +33,7 @@ export const refreshEmotesAdminCommand = createAdminBotCommand(
             return;
         }
         const total = await emoteTracker.refreshEmotes(broadcasterName);
-        say(`Emotes refreshed for ${broadcasterName}. ${total} emotes in total.`);
+        say(`Emotes refreshed for ${broadcasterName} channel. ${total} emotes in total.`);
     },
     { aliases: ["ref"] },
 );
