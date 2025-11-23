@@ -49,26 +49,39 @@ export class emotesRank extends OpenAPIRoute {
         const take = perPage;
 
         // Get total distinct emotes for pagination
-        const totalQuery = await prisma.$queryRaw<[{ count: BigInt }]>`
+        const [totalQuery, emotes, emotesIds] = await Promise.all([
+            prisma.$queryRaw<[{ count: BigInt }]>`
             SELECT COUNT(DISTINCT "emoteName") as count
             FROM "EmoteUsageEventV2"
-            WHERE "channelProviderId" = ${channelProviderId}`;
-        const total = Number(totalQuery[0].count);
-        // Query the aggregated emote usage with pagination
-        const emotes = await prisma.emoteUsageEventV2.groupBy({
-            by: ["emoteName"],
-            _count: { emoteName: true },
-            _max: { provider: true, emoteId: true },
-            where: { channelProviderId: channelProviderId, userId: { notIn: excludeUserIds } },
-            orderBy: { _count: { emoteName: "desc" } },
-            skip,
-            take
-        });
+            WHERE "channelProviderId" = ${channelProviderId}`,
+            prisma.emoteUsageEventV2.groupBy({
+                by: ["emoteName"],
+                _count: { emoteName: true },
+                _max: { provider: true },
+                where: { channelProviderId: channelProviderId, userId: { notIn: excludeUserIds } },
+                orderBy: { _count: { emoteName: "desc" } },
+                skip,
+                take
+            }),
+            prisma.emoteUsageEventV2.findMany({
+                where: {
+                    channelProviderId: channelProviderId
+                },
+                distinct: ['emoteName'],
+                orderBy: { usedAt: 'desc' }
+            })
+        ]);
 
-        // Normalize types and return JSON
+        const total = Number(totalQuery[0].count);
+        const emoteIdMap = new Map<string, string | null>();
+        for (const e of emotesIds) {
+            if (!emoteIdMap.has(e.emoteName)) {
+                emoteIdMap.set(e.emoteName, e.emoteId ?? null);
+            }
+        }
         const result = emotes.map((r, i) => ({
             emoteName: r.emoteName,
-            emoteId: r._max.emoteId,
+            emoteId: emoteIdMap.get(r.emoteName),
             usage_count: r._count.emoteName,
             provider: r._max.provider,
             rank: skip + i + 1,
