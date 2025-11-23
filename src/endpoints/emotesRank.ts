@@ -51,7 +51,7 @@ export class emotesRank extends OpenAPIRoute {
         const take = perPage;
 
         // Get total distinct emotes for pagination
-        const [totalQuery, emotes, emotesIds] = await Promise.all([
+        const [totalQuery, emotes] = await Promise.all([
             prisma.$queryRaw<[{ count: BigInt }]>`
             SELECT COUNT(DISTINCT "emoteName") as count
             FROM "EmoteUsageEventV2"
@@ -64,14 +64,22 @@ export class emotesRank extends OpenAPIRoute {
                 orderBy: { _count: { emoteName: "desc" } },
                 skip,
                 take,
-            }),
-            prisma.emoteUsageEventV2.findMany({
-                where: { channelProviderId: channelProviderId },
-                distinct: ["emoteName"],
-                orderBy: { usedAt: "desc" },
-            }),
+            })
         ]);
 
+        const emotesIds = await prisma.emoteUsageEventV2.findMany({
+            where: {
+                channelProviderId: channelProviderId,
+                emoteName: { in: emotes.map(e => e.emoteName) },
+            },
+            select: {
+                emoteName: true,
+                emoteId: true,
+                usedAt: true
+            },
+            distinct: ["emoteName"],
+            orderBy: { usedAt: "desc" }
+        });
         const total = Number(totalQuery[0].count);
         const emoteIdMap = new Map<string, string | null>();
         for (const e of emotesIds) {
