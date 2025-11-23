@@ -32,8 +32,7 @@ export const giveSilverParamsSchema = z.object({
 });
 
 export const amountParamSchema = giveSilverParamsSchema.shape.giveAmount;
-export const giveSilverCommandSyntax = (prefix: string = "!") =>
-    `Usage: ${prefix}givesilver [username] [silver(K/M/B)|%|all|k(eep):silver(K/M/B)]`;
+export const giveSilverCommandSyntax = (prefix: string = "!") => `Usage: ${prefix}givesilver [username] [silver(K/M/B)|%|all|k(eep):silver(K/M/B)]`;
 export async function giveSilver({
     prisma,
     channelLogin,

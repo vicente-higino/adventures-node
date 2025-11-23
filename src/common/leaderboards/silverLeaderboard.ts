@@ -10,7 +10,7 @@ export async function handleSilver(
 ): Promise<LeaderboardResult> {
     const balances = await prisma.balance.findMany({
         where: { channelProviderId: channelProviderId },
-        include: { user: { select: { displayName: true, login: true } } }
+        include: { user: { select: { displayName: true, login: true } } },
     });
     const totalEntries = balances.length;
 

@@ -8,15 +8,17 @@ import { getUserById } from "@/twitch/api";
 export class emotesRank extends OpenAPIRoute {
     schema = {
         request: {
-            params: z.object({
-                userId: z.string().refine(c => !isNaN(parseInt(c)))
-            }),
+            params: z.object({ userId: z.string().refine(c => !isNaN(parseInt(c))) }),
             query: z.object({
-                excludeUserIds: z.string().refine(c => !isNaN(parseInt(c))).optional(),
+                excludeUserIds: z
+                    .string()
+                    .refine(c => !isNaN(parseInt(c)))
+                    .optional(),
                 page: z.coerce.number().optional(),
-                perPage: z.coerce.number().optional()
-            })
-        }, responses: {}
+                perPage: z.coerce.number().optional(),
+            }),
+        },
+        responses: {},
     };
 
     async handle(c: Context<HonoEnv>) {
@@ -61,15 +63,13 @@ export class emotesRank extends OpenAPIRoute {
                 where: { channelProviderId: channelProviderId, userId: { notIn: excludeUserIds } },
                 orderBy: { _count: { emoteName: "desc" } },
                 skip,
-                take
+                take,
             }),
             prisma.emoteUsageEventV2.findMany({
-                where: {
-                    channelProviderId: channelProviderId
-                },
-                distinct: ['emoteName'],
-                orderBy: { usedAt: 'desc' }
-            })
+                where: { channelProviderId: channelProviderId },
+                distinct: ["emoteName"],
+                orderBy: { usedAt: "desc" },
+            }),
         ]);
 
         const total = Number(totalQuery[0].count);
@@ -91,15 +91,7 @@ export class emotesRank extends OpenAPIRoute {
 
         return c.json({
             data: result,
-            meta: {
-                page,
-                perPage,
-                total,
-                totalPages,
-                channelId: user.id,
-                channelName: user.login,
-                channelDisplayName: user.displayName
-            }
+            meta: { page, perPage, total, totalPages, channelId: user.id, channelName: user.login, channelDisplayName: user.displayName },
         });
     }
 }

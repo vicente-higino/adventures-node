@@ -93,17 +93,17 @@ export const BLOBFISH_EMOTES = ["FishMoley"];
 export const SURGEONFISH_EMOTES = ["fusDory"];
 
 export const VALUE_EMOTES_LIST = [
-    "WAJAJA",    // < 10
-    "pogg",      // < 50
-    "poggSpin",  // < 100
-    "YIPPIE",    // < 140
-    "POGGIES",   // < 300
-    "POGGERS",   // < 600
-    "Pog",       // < 800
-    "HOLY",      // < 1000
-    "Cereal",    // < 2500
-    "MUGA",      // < 5000
-    "OOOO",      // >= 5000
+    "WAJAJA", // < 10
+    "pogg", // < 50
+    "poggSpin", // < 100
+    "YIPPIE", // < 140
+    "POGGIES", // < 300
+    "POGGERS", // < 600
+    "Pog", // < 800
+    "HOLY", // < 1000
+    "Cereal", // < 2500
+    "MUGA", // < 5000
+    "OOOO", // >= 5000
 ];
 
 export const ADVENTURE_GAMBA_EMOTE = "GAMBA";

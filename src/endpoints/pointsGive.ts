@@ -4,13 +4,7 @@ import { OpenAPIRoute } from "chanfana";
 import { giveSilver, giveSilverCommandSyntax, giveSilverParamsSchema } from "@/common/giveSilver";
 
 export class PointGive extends OpenAPIRoute {
-    schema = {
-        request: {
-            headers: FossaHeaders,
-            params: giveSilverParamsSchema,
-        },
-        responses: {},
-    };
+    schema = { request: { headers: FossaHeaders, params: giveSilverParamsSchema }, responses: {} };
     handleValidationError(): Response {
         const msg = giveSilverCommandSyntax();
         return new Response(msg, { status: 400 });

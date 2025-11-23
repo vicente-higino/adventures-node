@@ -3,9 +3,7 @@ import { getUserByUsername } from "@/twitch/api";
 import { prisma } from "@/prisma";
 import z from "zod";
 
-const rankSchema = z.array(z.object({
-    position: z.coerce.number()
-})).nonempty()
+const rankSchema = z.array(z.object({ position: z.coerce.number() })).nonempty();
 
 async function getRank(userId: string, channelProviderId: string) {
     try {
@@ -23,7 +21,7 @@ async function getRank(userId: string, channelProviderId: string) {
         ) ranked
         WHERE "userId" = ${userId};`,
             prisma.balance.count({ where: { channelProviderId } }),
-            prisma.balance.findUnique({ where: { channelProviderId_userId: { userId, channelProviderId } } })
+            prisma.balance.findUnique({ where: { channelProviderId_userId: { userId, channelProviderId } } }),
         ]);
         const parsedRank = rankSchema.safeParse(rank);
         if (parsedRank.success && balance) {
