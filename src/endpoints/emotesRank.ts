@@ -57,7 +57,7 @@ export class emotesRank extends OpenAPIRoute {
             FROM "EmoteUsageEventV2"
             WHERE "channelProviderId" = ${channelProviderId}`,
             prisma.emoteUsageEventV2.groupBy({
-                by: ["emoteName"],
+                by: ["emoteId", "emoteName"],
                 _count: { emoteName: true },
                 _max: { provider: true },
                 where: { channelProviderId: channelProviderId, userId: { notIn: excludeUserIds } },
@@ -67,29 +67,11 @@ export class emotesRank extends OpenAPIRoute {
             })
         ]);
 
-        const emotesIds = await prisma.emoteUsageEventV2.findMany({
-            where: {
-                channelProviderId: channelProviderId,
-                emoteName: { in: emotes.map(e => e.emoteName) },
-            },
-            select: {
-                emoteName: true,
-                emoteId: true,
-                usedAt: true
-            },
-            distinct: ["emoteName"],
-            orderBy: { usedAt: "desc" }
-        });
         const total = Number(totalQuery[0].count);
-        const emoteIdMap = new Map<string, string | null>();
-        for (const e of emotesIds) {
-            if (!emoteIdMap.has(e.emoteName)) {
-                emoteIdMap.set(e.emoteName, e.emoteId ?? null);
-            }
-        }
+
         const result = emotes.map((r, i) => ({
             emoteName: r.emoteName,
-            emoteId: emoteIdMap.get(r.emoteName),
+            emoteId: r.emoteId,
             usage_count: r._count.emoteName,
             provider: r._max.provider,
             rank: skip + i + 1,
@@ -100,6 +82,7 @@ export class emotesRank extends OpenAPIRoute {
         return c.json({
             data: result,
             meta: { page, perPage, total, totalPages, channelId: user.id, channelName: user.login, channelDisplayName: user.displayName },
-        });
+        },
+            200, { "Access-Control-Allow-Origin": "*" });
     }
 }
