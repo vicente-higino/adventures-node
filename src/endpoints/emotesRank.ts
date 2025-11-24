@@ -16,6 +16,8 @@ export class emotesRank extends OpenAPIRoute {
                     .optional(),
                 page: z.coerce.number().optional(),
                 perPage: z.coerce.number().optional(),
+                from: z.coerce.date().optional(),
+                to: z.coerce.date().optional(),
             }),
         },
         responses: {},
@@ -28,6 +30,8 @@ export class emotesRank extends OpenAPIRoute {
         const rawExcludes = data.query.excludeUserIds ?? "";
         const rawPage = data.query.page ?? 1;
         const rawPerPage = data.query.perPage ?? 10;
+        const from = data.query.from ?? new Date(0);
+        const to = data.query.to ?? new Date();
 
         const sanitizeId = z.string().safeParse(rawChannel);
         if (!sanitizeId.success) {
@@ -50,17 +54,29 @@ export class emotesRank extends OpenAPIRoute {
         const skip = (page - 1) * perPage;
         const take = perPage;
 
+        // Build date filter
+        const dateFilter: Record<string, any> = {};
+        if (from) dateFilter.gte = from;
+        if (to) dateFilter.lte = to;
+
         // Get total distinct emotes for pagination
         const [totalQuery, emotes] = await Promise.all([
             prisma.$queryRaw<[{ count: BigInt }]>`
             SELECT COUNT(DISTINCT "emoteName") as count
             FROM "EmoteUsageEventV2"
-            WHERE "channelProviderId" = ${channelProviderId}`,
+            WHERE "channelProviderId" = ${channelProviderId}
+            AND "usedAt" >= ${from}
+            AND "usedAt" <= ${to}
+            `,
             prisma.emoteUsageEventV2.groupBy({
                 by: ["emoteId", "emoteName"],
                 _count: { emoteName: true },
                 _max: { provider: true },
-                where: { channelProviderId: channelProviderId, userId: { notIn: excludeUserIds } },
+                where: {
+                    channelProviderId: channelProviderId,
+                    userId: { notIn: excludeUserIds },
+                    ...(from || to ? { usedAt: dateFilter } : {}),
+                },
                 orderBy: { _count: { emoteName: "desc" } },
                 skip,
                 take,
