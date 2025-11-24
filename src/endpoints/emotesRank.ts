@@ -101,7 +101,7 @@ export class emotesRank extends OpenAPIRoute {
         },
             200, {
             "Access-Control-Allow-Origin": "*",
-            "Cache-Control": "s-maxage=600, stale-while-revalidate=600"
+            "Cache-Control": "public, max-age=3600, s-maxage=3600"
         });
     }
 }
