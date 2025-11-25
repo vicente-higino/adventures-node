@@ -95,7 +95,7 @@ app.get("/api/duel/accept/:challengerId", DuelAccept);
 app.get("/api/duel/cancel/:challengedId", DuelCancel);
 
 app.get("/api/leaderboard/:amount/:sortBy", ConsolidatedLeaderboard);
-app.get("/api/emotes/rank/:userId", emotesRank);
+app.get("/api/emotes/rank/:username", emotesRank);
 
 app.route("/", authenticatedRoute);
 // Add the last fish endpoint

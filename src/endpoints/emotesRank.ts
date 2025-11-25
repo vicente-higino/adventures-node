@@ -3,16 +3,15 @@ import { type HonoEnv } from "../types";
 import type { Context } from "hono";
 import { prisma } from "@/prisma";
 import z from "zod";
-import { getUserById } from "@/twitch/api";
+import { getUserById, getUserByUsername } from "@/twitch/api";
 
 export class emotesRank extends OpenAPIRoute {
     schema = {
         request: {
-            params: z.object({ userId: z.string().refine(c => !isNaN(parseInt(c))) }),
+            params: z.object({ username: z.string().min(1) }),
             query: z.object({
-                excludeUserIds: z
+                excludeUsers: z
                     .string()
-                    .refine(c => !isNaN(parseInt(c)))
                     .optional(),
                 page: z.coerce.number().optional(),
                 perPage: z.coerce.number().optional(),
@@ -26,27 +25,26 @@ export class emotesRank extends OpenAPIRoute {
     async handle(c: Context<HonoEnv>) {
         // Read and sanitize query params
         const data = await this.getValidatedData<typeof this.schema>();
-        const rawChannel = data.params.userId;
-        const rawExcludes = data.query.excludeUserIds ?? "";
+        const rawChannel = data.params.username;
+        const rawExcludes = data.query.excludeUsers ?? "";
         const rawPage = data.query.page ?? 1;
         const rawPerPage = data.query.perPage ?? 10;
         const from = data.query.from ?? new Date(0);
         const to = data.query.to ?? new Date();
 
-        const sanitizeId = z.string().safeParse(rawChannel);
-        if (!sanitizeId.success) {
-            return c.json({ message: "Error parsing userId" }, 400);
-        }
-        const channelProviderId = sanitizeId.data;
-        const user = await getUserById(prisma, channelProviderId);
+        const user = await getUserByUsername(prisma, rawChannel);
         if (!user) {
             return c.json({ message: "User not found" }, 404);
         }
-        const excludeUserIds = rawExcludes
+        const channelProviderId = user.id;
+        const excludeUsernames = rawExcludes
             .split(",")
             .map(s => s.trim())
             .filter(Boolean);
-
+        const excludeUserIds = await Promise.all(excludeUsernames.map(async (username) => {
+            const user = await getUserByUsername(prisma, username);
+            return user?.id ?? "";
+        }));
         // Parse pagination params
         const page = Math.max(1, Number.isFinite(+rawPage) ? Math.max(1, rawPage) : 1);
         const perPageRaw = Number.isFinite(+rawPerPage) ? Math.max(1, rawPerPage) : 50;
@@ -62,7 +60,7 @@ export class emotesRank extends OpenAPIRoute {
         // Get total distinct emotes for pagination
         const [totalQuery, emotes] = await Promise.all([
             prisma.$queryRaw<[{ count: BigInt }]>`
-            SELECT COUNT(DISTINCT "emoteName") as count
+            SELECT COUNT(DISTINCT "emoteId") as count
             FROM "EmoteUsageEventV2"
             WHERE "channelProviderId" = ${channelProviderId}
             AND "usedAt" >= ${from}
