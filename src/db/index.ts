@@ -329,3 +329,16 @@ export async function hasFishDexCompletion(prisma: dbClient, channelProviderId: 
     });
     return !!completion;
 }
+
+export async function deleteOldCompletedDuels(prisma: dbClient, duelCooldownHours: number) {
+    const cutoff = new Date(Date.now() - duelCooldownHours * 60 * 60 * 1000);
+    const { count } = await prisma.duel.deleteMany({
+        where: {
+            status: "Completed",
+            updatedAt: { lt: cutoff },
+        },
+    });
+    if (count > 0) {
+        console.log(`Deleted ${count} old completed duels.`);
+    }
+}

@@ -2,9 +2,14 @@ import { PrismaClient } from "@prisma/client";
 import { getUserById } from "@/twitch/api";
 import { findOrCreateBalance, increaseBalanceWithChannelID, updateUseDuelsStats } from "@/db";
 import { pickRandom, calculateAmount } from "@/utils/misc";
-import { DUEL_CREATE_EMOTES, DUEL_WIN_EMOTES, DUEL_DENY_EMOTES } from "@/emotes";
+import { DUEL_CREATE_EMOTES, DUEL_WIN_EMOTES, DUEL_DENY_EMOTES, ADVENTURE_COOLDOWN_EMOTES } from "@/emotes";
 import { prisma } from "@/prisma";
 import { amountParamSchema } from "./handleAdventure";
+import env from "@/env";
+import dayjs from "dayjs";
+import { formatTimeToWithSeconds } from "@/utils/time";
+
+const duelCooldownMs = () => 1000 * 60 * 60 * env.COOLDOWN_DUEL_IN_HOURS;
 
 export async function handleDuelCreate(params: {
     channelLogin: string;
@@ -35,8 +40,8 @@ export async function handleDuelCreate(params: {
         return `@${userDisplayName}, you can't duel yourself.`;
     }
 
-    const existingDuel = await prisma.duel.findUnique({
-        where: { channelProviderId_challengerId_challengedId: { channelProviderId, challengerId, challengedId } },
+    const existingDuel = await prisma.duel.findFirst({
+        where: { channelProviderId, challengerId, challengedId, status: "Pending" },
         include: { challenger: true, challenged: true },
     });
     if (existingDuel) {
@@ -45,8 +50,8 @@ export async function handleDuelCreate(params: {
                 $(newline)@${existingDuel.challenged.displayName} you can use "${prefix ?? "!"}accept|deny".`;
     }
 
-    const reverseDuel = await prisma.duel.findUnique({
-        where: { channelProviderId_challengerId_challengedId: { channelProviderId, challengerId: challengedId, challengedId: challengerId } },
+    const reverseDuel = await prisma.duel.findFirst({
+        where: { channelProviderId, challengerId: challengedId, challengedId: challengerId, status: "Pending" },
         include: { challenger: true, challenged: true },
     });
 
@@ -65,6 +70,27 @@ export async function handleDuelCreate(params: {
         return `@${userDisplayName}, you don't have enough silver (${balance.value}) to wager ${actualWagerAmount}.`;
     }
 
+    // Duel cooldown check
+    const lastCompletedDuel = await prisma.duel.findFirst({
+        where: {
+            channelProviderId,
+            status: "Completed",
+            challengerId,
+        },
+        orderBy: { updatedAt: "desc" },
+    });
+
+    if (lastCompletedDuel) {
+        const lastEndedAt = lastCompletedDuel.updatedAt;
+        const nextAvailable = new Date(lastEndedAt.getTime() + duelCooldownMs());
+        const now = new Date();
+        const secondsLeft = Math.floor((nextAvailable.getTime() - now.getTime()) / 1000);
+        if (secondsLeft >= 1) {
+            const timeUntilNext = dayjs(nextAvailable);
+            return `@${userDisplayName}, you are on cooldown for ${formatTimeToWithSeconds(timeUntilNext.toDate())}. ${pickRandom(ADVENTURE_COOLDOWN_EMOTES)}`;
+        }
+    }
+
     await Promise.all([
         increaseBalanceWithChannelID(prisma, channelProviderId, challengerId, -actualWagerAmount),
         prisma.duel.create({
@@ -73,7 +99,7 @@ export async function handleDuelCreate(params: {
     ]);
 
     return `@${userDisplayName} challenged ${challenged.displayName} for a duel with a ${actualWagerAmount} silver bet! ${pickRandom(DUEL_CREATE_EMOTES)}
-             $(newline)@${challenged.displayName} you can use "!accept|deny".`;
+             $(newline)@${challenged.displayName} you can use "${prefix ?? "!"}accept|deny".`;
 }
 
 export async function handleDuelAccept(params: {
@@ -91,8 +117,8 @@ export async function handleDuelAccept(params: {
         if (challengerId == challengedId) {
             return `@${userDisplayName}, you can't duel yourself.`;
         }
-        duel = await prisma.duel.findUnique({
-            where: { channelProviderId_challengerId_challengedId: { channelProviderId, challengerId, challengedId } },
+        duel = await prisma.duel.findFirst({
+            where: { channelProviderId, challengerId, challengedId, status: "Pending" },
             include: { challenger: true },
         });
 
@@ -145,10 +171,11 @@ export async function handleDuelAccept(params: {
         updateUseDuelsStats(prisma, channelLogin, channelProviderId, loserId, { didWin: false, wagerAmount: duel.wagerAmount, winAmount: 0 }),
     ]);
 
-    await prisma.duel.delete({
+    await prisma.duel.update({
         where: {
-            channelProviderId_challengerId_challengedId: { channelProviderId, challengerId: duel.challengerId, challengedId: duel.challengedId },
+            id: duel.id
         },
+        data: { status: "Completed" },
     });
 
     if (winnerStats.duelWinStreak > 1) {
@@ -212,11 +239,7 @@ export async function handleDuelCancel(params: {
         increaseBalanceWithChannelID(prisma, channelProviderId, duel.challengerId, duel.wagerAmount),
         prisma.duel.delete({
             where: {
-                channelProviderId_challengerId_challengedId: {
-                    channelProviderId: duel.channelProviderId,
-                    challengerId: duel.challengerId,
-                    challengedId: duel.challengedId,
-                },
+                id: duel.id
             },
         }),
     ]);

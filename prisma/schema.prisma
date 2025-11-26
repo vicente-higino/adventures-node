@@ -189,7 +189,6 @@ model Duel {
     createdAt         DateTime   @default(now())
     updatedAt         DateTime   @updatedAt
 
-    @@unique([channelProviderId, challengerId, challengedId])
     @@index([channelProviderId, challengerId, challengedId])
 }
 

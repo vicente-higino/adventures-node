@@ -11,6 +11,7 @@ const envSchema = z.object({
     DATABASE_URL: z.string({ required_error: "Missing environment variable: DATABASE_URL" }),
     COOLDOWN_FISHING_IN_HOURS: z.coerce.number({ required_error: "Missing environment variable: COOLDOWN_FISHING_IN_HOURS" }),
     COOLDOWN_ADVENTURE_IN_HOURS: z.coerce.number({ required_error: "Missing environment variable: COOLDOWN_ADVENTURE_IN_HOURS" }),
+    COOLDOWN_DUEL_IN_HOURS: z.coerce.number({ required_error: "Missing environment variable: COOLDOWN_DUEL_IN_HOURS" }),
 });
 export type Env = z.infer<typeof envSchema>;
 // Parse and validate environment variables
