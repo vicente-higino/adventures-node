@@ -27,6 +27,6 @@ export class Fish extends OpenAPIRoute {
             cooldownHours: c.env.COOLDOWN_FISHING_IN_HOURS,
         });
 
-        return c.text(result);
+        return c.text(result.replace("/me ", ""));
     }
 }
