@@ -26,11 +26,12 @@ import { AuthTwitch, AuthTwitchRedirect } from "@/endpoints/authTwitch";
 import { bearerAuth } from "hono/bearer-auth";
 import { startCron } from "@/cron";
 import { authMiddleware } from "@/middleware/authMiddleware";
-import { ignoreMiddleware } from "./middleware/ignoreUsers";
-import { trollMiddleware } from "./middleware/trollUsers";
+import { ignoreMiddleware } from "@/middleware/ignoreUsers";
 import { restartAdventureWarnings } from "@/common/helpers/schedule";
 import { delay } from "@/utils/misc";
-import { emotesRank } from "./endpoints/emotesRank";
+import { emotesRank } from "@/endpoints/emotesRank";
+import { emotesChannel } from "@/endpoints/emotesChannel";
+import { cors } from 'hono/cors'
 // Start a Hono app
 const hono = new Hono<HonoEnv>();
 const honoWithAuth = new Hono<HonoEnv>();
@@ -95,7 +96,9 @@ app.get("/api/duel/accept/:challengerId", DuelAccept);
 app.get("/api/duel/cancel/:challengedId", DuelCancel);
 
 app.get("/api/leaderboard/:amount/:sortBy", ConsolidatedLeaderboard);
+app.use("/api/emotes/*", cors({ origin: '*' }))
 app.get("/api/emotes/rank/:username", emotesRank);
+app.get("/api/emotes/channel/:username", emotesChannel);
 
 app.route("/", authenticatedRoute);
 // Add the last fish endpoint

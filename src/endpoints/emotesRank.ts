@@ -101,8 +101,6 @@ export class emotesRank extends OpenAPIRoute {
                 data: result,
                 meta: { page, perPage, total, totalPages, channelId: user.id, channelName: user.login, channelDisplayName: user.displayName },
             },
-            200,
-            { "Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=3600, s-maxage=3600" },
         );
     }
 }
