@@ -3,20 +3,21 @@ import { type HonoEnv } from "../types";
 import type { Context } from "hono";
 import { prisma } from "@/prisma";
 import z from "zod";
-import { getUserById, getUserByUsername } from "@/twitch/api";
+import { getUserByUsername } from "@/twitch/api";
+import { EmoteProvider, Prisma } from "@prisma/client";
+import { parseProviders } from "@/utils/params";
 
 export class emotesRank extends OpenAPIRoute {
     schema = {
         request: {
             params: z.object({ username: z.string().min(1) }),
             query: z.object({
-                excludeUsers: z
-                    .string()
-                    .optional(),
+                excludeUsers: z.string().optional(),
                 page: z.coerce.number().optional(),
                 perPage: z.coerce.number().optional(),
                 from: z.coerce.date().optional(),
                 to: z.coerce.date().optional(),
+                providers: z.string().optional(),
             }),
         },
         responses: {},
@@ -31,6 +32,7 @@ export class emotesRank extends OpenAPIRoute {
         const rawPerPage = data.query.perPage ?? 10;
         const from = data.query.from ?? new Date(0);
         const to = data.query.to ?? new Date();
+        const rawProviders = data.query.providers ?? "";
 
         const user = await getUserByUsername(prisma, rawChannel);
         if (!user) {
@@ -41,21 +43,19 @@ export class emotesRank extends OpenAPIRoute {
             .split(",")
             .map(s => s.trim())
             .filter(Boolean);
-        const excludeUserIds = await Promise.all(excludeUsernames.map(async (username) => {
-            const user = await getUserByUsername(prisma, username);
-            return user?.id ?? "";
-        }));
+        const excludeUserIds = await Promise.all(
+            excludeUsernames.map(async username => {
+                const user = await getUserByUsername(prisma, username);
+                return user?.id ?? "";
+            }),
+        );
+        const filterProviders = parseProviders(rawProviders.split(",")) ?? Object.values(EmoteProvider);
         // Parse pagination params
         const page = Math.max(1, Number.isFinite(+rawPage) ? Math.max(1, rawPage) : 1);
         const perPageRaw = Number.isFinite(+rawPerPage) ? Math.max(1, rawPerPage) : 50;
         const perPage = Math.min(perPageRaw, 1000); // cap perPage to 1000
         const skip = (page - 1) * perPage;
         const take = perPage;
-
-        // Build date filter
-        const dateFilter: Record<string, any> = {};
-        if (from) dateFilter.gte = from;
-        if (to) dateFilter.lte = to;
 
         // Get total distinct emotes for pagination
         const [totalQuery, emotes] = await Promise.all([
@@ -65,6 +65,8 @@ export class emotesRank extends OpenAPIRoute {
             WHERE "channelProviderId" = ${channelProviderId}
             AND "usedAt" >= ${from}
             AND "usedAt" <= ${to}
+            AND "provider" IN (${filterProviders.length > 0 ? Prisma.join(filterProviders) : ""})
+            AND "userId" NOT IN (${excludeUserIds.length > 0 ? Prisma.join(excludeUserIds) : ""})
             `,
             prisma.emoteUsageEventV2.groupBy({
                 by: ["emoteId", "emoteName"],
@@ -73,12 +75,13 @@ export class emotesRank extends OpenAPIRoute {
                 where: {
                     channelProviderId: channelProviderId,
                     userId: { notIn: excludeUserIds },
-                    ...(from || to ? { usedAt: dateFilter } : {}),
+                    usedAt: { gte: from, lte: to },
+                    provider: { in: filterProviders },
                 },
                 orderBy: { _count: { emoteName: "desc" } },
                 skip,
                 take,
-            })
+            }),
         ]);
 
         const total = Number(totalQuery[0].count);
@@ -93,13 +96,13 @@ export class emotesRank extends OpenAPIRoute {
 
         const totalPages = Math.max(1, Math.ceil(total / perPage));
 
-        return c.json({
-            data: result,
-            meta: { page, perPage, total, totalPages, channelId: user.id, channelName: user.login, channelDisplayName: user.displayName },
-        },
-            200, {
-            "Access-Control-Allow-Origin": "*",
-            "Cache-Control": "public, max-age=3600, s-maxage=3600"
-        });
+        return c.json(
+            {
+                data: result,
+                meta: { page, perPage, total, totalPages, channelId: user.id, channelName: user.login, channelDisplayName: user.displayName },
+            },
+            200,
+            { "Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=3600, s-maxage=3600" },
+        );
     }
 }

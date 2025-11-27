@@ -9,7 +9,6 @@ export function startCron() {
     cron.schedule("0 * * * *", () => {
         cancelExpiredDuels(prisma);
         deleteOldCompletedDuels(prisma, env.COOLDOWN_DUEL_IN_HOURS);
-
     });
     console.log("Cron jobs started");
 }

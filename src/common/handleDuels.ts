@@ -72,11 +72,7 @@ export async function handleDuelCreate(params: {
 
     // Duel cooldown check
     const lastCompletedDuel = await prisma.duel.findFirst({
-        where: {
-            channelProviderId,
-            status: "Completed",
-            challengerId,
-        },
+        where: { channelProviderId, status: "Completed", challengerId },
         orderBy: { updatedAt: "desc" },
     });
 
@@ -171,12 +167,7 @@ export async function handleDuelAccept(params: {
         updateUseDuelsStats(prisma, channelLogin, channelProviderId, loserId, { didWin: false, wagerAmount: duel.wagerAmount, winAmount: 0 }),
     ]);
 
-    await prisma.duel.update({
-        where: {
-            id: duel.id
-        },
-        data: { status: "Completed" },
-    });
+    await prisma.duel.update({ where: { id: duel.id }, data: { status: "Completed" } });
 
     if (winnerStats.duelWinStreak > 1) {
         winnerDisplayName += ` (${winnerStats.duelWinStreak} wins in a row)`;
@@ -237,11 +228,7 @@ export async function handleDuelCancel(params: {
 
     await Promise.all([
         increaseBalanceWithChannelID(prisma, channelProviderId, duel.challengerId, duel.wagerAmount),
-        prisma.duel.delete({
-            where: {
-                id: duel.id
-            },
-        }),
+        prisma.duel.delete({ where: { id: duel.id } }),
     ]);
 
     const otherUser = currentUserId === duel.challengerId ? duel.challenged : duel.challenger;
