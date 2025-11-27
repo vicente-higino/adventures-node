@@ -6,6 +6,7 @@ import z from "zod";
 import { getUserByUsername } from "@/twitch/api";
 import { EmoteProvider, Prisma } from "@prisma/client";
 import { parseProviders } from "@/utils/params";
+import { emoteTracker } from "@/bot";
 
 export class emotesRank extends OpenAPIRoute {
     schema = {
@@ -18,6 +19,7 @@ export class emotesRank extends OpenAPIRoute {
                 from: z.coerce.date().optional(),
                 to: z.coerce.date().optional(),
                 providers: z.string().optional(),
+                onlyCurrentEmotes: z.boolean().optional(),
             }),
         },
         responses: {},
@@ -33,10 +35,15 @@ export class emotesRank extends OpenAPIRoute {
         const from = data.query.from ?? new Date(0);
         const to = data.query.to ?? new Date();
         const rawProviders = data.query.providers ?? "";
-
+        const onlyCurrentEmoteSet = data.query.onlyCurrentEmotes ?? false;
+        let emotesIdFilter: string[] = [];
         const user = await getUserByUsername(prisma, rawChannel);
         if (!user) {
             return c.json({ message: "User not found" }, 404);
+        }
+        const currentEmotes = emoteTracker?.getChannelEmotes(user.login);
+        if (onlyCurrentEmoteSet && currentEmotes) {
+            emotesIdFilter = [...currentEmotes.values()].map(emote => emote.id);
         }
         const channelProviderId = user.id;
         const excludeUsernames = rawExcludes
@@ -77,30 +84,42 @@ export class emotesRank extends OpenAPIRoute {
                     userId: { notIn: excludeUserIds },
                     usedAt: { gte: from, lte: to },
                     provider: { in: filterProviders },
+                    emoteId: onlyCurrentEmoteSet ? { in: emotesIdFilter } : undefined,
                 },
                 orderBy: { _count: { emoteName: "desc" } },
-                skip,
-                take,
+                skip: !onlyCurrentEmoteSet ? skip : undefined,
+                take: !onlyCurrentEmoteSet ? take : undefined,
             }),
         ]);
 
-        const total = Number(totalQuery[0].count);
-
-        const result = emotes.map((r, i) => ({
+        let total = Number(totalQuery[0].count);
+        let totalPages = Math.max(1, Math.ceil(total / perPage));
+        let result = emotes.map((r, i) => ({
             emoteName: r.emoteName,
             emoteId: r.emoteId,
             usage_count: r._count.emoteName,
             provider: r._max.provider,
             rank: skip + i + 1,
         }));
+        if (onlyCurrentEmoteSet && currentEmotes && currentEmotes.size > 0) {
+            if (filterProviders.length > 0) {
+                result = result.filter(e => (e.provider ? filterProviders.includes(e.provider) : false));
+            }
+            const usedEmoteNames = new Set(result.map(e => e.emoteId));
+            const usedEmotesSize = result.length;
+            const missingEmotes = [...currentEmotes.values()]
+                .filter(e => !usedEmoteNames.has(e.id))
+                .filter(e => filterProviders.includes(e.provider))
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((e, i) => ({ emoteName: e.name, emoteId: e.id, usage_count: 0, provider: e.provider, rank: usedEmotesSize + i + 1 }));
+            result = result.concat(missingEmotes);
+            total = result.length;
+            totalPages = 1;
+        }
 
-        const totalPages = Math.max(1, Math.ceil(total / perPage));
-
-        return c.json(
-            {
-                data: result,
-                meta: { page, perPage, total, totalPages, channelId: user.id, channelName: user.login, channelDisplayName: user.displayName },
-            },
-        );
+        return c.json({
+            data: result,
+            meta: { page, perPage, total, totalPages, channelId: user.id, channelName: user.login, channelDisplayName: user.displayName },
+        });
     }
 }

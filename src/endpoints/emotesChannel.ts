@@ -7,12 +7,7 @@ import z from "zod";
 import { prisma } from "@/prisma";
 
 export class emotesChannel extends OpenAPIRoute {
-    schema = {
-        request: {
-            params: z.object({ username: z.string().min(1) }),
-        },
-        responses: {},
-    };
+    schema = { request: { params: z.object({ username: z.string().min(1) }) }, responses: {} };
 
     async handle(c: Context<HonoEnv>) {
         const data = await this.getValidatedData<typeof this.schema>();
@@ -33,16 +28,8 @@ export class emotesChannel extends OpenAPIRoute {
         }
 
         // Return emotes as array of objects
-        const emotes = Array.from(emotesMap.values()).map(e => ({
-            id: e.id,
-            name: e.name,
-            provider: e.provider,
-        }));
+        const emotes = Array.from(emotesMap.values()).map(e => ({ id: e.id, name: e.name, provider: e.provider }));
 
-        return c.json({
-            channel: user.login,
-            channelId: user.id,
-            emotes,
-        });
+        return c.json({ channel: user.login, channelId: user.id, emotes });
     }
 }
