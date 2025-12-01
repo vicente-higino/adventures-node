@@ -25,14 +25,14 @@ export const giveSilverParamsSchema = z.object({
                 "Silver amount must be a number, K/M/B (e.g., 5k), percentage (e.g., 50%), 'all', 'to:X', 'k:X', or a delta (e.g., +1k, -50%)",
             required_error: "Silver amount is required",
         })
-        .regex(/^((all|\d+(\.\d+)?%|\d+(\.\d+)?[kmb]?|\d+)|k(eep)?:\d+(\.\d+)?[kmb]?)$/i, {
+        .regex(/^((all|\d+(\.\d+)?%|\d+(\.\d+)?[kmb]?|\d+)|to:\d+(\.\d+)?[kmb]?|k(eep)?:\d+(\.\d+)?[kmb]?)$/i, {
             message:
                 "Amount must be a positive whole number, K/M/B (e.g., 5k), percentage (e.g., 50%), 'all', 'to:X', 'k:X', or a delta (e.g., +1k, -50%)",
         }),
 });
 
 export const amountParamSchema = giveSilverParamsSchema.shape.giveAmount;
-export const giveSilverCommandSyntax = (prefix: string = "!") => `Usage: ${prefix}givesilver [username] [silver(K/M/B)|%|all|k(eep):silver(K/M/B)]`;
+export const giveSilverCommandSyntax = (prefix: string = "!") => `Usage: ${prefix}givesilver [username] [silver(K/M/B)|%|all|to:silver(K/M/B)|k(eep):silver(K/M/B)]`;
 export async function giveSilver({
     prisma,
     channelLogin,
@@ -65,7 +65,7 @@ export async function giveSilver({
 
     const toBalance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, toUserProviderId, toUserLogin, toUserDisplayName);
 
-    const giveAmount = calculateAmount(giveAmountStr, fromBalance.value);
+    const giveAmount = calculateAmount(giveAmountStr, fromBalance.value, toBalance.value);
 
     if (giveAmount <= 0) {
         return { message: `@${fromUserDisplayName}, minimum amount to give is 1 silver.` };

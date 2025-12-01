@@ -117,7 +117,6 @@ export function calculateAmount(amountStr: string, availableAmount: number, curr
 
     // Handle "to:X" syntax
     if (cleanedAmountStr.startsWith("to:")) {
-        if (!payoutRate || payoutRate <= 1) return 0;
         // Parse the target value (support K/M/B suffixes)
         const targetStr = cleanedAmountStr.slice(3);
         const match = targetStr.match(/^(\d+(\.\d+)?)([kmb])?$/);
@@ -127,6 +126,13 @@ export function calculateAmount(amountStr: string, availableAmount: number, curr
             if (suffix === "k") target *= 1_000;
             else if (suffix === "m") target *= 1_000_000;
             else if (suffix === "b") target *= 1_000_000_000;
+            if (currentAmount !== undefined) {
+                let toSend = target - currentAmount;
+                if (toSend < 0) toSend = 0;
+                if (toSend > availableAmount) toSend = availableAmount;
+                return toSend;
+            }
+            if (!payoutRate || payoutRate <= 1) return 0;
             const totalAvailable = availableAmount; // this is balance+buyin for update, or just balance for new join
             // The user wants: (buyin * payoutRate) + (totalAvailable - buyin) = target
             // => buyin * (payoutRate - 1) = target - totalAvailable
