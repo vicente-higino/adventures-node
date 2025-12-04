@@ -131,3 +131,22 @@ export async function getChannelsModForUser(userId: string, api: ApiClient): Pro
         return [];
     }
 }
+
+export async function getStreamByUsername(username: string) {
+    try {
+        const stream = await apiClient.streams.getStreamByUserName(username);
+        return stream;
+    } catch (error) {
+        console.error(`Error fetching stream for user ${username}`, error);
+        return null;
+    }
+}
+export async function getStreamByUserId(userid: string) {
+    try {
+        const stream = await apiClient.streams.getStreamByUserId(userid);
+        return stream;
+    } catch (error) {
+        console.error(`Error fetching stream for user ${userid}`, error);
+        return null;
+    }
+}

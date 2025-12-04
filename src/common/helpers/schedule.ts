@@ -3,6 +3,7 @@ import { prisma } from "@/prisma";
 import { delay, sendActionToChannel, sendMessageToChannel } from "@/utils/misc";
 import { PrismaClient } from "@prisma/client";
 import { handleAdventureEnd } from "../handleAdventure";
+import { getStreamByUserId } from "@/twitch/api";
 
 export interface AdventureWarning {
     delay: number; // milliseconds
@@ -42,14 +43,22 @@ export function scheduleAdventureWarnings(prisma: PrismaClient, adventureId: num
     for (const { delay, message } of warnings) {
         const timer = setTimeout(async () => {
             const adv = await prisma.adventure.findUnique({ where: { id: adventureId } });
-            if (!adv || adv.name === "DONE" || isChannelLive(adv.channelProviderId)) {
+            if (!adv) {
+                console.log(`Adventure ID ${adventureId} not found, skipping warning "${message}"`);
+                return;
+            }
+            const live = await getStreamByUserId(adv?.channelProviderId || "");
+            if (adv.name === "DONE" || live) {
+                if (live && !isChannelLive(adv.channel)) {
+                    console.log(`Channel ${adv.channel} is mismatched as not live, skipping adventure end warning "${message}"`);
+                }
                 for (const t of timers) {
                     clearTimeout(t);
                     console.log("clear timeout #", t);
                 }
                 return;
             }
-            if (!isChannelLive(adv.channelProviderId)) {
+            if (!live) {
                 if (message === "!adventureend" && getBotConfig().modChannels.includes(adv.channel)) {
                     const result = await handleAdventureEnd({
                         channelLogin: adv.channel,
@@ -67,6 +76,7 @@ export function scheduleAdventureWarnings(prisma: PrismaClient, adventureId: num
         timer.unref();
         timers.push(timer);
     }
+    console.log(`Scheduled ${timers.length} timers #${timers.join(", #")} adventure warnings for adventure ID ${adventureId}`);
 }
 
 export async function restartAdventureWarnings(channelProviderId?: string) {
@@ -87,9 +97,9 @@ export async function restartAdventureWarnings(channelProviderId?: string) {
             elapsedTime >= totalDuration
                 ? RESTART_WARNINGS // Use default delays if the adventure has passed the end time
                 : RESTART_WARNINGS.map(warning => ({
-                      ...warning,
-                      delay: warning.delay + Math.max(0, totalDuration - elapsedTime), // Add the delayOffset
-                  }));
+                    ...warning,
+                    delay: warning.delay + Math.max(0, totalDuration - elapsedTime), // Add the delayOffset
+                }));
 
         scheduleAdventureWarnings(prisma, adv.id, adjustedWarnings);
     }
