@@ -12,9 +12,11 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
-		"prettier": "prettier --write ./src"
+		"prettier": "prettier --write ./src",
+		"clickhouse:migrate": "clickhouse-migrations migrate "
 	},
 	"dependencies": {
+		"@clickhouse/client": "^1.14.0",
 		"@hono/node-server": "^1.14.1",
 		"@prisma/adapter-d1": "^6.5.0",
 		"@prisma/adapter-pg": "^6.8.2",
@@ -26,6 +28,7 @@
 		"@twurple/eventsub-http": "^7.3.0",
 		"async-mutex": "^0.5.0",
 		"chanfana": "^2.0.2",
+		"clickhouse-migrations": "^1.1.1",
 		"dayjs": "^1.11.13",
 		"dotenv": "^16.5.0",
 		"hono": "^4.4.7",

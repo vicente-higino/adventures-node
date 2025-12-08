@@ -21,7 +21,27 @@ services:
       interval: 5s
       timeout: 2s
       retries: 20
-
+  clickhouse_db:
+    image: clickhouse/clickhouse-server
+    container_name: clickhouse_db
+    restart: always
+    environment:
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    env_file:
+      - .env
+    volumes:
+      - ./clickhouse_data:/var/lib/clickhouse
+    ports:
+      - '8123:8123'
+      - '9000:9000'
+    networks:
+      - prisma-network
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'SELECT 1' | clickhouse-client --user=${CLICKHOUSE_USER} --password=${CLICKHOUSE_PASSWORD}"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
   server:
     build:
       context: .
@@ -31,6 +51,8 @@ services:
       - '8001:8001'
     depends_on:
       postgres_db:
+        condition: service_healthy
+      clickhouse_db:
         condition: service_healthy
     restart: unless-stopped
     env_file:

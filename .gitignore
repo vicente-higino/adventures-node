@@ -177,3 +177,4 @@ data/
 db_backups/
 secrets/
 scripts/generate_pg_dump.sh
+clickhouse_data

@@ -2,6 +2,11 @@
 *Dockerfile*
 *docker-compose*
 node_modules
+clickhouse_data
+build
+data
+db_backups
+
 *.log
 *.ps1
 *.cmd
