@@ -5,6 +5,10 @@ import { getUserByUsername } from "@/twitch/api";
 import { z } from "zod";
 import { parseProviders } from "@/utils/params";
 import { parse, format } from "ms";
+import clickhouse from "@/db/clickhouse";
+import { EmoteProvider } from "@prisma/client";
+
+
 const TOP_EMOTES_COUNT = 15;
 
 const ChannelSchema = z.string().min(3, "Broadcaster name required").optional();
@@ -58,19 +62,26 @@ export const emoteRankCommand = createBotCommand(
         // Parse providers filter
         let filterProviders = providers ? parseProviders(providers.split(",")) : null;
 
-        const emotes = await prisma.emoteUsageEventV2.groupBy({
-            by: ["emoteName"],
-            _count: { emoteName: true },
-            _max: { provider: true },
-            where: { channelProviderId: broadcasterId, usedAt: { gte: startDate } },
-            orderBy: { _count: { emoteName: sort } },
-        });
-        if (!emotes.length) {
+        const query = await clickhouse.query({
+            query: `select emoteName, provider, count(emoteName) as count from emotes 
+                where channelProviderId={channelProviderId: String}
+                ${filterProviders && filterProviders?.length > 0 ? "and provider  in {filterProviders: Array(Enum8('Twitch' = 1, 'BTTV' = 2, 'FFZ' = 3, 'SevenTV' = 4))}" : ""}
+                and usedAt >= {from: DateTime64} 
+                group by emoteId, emoteName, provider order by count desc`,
+            format: "JSON",
+            query_params: {
+                channelProviderId: broadcasterId,
+                from: startDate,
+                filterProviders,
+            },
+        })
+        const queryResult = await query.json<{ emoteId: string; emoteName: string; provider: EmoteProvider; count: number }>();
+        if (!queryResult?.rows) {
             say("No emotes have been found for this range.");
             return;
         }
-        let usage = emotes
-            .map(e => ({ name: e.emoteName, count: e._count.emoteName, provider: e._max.provider ?? null }))
+        let usage = queryResult.data
+            .map(e => ({ name: e.emoteName, count: e.count, provider: e.provider }))
             .sort((a, b) => (sort === "asc" ? a.count - b.count : b.count - a.count));
 
         // Add missing emotes from channelEmotes (Map) with count 0
@@ -78,7 +89,7 @@ export const emoteRankCommand = createBotCommand(
             const usedEmoteNames = new Set(usage.map(e => e.name));
             const missingEmotes = Array.from(channelEmotes.keys())
                 .filter(e => !usedEmoteNames.has(e))
-                .map(e => ({ name: e, count: 0, provider: channelEmotes.get(e)?.provider ?? null }));
+                .map(e => ({ name: e, count: 0, provider: channelEmotes.get(e)?.provider! }));
             // Only add as many as needed to fill up to 'count'
             usage = usage.concat(missingEmotes);
         }
@@ -132,12 +143,25 @@ export const emoteCountCommand = createBotCommand(
         }
 
         const startDate = getStartDate(range);
-        const result = await prisma.emoteUsageEventV2.aggregate({
-            _count: { emoteName: true },
-            where: { channelProviderId: broadcasterId, emoteName: emoteName, usedAt: { gte: startDate } },
-        });
-
-        const count = result._count.emoteName;
+        const query = await clickhouse.query({
+            query: `
+                SELECT emoteName, count(emoteName) AS count FROM emotes 
+                WHERE channelProviderId={channelProviderId: String}
+                AND emoteName = {emoteName: String}
+                AND usedAt >= {from: DateTime64} 
+                GROUP BY emoteName ORDER BY count DESC LIMIT 1`,
+            format: "JSON",
+            query_params: {
+                channelProviderId: broadcasterId,
+                from: startDate,
+                emoteName
+            },
+        })
+        const queryResult = await query.json<{ emoteName: string; count: number }>();
+        let count = 0;
+        if (queryResult.data.length > 0) {
+            count = queryResult.data[0].count;
+        }
         say(`Last ${range}: ${emoteName} (${count})`);
     },
     { aliases: ["ec"] },
@@ -161,18 +185,27 @@ export const myEmoteRankCommand = createBotCommand(
         }
 
         const startDate = getStartDate(range);
-        const emotes = await prisma.emoteUsageEventV2.groupBy({
-            by: ["emoteName"],
-            _count: { emoteName: true },
-            where: { userId, channelProviderId: broadcasterId, usedAt: { gte: startDate } },
-            orderBy: { _count: { emoteName: sort } },
-        });
-        if (!emotes.length) {
+
+        const query = await clickhouse.query({
+            query: `select emoteName, count(emoteName) as count from emotes 
+                where channelProviderId={channelProviderId: String}
+                and userId = {userId: String}
+                and usedAt >= {from: DateTime64} 
+                group by emoteName order by count desc`,
+            format: "JSON",
+            query_params: {
+                channelProviderId: broadcasterId,
+                from: startDate,
+                userId,
+            },
+        })
+        const queryResult = await query.json<{ emoteId: string; emoteName: string; provider: EmoteProvider; count: number }>();
+        if (!queryResult?.rows) {
             say("You haven't used any emotes in this range.");
             return;
         }
-        const usage = emotes
-            .map(e => ({ name: e.emoteName, count: e._count.emoteName }))
+        const usage = queryResult.data
+            .map(e => ({ name: e.emoteName, count: e.count }))
             .filter(e => e.count > 0)
             .sort((a, b) => (sort === "asc" ? a.count - b.count : b.count - a.count))
             .slice(0, TOP_EMOTES_COUNT);
@@ -206,11 +239,27 @@ export const myEmoteCountCommand = createBotCommand(
         }
 
         const startDate = getStartDate(range);
-        const result = await prisma.emoteUsageEventV2.aggregate({
-            _count: { emoteName: true },
-            where: { userId, channelProviderId: broadcasterId, emoteName: emoteName, usedAt: { gte: startDate } },
-        });
-        const count = result._count.emoteName;
+        const query = await clickhouse.query({
+            query: `
+                SELECT emoteName, count(emoteName) AS count FROM emotes 
+                WHERE channelProviderId={channelProviderId: String}
+                AND emoteName = {emoteName: String}
+                AND userId = {userId: String}
+                AND usedAt >= {from: DateTime64} 
+                GROUP BY emoteName ORDER BY count DESC LIMIT 1`,
+            format: "JSON",
+            query_params: {
+                channelProviderId: broadcasterId,
+                from: startDate,
+                emoteName,
+                userId
+            },
+        })
+        const queryResult = await query.json<{ emoteName: string; count: number }>();
+        let count = 0;
+        if (queryResult.data.length > 0) {
+            count = queryResult.data[0].count;
+        }
         say(`@${userDisplayName} Last ${range}: ${emoteName} (${count})`);
     },
     { aliases: ["mec"] },

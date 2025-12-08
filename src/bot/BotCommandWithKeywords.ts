@@ -103,7 +103,11 @@ export function createBotCommand(
         }
 
         async execute(params: string[], context: BotCommandContext) {
-            await handler(params, context);
+            try {
+                await handler(params, context);
+            } catch (error) {
+                console.error(`[${new Date().toISOString()}] Bot command ${this.name} error: `, error)
+            }
         }
     })(options);
 }
