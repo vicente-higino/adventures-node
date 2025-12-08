@@ -128,5 +128,5 @@ export const fishGalleryCommand = createBotCommand(
 
         say(`@${userDisplayName} Fish Gallery [${page}/${totalPages}]: ${summary}`);
     },
-    { ignoreCase: true },
+    { ignoreCase: true, aliases: ["fg"] },
 );
