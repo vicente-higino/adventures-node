@@ -6,7 +6,7 @@ import { prisma } from "@/prisma";
 import cron from "node-cron";
 import { uuidv7 } from "uuidv7";
 import { EmoteProvider, Prisma } from "@prisma/client";
-
+import clickhouse from "@/db/clickhouse";
 // Tracks emote usage per channel
 export class EmoteTracker {
     private emoteFetcher = new EmoteFetcher();
@@ -73,7 +73,6 @@ export class EmoteTracker {
                 if (!word) continue;
                 if (nativeEmotes.has(word)) {
                     emoteEvents.push({
-                        id: uuidv7(),
                         channelProviderId: channelId,
                         emoteName: word,
                         userId,
@@ -82,7 +81,6 @@ export class EmoteTracker {
                     });
                 } else if (emotes.has(word)) {
                     emoteEvents.push({
-                        id: uuidv7(),
                         channelProviderId: channelId,
                         emoteName: word,
                         userId,
@@ -91,7 +89,6 @@ export class EmoteTracker {
                     });
                 } else if (this.globalEmotes.has(word)) {
                     emoteEvents.push({
-                        id: uuidv7(),
                         channelProviderId: channelId,
                         emoteName: word,
                         userId,
@@ -103,7 +100,12 @@ export class EmoteTracker {
 
             if (emoteEvents.length > 0) {
                 try {
-                    await prisma.emoteUsageEventV2.createMany({ data: emoteEvents });
+                    clickhouse.insert({
+                        table: "emotes",
+                        values: emoteEvents,
+                        format: 'JSONEachRow',
+                    });
+                    // await prisma.emoteUsageEventV2.createMany({ data: emoteEvents });
                 } catch (err) {
                     console.error(`[EmoteTracker] Failed to batch insert EmoteUsageEvents:`, err);
                 }

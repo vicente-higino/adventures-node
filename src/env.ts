@@ -12,6 +12,9 @@ const envSchema = z.object({
     COOLDOWN_FISHING_IN_HOURS: z.coerce.number({ required_error: "Missing environment variable: COOLDOWN_FISHING_IN_HOURS" }),
     COOLDOWN_ADVENTURE_IN_HOURS: z.coerce.number({ required_error: "Missing environment variable: COOLDOWN_ADVENTURE_IN_HOURS" }),
     COOLDOWN_DUEL_IN_HOURS: z.coerce.number({ required_error: "Missing environment variable: COOLDOWN_DUEL_IN_HOURS" }),
+    CH_MIGRATIONS_HOST: z.string({ required_error: "Missing environment variable: CH_MIGRATIONS_HOST" }),
+    CH_MIGRATIONS_USER: z.string({ required_error: "Missing environment variable: CH_MIGRATIONS_USER" }),
+    CH_MIGRATIONS_PASSWORD: z.string({ required_error: "Missing environment variable: CH_MIGRATIONS_PASSWORD" }),
 });
 export type Env = z.infer<typeof envSchema>;
 // Parse and validate environment variables

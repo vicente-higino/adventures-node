@@ -7,6 +7,7 @@ import { getUserByUsername } from "@/twitch/api";
 import { EmoteProvider, Prisma } from "@prisma/client";
 import { parseProviders } from "@/utils/params";
 import { emoteTracker } from "@/bot";
+import clickhouse from "@/db/clickhouse";
 
 export class emotesRank extends OpenAPIRoute {
     schema = {
@@ -64,41 +65,37 @@ export class emotesRank extends OpenAPIRoute {
         const skip = (page - 1) * perPage;
         const take = perPage;
 
-        // Get total distinct emotes for pagination
-        const [totalQuery, emotes] = await Promise.all([
-            prisma.$queryRaw<[{ count: BigInt }]>`
-            SELECT COUNT(DISTINCT "emoteId") as count
-            FROM "EmoteUsageEventV2"
-            WHERE "channelProviderId" = ${channelProviderId}
-            AND "usedAt" >= ${from}
-            AND "usedAt" <= ${to}
-            AND "provider" IN (${filterProviders.length > 0 ? Prisma.join(filterProviders) : ""})
-            AND "userId" NOT IN (${excludeUserIds.length > 0 ? Prisma.join(excludeUserIds) : ""})
-            `,
-            prisma.emoteUsageEventV2.groupBy({
-                by: ["emoteId", "emoteName"],
-                _count: { emoteName: true },
-                _max: { provider: true },
-                where: {
-                    channelProviderId: channelProviderId,
-                    userId: { notIn: excludeUserIds },
-                    usedAt: { gte: from, lte: to },
-                    provider: { in: filterProviders },
-                    emoteId: onlyCurrentEmoteSet ? { in: emotesIdFilter } : undefined,
-                },
-                orderBy: { _count: { emoteName: "desc" } },
-                skip: !onlyCurrentEmoteSet ? skip : undefined,
-                take: !onlyCurrentEmoteSet ? take : undefined,
-            }),
-        ]);
-
-        let total = Number(totalQuery[0].count);
+        const query = await clickhouse.query({
+            query: `select emoteId, emoteName, provider, count(emoteName) as count from emotes 
+                where channelProviderId={channelProviderId: String}
+                and provider in {filterProviders: Array(Enum8('Twitch' = 1, 'BTTV' = 2, 'FFZ' = 3, 'SevenTV' = 4))}
+                and usedAt >= {from: DateTime64} 
+                and usedAt <= {to: DateTime64}
+                and userId not in {excludeUserIds: Array(String)}
+                ${emotesIdFilter.length > 0 ? "and emoteId in {emotesIdFilter: Array(String)}" : ""}
+                group by emoteId, emoteName, provider order by count desc
+                ${!onlyCurrentEmoteSet ? "limit {take: Int32} offset {skip: Int32}" : ""}`,
+            format: "JSON",
+            query_params: {
+                channelProviderId,
+                take,
+                skip,
+                from,
+                to,
+                excludeUserIds,
+                filterProviders,
+                emotesIdFilter,
+            }
+        })
+        const queryResult = await query.json<{ emoteId: string; emoteName: string; provider: EmoteProvider; count: number }>();
+        const emotes = queryResult.data;
+        let total = queryResult.rows_before_limit_at_least!
         let totalPages = Math.max(1, Math.ceil(total / perPage));
         let result = emotes.map((r, i) => ({
             emoteName: r.emoteName,
             emoteId: r.emoteId,
-            usage_count: r._count.emoteName,
-            provider: r._max.provider,
+            usage_count: r.count,
+            provider: r.provider,
             rank: skip + i + 1,
         }));
         if (onlyCurrentEmoteSet && currentEmotes && currentEmotes.size > 0) {
