@@ -66,14 +66,14 @@ export class emotesRank extends OpenAPIRoute {
         const take = perPage;
 
         const query = await clickhouse.query({
-            query: `select emoteId, emoteName, provider, count(emoteName) as count from emotes 
+            query: `select emoteId, any(emoteName) as emoteName, provider, count() as count from emotes 
                 where channelProviderId={channelProviderId: String}
                 and provider in {filterProviders: Array(Enum8('Twitch' = 1, 'BTTV' = 2, 'FFZ' = 3, 'SevenTV' = 4))}
                 and usedAt >= {from: DateTime64} 
                 and usedAt <= {to: DateTime64}
                 and userId not in {excludeUserIds: Array(String)}
                 ${emotesIdFilter.length > 0 ? "and emoteId in {emotesIdFilter: Array(String)}" : ""}
-                group by emoteId, emoteName, provider order by count desc
+                group by emoteId, provider order by count desc
                 ${!onlyCurrentEmoteSet ? "limit {take: Int32} offset {skip: Int32}" : ""}`,
             format: "JSON",
             query_params: {
@@ -88,6 +88,7 @@ export class emotesRank extends OpenAPIRoute {
             }
         })
         const queryResult = await query.json<{ emoteId: string; emoteName: string; provider: EmoteProvider; count: number }>();
+        console.log({ ...queryResult, data: null })
         const emotes = queryResult.data;
         let total = queryResult.rows_before_limit_at_least!
         let totalPages = Math.max(1, Math.ceil(total / perPage));
