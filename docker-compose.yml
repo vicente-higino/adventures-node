@@ -32,6 +32,7 @@ services:
       - .env
     volumes:
       - ./clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse/config/z_disable_logs.xml:/etc/clickhouse-server/config.d/z_disable_logs.xml
     ports:
       - '8123:8123'
       - '9000:9000'
