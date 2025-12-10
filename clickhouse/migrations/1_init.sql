@@ -7,4 +7,4 @@
      `emoteId` String                                                     
  )                                                                        
  ENGINE = MergeTree
- ORDER BY (channelProviderId, provider, emoteName, emoteId, userId, usedAt)
+ORDER BY (channelProviderId, toStartOfDay(usedAt), provider, emoteId, usedAt);

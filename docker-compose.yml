@@ -43,6 +43,43 @@ services:
       interval: 5s
       timeout: 2s
       retries: 20
+  clickhouse-backup:
+    image: altinity/clickhouse-backup:latest
+    container_name: clickhouse-backup
+    volumes:
+      - ./clickhouse_data:/var/lib/clickhouse:rw
+    environment:
+      REMOTE_STORAGE: "s3"                  # config 'general.remote_storage' (overridable via env)
+      S3_BUCKET: "emotes-backup"     # example: clickhouse-backups
+      S3_ACCESS_KEY: ${ACCESS_KEY_ID}
+      S3_SECRET_KEY: ${SECRET_ACCESS_KEY}
+      # Cloudflare R2 endpoint example: https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+      S3_ENDPOINT: ${HOST_BASE}
+      S3_REGION: ${DEFAULT_REGION}
+      # R2 is S3 compatible; some setups use path style
+      S3_FORCE_PATH_STYLE: "true"
+      # Optional: tune remote retention (0 = keep all remote backups)
+      BACKUPS_TO_KEEP_REMOTE: 30
+      BACKUPS_TO_KEEP_LOCAL: -1
+      # clickhouse connection details (used for executing freeze/attach commands)
+      CLICKHOUSE_HOST: clickhouse_db
+      CLICKHOUSE_PORT: "9000"
+      CLICKHOUSE_USERNAME: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    command:
+      - sh
+      - -c
+      - |
+        clickhouse-backup watch \
+          --full-interval=24h \
+          --watch-interval=6h \
+          --watch-backup-name-template='backup-{time:20060102}'
+    networks:
+      - prisma-network
+    depends_on:
+      clickhouse_db:
+        condition: service_healthy
+    restart: unless-stopped
   server:
     build:
       context: .
