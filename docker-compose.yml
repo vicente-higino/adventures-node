@@ -60,7 +60,7 @@ services:
       S3_FORCE_PATH_STYLE: "true"
       # Optional: tune remote retention (0 = keep all remote backups)
       BACKUPS_TO_KEEP_REMOTE: 30
-      BACKUPS_TO_KEEP_LOCAL: -1
+      BACKUPS_TO_KEEP_LOCAL: 1
       # clickhouse connection details (used for executing freeze/attach commands)
       CLICKHOUSE_HOST: clickhouse_db
       CLICKHOUSE_PORT: "9000"
@@ -73,7 +73,7 @@ services:
         clickhouse-backup watch \
           --full-interval=24h \
           --watch-interval=6h \
-          --watch-backup-name-template='backup-{time:20060102}'
+          --watch-backup-name-template='{time:2006-01-02_15-04-05}'
     networks:
       - prisma-network
     depends_on:
