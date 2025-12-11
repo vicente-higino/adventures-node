@@ -21,6 +21,7 @@ export class emotesRank extends OpenAPIRoute {
                 to: z.coerce.date().optional(),
                 providers: z.string().optional(),
                 onlyCurrentEmotes: z.boolean().optional(),
+                groupBy: z.enum(['id', 'name']).default('id')
             }),
         },
         responses: {},
@@ -37,14 +38,15 @@ export class emotesRank extends OpenAPIRoute {
         const to = data.query.to ?? new Date();
         const rawProviders = data.query.providers ?? "";
         const onlyCurrentEmoteSet = data.query.onlyCurrentEmotes ?? false;
-        let emotesIdFilter: string[] = [];
+        const groupBy = data.query.groupBy;
+        let channelEmotes: string[] = [];
         const user = await getUserByUsername(prisma, rawChannel);
         if (!user) {
             return c.json({ message: "User not found" }, 404);
         }
         const currentEmotes = emoteTracker?.getChannelEmotes(user.login);
         if (onlyCurrentEmoteSet && currentEmotes) {
-            emotesIdFilter = [...currentEmotes.values()].map(emote => emote.id);
+            channelEmotes = [...currentEmotes.values()].map(emote => groupBy == 'id' ? emote.id : emote.name);
         }
         const channelProviderId = user.id;
         const excludeUsernames = rawExcludes
@@ -65,16 +67,15 @@ export class emotesRank extends OpenAPIRoute {
         const skip = (page - 1) * perPage;
         const take = perPage;
 
+        const { sql } = buildEmoteQuery({
+            groupBy,
+            excludeUserIds,
+            channelEmotes,
+            onlyCurrentEmoteSet
+        });
+
         const query = await clickhouse.query({
-            query: `SELECT emoteId, any(emoteName) AS emoteName, provider, sum(count) AS count FROM ${excludeUserIds.length > 0 ? "emotes_daily_user" : "emotes_daily"} 
-                WHERE channelProviderId={channelProviderId: String}
-                AND provider IN {filterProviders: Array(Enum8('Twitch' = 1, 'BTTV' = 2, 'FFZ' = 3, 'SevenTV' = 4))}
-                AND day >= {from: DateTime64} 
-                AND day <= {to: DateTime64}
-                ${excludeUserIds.length > 0 ? "AND userId NOT IN {excludeUserIds: Array(String)}" : ""}
-                ${emotesIdFilter.length > 0 ? "AND emoteId IN {emotesIdFilter: Array(String)}" : ""}
-                GROUP BY emoteId, provider ORDER BY count DESC
-                ${!onlyCurrentEmoteSet ? "LIMIT {take: Int32} OFFSET {skip: Int32}" : ""}`,
+            query: sql,
             format: "JSON",
             query_params: {
                 channelProviderId,
@@ -84,7 +85,7 @@ export class emotesRank extends OpenAPIRoute {
                 to,
                 excludeUserIds,
                 filterProviders,
-                emotesIdFilter,
+                emotesFilter: channelEmotes,
             }
         })
         const queryResult = await query.json<{ emoteId: string; emoteName: string; provider: EmoteProvider; count: number }>();
@@ -120,4 +121,63 @@ export class emotesRank extends OpenAPIRoute {
             meta: { page, perPage, total, totalPages, channelId: user.id, channelName: user.login, channelDisplayName: user.displayName },
         });
     }
+}
+
+
+function buildEmoteQuery(options: {
+    groupBy: "id" | "name";
+    excludeUserIds: string[];
+    channelEmotes: string[];
+    onlyCurrentEmoteSet: boolean;
+}) {
+    const { groupBy, excludeUserIds, channelEmotes, onlyCurrentEmoteSet } = options;
+
+    const isGroupById = groupBy === "id";
+
+    const select = isGroupById
+        ? "emoteId, any(emoteName) AS emoteName"
+        : "emoteName, topK(1)(emoteId)[1] AS emoteId";
+
+    const group = isGroupById ? "emoteId" : "emoteName";
+
+    const table = excludeUserIds.length > 0
+        ? "emotes_daily_user"
+        : "emotes_daily";
+
+    // Build WHERE clauses
+    const where: string[] = [
+        "channelProviderId = {channelProviderId: String}",
+        "provider IN {filterProviders: Array(Enum8('Twitch' = 1, 'BTTV' = 2, 'FFZ' = 3, 'SevenTV' = 4))}",
+        "day >= {from: DateTime64}",
+        "day <= {to: DateTime64}",
+    ];
+
+    if (excludeUserIds.length > 0) {
+        where.push("userId NOT IN {excludeUserIds: Array(String)}");
+    }
+
+    if (channelEmotes.length > 0) {
+        where.push(
+            isGroupById
+                ? "emoteId IN {emotesFilter: Array(String)}"
+                : "emoteName IN {emotesFilter: Array(String)}"
+        );
+    }
+
+    // Optional limit
+    const limit = onlyCurrentEmoteSet && channelEmotes.length > 0
+        ? ""
+        : "LIMIT {take: Int32} OFFSET {skip: Int32}";
+
+    // Final SQL
+    const sql = `
+        SELECT ${select}, provider, sum(count) AS count
+        FROM ${table}
+        WHERE ${where.join("\n  AND ")}
+        GROUP BY ${group}, provider
+        ORDER BY count DESC
+        ${limit}
+    `;
+
+    return { sql, group, select, table };
 }
