@@ -66,15 +66,15 @@ export class emotesRank extends OpenAPIRoute {
         const take = perPage;
 
         const query = await clickhouse.query({
-            query: `select emoteId, any(emoteName) as emoteName, provider, count() as count from emotes 
-                where channelProviderId={channelProviderId: String}
-                and provider in {filterProviders: Array(Enum8('Twitch' = 1, 'BTTV' = 2, 'FFZ' = 3, 'SevenTV' = 4))}
-                and usedAt >= {from: DateTime64} 
-                and usedAt <= {to: DateTime64}
-                and userId not in {excludeUserIds: Array(String)}
-                ${emotesIdFilter.length > 0 ? "and emoteId in {emotesIdFilter: Array(String)}" : ""}
-                group by emoteId, provider order by count desc
-                ${!onlyCurrentEmoteSet ? "limit {take: Int32} offset {skip: Int32}" : ""}`,
+            query: `SELECT emoteId, any(emoteName) AS emoteName, provider, sum(count) AS count FROM ${excludeUserIds.length > 0 ? "emotes_daily_user" : "emotes_daily"} 
+                WHERE channelProviderId={channelProviderId: String}
+                AND provider IN {filterProviders: Array(Enum8('Twitch' = 1, 'BTTV' = 2, 'FFZ' = 3, 'SevenTV' = 4))}
+                AND day >= {from: DateTime64} 
+                AND day <= {to: DateTime64}
+                ${excludeUserIds.length > 0 ? "AND userId NOT IN {excludeUserIds: Array(String)}" : ""}
+                ${emotesIdFilter.length > 0 ? "AND emoteId IN {emotesIdFilter: Array(String)}" : ""}
+                GROUP BY emoteId, provider ORDER BY count DESC
+                ${!onlyCurrentEmoteSet ? "LIMIT {take: Int32} OFFSET {skip: Int32}" : ""}`,
             format: "JSON",
             query_params: {
                 channelProviderId,

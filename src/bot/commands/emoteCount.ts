@@ -63,11 +63,11 @@ export const emoteRankCommand = createBotCommand(
         let filterProviders = providers ? parseProviders(providers.split(",")) : null;
 
         const query = await clickhouse.query({
-            query: `select emoteName, provider, count(emoteName) as count from emotes 
-                where channelProviderId={channelProviderId: String}
-                ${filterProviders && filterProviders?.length > 0 ? "and provider  in {filterProviders: Array(Enum8('Twitch' = 1, 'BTTV' = 2, 'FFZ' = 3, 'SevenTV' = 4))}" : ""}
-                and usedAt >= {from: DateTime64} 
-                group by emoteId, emoteName, provider order by count desc`,
+            query: `SELECT emoteName, any(provider) AS provider, sum(count) AS count FROM emotes_daily 
+                WHERE channelProviderId={channelProviderId: String}
+                ${filterProviders && filterProviders?.length > 0 ? "AND provider IN {filterProviders: Array(Enum8('Twitch' = 1, 'BTTV' = 2, 'FFZ' = 3, 'SevenTV' = 4))}" : ""}
+                AND day >= {from: DateTime64} 
+                GROUP BY emoteName ORDER BY count DESC`,
             format: "JSON",
             query_params: {
                 channelProviderId: broadcasterId,
@@ -145,10 +145,10 @@ export const emoteCountCommand = createBotCommand(
         const startDate = getStartDate(range);
         const query = await clickhouse.query({
             query: `
-                SELECT emoteName, count(emoteName) AS count FROM emotes 
+                SELECT emoteName, sum(count) AS count FROM emotes_daily 
                 WHERE channelProviderId={channelProviderId: String}
                 AND emoteName = {emoteName: String}
-                AND usedAt >= {from: DateTime64} 
+                AND day >= {from: DateTime64} 
                 GROUP BY emoteName ORDER BY count DESC LIMIT 1`,
             format: "JSON",
             query_params: {
@@ -187,11 +187,11 @@ export const myEmoteRankCommand = createBotCommand(
         const startDate = getStartDate(range);
 
         const query = await clickhouse.query({
-            query: `select emoteName, count(emoteName) as count from emotes 
-                where channelProviderId={channelProviderId: String}
-                and userId = {userId: String}
-                and usedAt >= {from: DateTime64} 
-                group by emoteName order by count desc`,
+            query: `SELECT emoteName, sum(count) AS count FROM emotes_daily_user 
+                WHERE channelProviderId={channelProviderId: String}
+                AND userId = {userId: String}
+                AND day >= {from: DateTime64} 
+                GROUP BY emoteName ORDER BY count DESC`,
             format: "JSON",
             query_params: {
                 channelProviderId: broadcasterId,
@@ -241,11 +241,11 @@ export const myEmoteCountCommand = createBotCommand(
         const startDate = getStartDate(range);
         const query = await clickhouse.query({
             query: `
-                SELECT emoteName, count(emoteName) AS count FROM emotes 
+                SELECT emoteName, sum(count) AS count FROM emotes_daily_user 
                 WHERE channelProviderId={channelProviderId: String}
                 AND emoteName = {emoteName: String}
                 AND userId = {userId: String}
-                AND usedAt >= {from: DateTime64} 
+                AND day >= {from: DateTime64} 
                 GROUP BY emoteName ORDER BY count DESC LIMIT 1`,
             format: "JSON",
             query_params: {
