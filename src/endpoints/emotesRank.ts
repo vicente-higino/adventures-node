@@ -88,7 +88,7 @@ export class emotesRank extends OpenAPIRoute {
                 emotesFilter: channelEmotes,
             }
         })
-        const queryResult = await query.json<{ emoteId: string; emoteName: string; provider: EmoteProvider; count: number }>();
+        const queryResult = await query.json<{ emoteId: string; emoteName: string; provider: EmoteProvider; total: number }>();
         console.log({ ...queryResult, data: null })
         const emotes = queryResult.data;
         let total = queryResult.rows_before_limit_at_least!
@@ -96,7 +96,7 @@ export class emotesRank extends OpenAPIRoute {
         let result = emotes.map((r, i) => ({
             emoteName: r.emoteName,
             emoteId: r.emoteId,
-            usage_count: r.count,
+            usage_count: r.total,
             provider: r.provider,
             rank: skip + i + 1,
         }));
@@ -136,7 +136,7 @@ function buildEmoteQuery(options: {
 
     const select = isGroupById
         ? "emoteId, any(emoteName) AS emoteName"
-        : "emoteName, topK(1)(emoteId)[1] AS emoteId";
+        : "emoteName, topKWeighted(1)(emoteId, count)[1] AS emoteId";
 
     const group = isGroupById ? "emoteId" : "emoteName";
 
@@ -171,11 +171,11 @@ function buildEmoteQuery(options: {
 
     // Final SQL
     const sql = `
-        SELECT ${select}, provider, sum(count) AS count
+        SELECT ${select}, provider, sum(count) AS total
         FROM ${table}
         WHERE ${where.join("\n  AND ")}
         GROUP BY ${group}, provider
-        ORDER BY count DESC
+        ORDER BY total DESC
         ${limit}
     `;
 
