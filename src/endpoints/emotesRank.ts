@@ -104,10 +104,10 @@ export class emotesRank extends OpenAPIRoute {
             if (filterProviders.length > 0) {
                 result = result.filter(e => (e.provider ? filterProviders.includes(e.provider) : false));
             }
-            const usedEmoteNames = new Set(result.map(e => e.emoteId));
+            const usedEmoteNames = new Set(result.map(e => groupBy == 'id' ? e.emoteId : e.emoteName));
             const usedEmotesSize = result.length;
             const missingEmotes = [...currentEmotes.values()]
-                .filter(e => !usedEmoteNames.has(e.id))
+                .filter(e => !usedEmoteNames.has(groupBy == 'id' ? e.id : e.name))
                 .filter(e => filterProviders.includes(e.provider))
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((e, i) => ({ emoteName: e.name, emoteId: e.id, usage_count: 0, provider: e.provider, rank: usedEmotesSize + i + 1 }));
