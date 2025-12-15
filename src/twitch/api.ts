@@ -4,6 +4,7 @@ import { ApiClient } from "@twurple/api";
 import { AppTokenAuthProvider } from "@twurple/auth";
 import env from "@/env";
 import Queue from "queue";
+import { prisma } from "@/prisma";
 const { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = env;
 export function buildUrl(baseUrl: string, params: Record<string, string>): string {
     const url = new URL(baseUrl);
@@ -64,6 +65,46 @@ export const getUserByUsername = async (
         displayName: apiUser.displayName,
         // Note: profilePictureUrl and description are not stored/returned in this simplified DbUser type
     };
+};
+export const getUsersByUsername = async (
+    usernames: string[]
+): Promise<DbUser[] | null> => {
+    // Change return type
+    // Check DB first
+    const users = usernames.map(u => u.toLowerCase().replaceAll("@", ""));
+    if (!users.length) return null;
+    const dbUsers = await prisma.user.findMany({ where: { login: { in: users } } });
+    if (dbUsers) {
+        return dbUsers.map(dbUser => {
+            return {
+                id: dbUser.providerId,
+                login: dbUser.login,
+                displayName: dbUser.displayName,
+            }
+        })
+    }
+    // If not in DB, fetch from Twitch API
+    const apiUsers = await handleApiRequest(() => apiClient.users.getUsersByNames(users), authProvider);
+    if (!apiUsers) {
+        return null;
+    }
+
+    // Upsert user into DB
+    for (const apiUser of apiUsers) {
+        prisma.user.upsert({
+            where: { providerId: apiUser.id },
+            update: { login: apiUser.name, displayName: apiUser.displayName },
+            create: { providerId: apiUser.id, login: apiUser.name, displayName: apiUser.displayName },
+        });
+    }
+
+    return apiUsers.map(apiUser => {
+        return {
+            id: apiUser.id,
+            login: apiUser.name,
+            displayName: apiUser.displayName,
+        }
+    });
 };
 
 export const getUserById = async (

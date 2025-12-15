@@ -3,7 +3,7 @@ import { type HonoEnv } from "../types";
 import type { Context } from "hono";
 import { prisma } from "@/prisma";
 import z from "zod";
-import { getUserByUsername } from "@/twitch/api";
+import { getUserByUsername, getUsersByUsername } from "@/twitch/api";
 import { EmoteProvider, Prisma } from "@prisma/client";
 import { parseProviders } from "@/utils/params";
 import { emoteTracker } from "@/bot";
@@ -32,7 +32,7 @@ export class emotesRank extends OpenAPIRoute {
         // Read and sanitize query params
         const data = await this.getValidatedData<typeof this.schema>();
         const rawChannel = data.params.username;
-        const rawExcludes = data.query.users ?? "";
+        const rawUsers = data.query.users ?? "";
         const rawPage = data.query.page ?? 1;
         const rawPerPage = data.query.perPage ?? 10;
         const from = data.query.from ?? new Date(0);
@@ -51,16 +51,12 @@ export class emotesRank extends OpenAPIRoute {
             channelEmotes = [...currentEmotes.values()].map(emote => groupBy == 'id' ? emote.id : emote.name);
         }
         const channelProviderId = user.id;
-        const excludeUsernames = rawExcludes
+        const usernames = rawUsers
             .split(",")
             .map(s => s.trim())
             .filter(Boolean);
-        const excludeUserIds = await Promise.all(
-            excludeUsernames.map(async username => {
-                const user = await getUserByUsername(prisma, username);
-                return user?.id ?? "";
-            }),
-        );
+        const users = await getUsersByUsername(usernames);
+        const userIds = users ? users.map(user => user.id) : [];
         const filterProviders = parseProviders(rawProviders.split(",")) ?? Object.values(EmoteProvider);
         // Parse pagination params
         const page = Math.max(1, Number.isFinite(+rawPage) ? Math.max(1, rawPage) : 1);
@@ -71,7 +67,7 @@ export class emotesRank extends OpenAPIRoute {
 
         const { sql } = buildEmoteQuery({
             groupBy,
-            userIds: excludeUserIds,
+            userIds,
             userScope,
             channelEmotes,
             onlyCurrentEmoteSet
@@ -86,7 +82,7 @@ export class emotesRank extends OpenAPIRoute {
                 skip,
                 from,
                 to,
-                userIds: excludeUserIds,
+                userIds,
                 filterProviders,
                 emotesFilter: channelEmotes,
             }
