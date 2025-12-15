@@ -14,13 +14,14 @@ export class emotesRank extends OpenAPIRoute {
         request: {
             params: z.object({ username: z.string().min(1) }),
             query: z.object({
-                excludeUsers: z.string().optional(),
+                users: z.string().optional(),
                 page: z.coerce.number().optional(),
                 perPage: z.coerce.number().optional(),
                 from: z.coerce.date().optional(),
                 to: z.coerce.date().optional(),
                 providers: z.string().optional(),
                 onlyCurrentEmotes: z.boolean().optional(),
+                userScope: z.enum(['all', 'include', 'exclude']).default('all'),
                 groupBy: z.enum(['id', 'name']).default('id')
             }),
         },
@@ -31,7 +32,7 @@ export class emotesRank extends OpenAPIRoute {
         // Read and sanitize query params
         const data = await this.getValidatedData<typeof this.schema>();
         const rawChannel = data.params.username;
-        const rawExcludes = data.query.excludeUsers ?? "";
+        const rawExcludes = data.query.users ?? "";
         const rawPage = data.query.page ?? 1;
         const rawPerPage = data.query.perPage ?? 10;
         const from = data.query.from ?? new Date(0);
@@ -39,6 +40,7 @@ export class emotesRank extends OpenAPIRoute {
         const rawProviders = data.query.providers ?? "";
         const onlyCurrentEmoteSet = data.query.onlyCurrentEmotes ?? false;
         const groupBy = data.query.groupBy;
+        const userScope = data.query.userScope;
         let channelEmotes: string[] = [];
         const user = await getUserByUsername(prisma, rawChannel);
         if (!user) {
@@ -69,7 +71,8 @@ export class emotesRank extends OpenAPIRoute {
 
         const { sql } = buildEmoteQuery({
             groupBy,
-            excludeUserIds,
+            userIds: excludeUserIds,
+            userScope,
             channelEmotes,
             onlyCurrentEmoteSet
         });
@@ -83,7 +86,7 @@ export class emotesRank extends OpenAPIRoute {
                 skip,
                 from,
                 to,
-                excludeUserIds,
+                userIds: excludeUserIds,
                 filterProviders,
                 emotesFilter: channelEmotes,
             }
@@ -126,11 +129,13 @@ export class emotesRank extends OpenAPIRoute {
 
 function buildEmoteQuery(options: {
     groupBy: "id" | "name";
-    excludeUserIds: string[];
+    userIds: string[];
+    userScope: "all" | "include" | "exclude";
     channelEmotes: string[];
     onlyCurrentEmoteSet: boolean;
+
 }) {
-    const { groupBy, excludeUserIds, channelEmotes, onlyCurrentEmoteSet } = options;
+    const { groupBy, userIds, userScope, channelEmotes, onlyCurrentEmoteSet } = options;
 
     const isGroupById = groupBy === "id";
 
@@ -140,7 +145,7 @@ function buildEmoteQuery(options: {
 
     const group = isGroupById ? "emoteId" : "emoteName";
 
-    const table = excludeUserIds.length > 0
+    const table = userIds.length > 0
         ? "emotes_daily_user"
         : "emotes_daily";
 
@@ -152,8 +157,9 @@ function buildEmoteQuery(options: {
         "day <= {to: DateTime64}",
     ];
 
-    if (excludeUserIds.length > 0) {
-        where.push("userId NOT IN {excludeUserIds: Array(String)}");
+    if (userIds.length > 0 && userScope !== 'all') {
+        const inOrNotIn = userScope == 'include' ? "IN" : "NOT IN";
+        where.push(`userId ${inOrNotIn} {userIds: Array(String)}`);
     }
 
     if (channelEmotes.length > 0) {
