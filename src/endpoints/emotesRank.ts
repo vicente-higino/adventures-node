@@ -21,8 +21,8 @@ export class emotesRank extends OpenAPIRoute {
                 to: z.coerce.date().optional(),
                 providers: z.string().optional(),
                 onlyCurrentEmotes: z.boolean().optional(),
-                userScope: z.enum(['all', 'include', 'exclude']).default('all'),
-                groupBy: z.enum(['id', 'name']).default('id')
+                userScope: z.enum(["all", "include", "exclude"]).default("all"),
+                groupBy: z.enum(["id", "name"]).default("id"),
             }),
         },
         responses: {},
@@ -48,7 +48,7 @@ export class emotesRank extends OpenAPIRoute {
         }
         const currentEmotes = emoteTracker?.getChannelEmotes(user.login);
         if (onlyCurrentEmoteSet && currentEmotes) {
-            channelEmotes = [...currentEmotes.values()].map(emote => groupBy == 'id' ? emote.id : emote.name);
+            channelEmotes = [...currentEmotes.values()].map(emote => (groupBy == "id" ? emote.id : emote.name));
         }
         const channelProviderId = user.id;
         const usernames = rawUsers
@@ -65,32 +65,17 @@ export class emotesRank extends OpenAPIRoute {
         const skip = (page - 1) * perPage;
         const take = perPage;
 
-        const { sql } = buildEmoteQuery({
-            groupBy,
-            userIds,
-            userScope,
-            channelEmotes,
-            onlyCurrentEmoteSet
-        });
+        const { sql } = buildEmoteQuery({ groupBy, userIds, userScope, channelEmotes, onlyCurrentEmoteSet });
 
         const query = await clickhouse.query({
             query: sql,
             format: "JSON",
-            query_params: {
-                channelProviderId,
-                take,
-                skip,
-                from,
-                to,
-                userIds,
-                filterProviders,
-                emotesFilter: channelEmotes,
-            }
-        })
+            query_params: { channelProviderId, take, skip, from, to, userIds, filterProviders, emotesFilter: channelEmotes },
+        });
         const queryResult = await query.json<{ emoteId: string; emoteName: string; provider: EmoteProvider; total: number }>();
-        console.log({ ...queryResult, data: null })
+        console.log({ ...queryResult, data: null });
         const emotes = queryResult.data;
-        let total = queryResult.rows_before_limit_at_least!
+        let total = queryResult.rows_before_limit_at_least!;
         let totalPages = Math.max(1, Math.ceil(total / perPage));
         let result = emotes.map((r, i) => ({
             emoteName: r.emoteName,
@@ -103,10 +88,10 @@ export class emotesRank extends OpenAPIRoute {
             if (filterProviders.length > 0) {
                 result = result.filter(e => (e.provider ? filterProviders.includes(e.provider) : false));
             }
-            const usedEmoteNames = new Set(result.map(e => groupBy == 'id' ? e.emoteId : e.emoteName));
+            const usedEmoteNames = new Set(result.map(e => (groupBy == "id" ? e.emoteId : e.emoteName)));
             const usedEmotesSize = result.length;
             const missingEmotes = [...currentEmotes.values()]
-                .filter(e => !usedEmoteNames.has(groupBy == 'id' ? e.id : e.name))
+                .filter(e => !usedEmoteNames.has(groupBy == "id" ? e.id : e.name))
                 .filter(e => filterProviders.includes(e.provider))
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((e, i) => ({ emoteName: e.name, emoteId: e.id, usage_count: 0, provider: e.provider, rank: usedEmotesSize + i + 1 }));
@@ -122,28 +107,22 @@ export class emotesRank extends OpenAPIRoute {
     }
 }
 
-
 function buildEmoteQuery(options: {
     groupBy: "id" | "name";
     userIds: string[];
     userScope: "all" | "include" | "exclude";
     channelEmotes: string[];
     onlyCurrentEmoteSet: boolean;
-
 }) {
     const { groupBy, userIds, userScope, channelEmotes, onlyCurrentEmoteSet } = options;
 
     const isGroupById = groupBy === "id";
 
-    const select = isGroupById
-        ? "emoteId, any(emoteName) AS emoteName"
-        : "emoteName, topKWeighted(1)(emoteId, count)[1] AS emoteId";
+    const select = isGroupById ? "emoteId, any(emoteName) AS emoteName" : "emoteName, topKWeighted(1)(emoteId, count)[1] AS emoteId";
 
     const group = isGroupById ? "emoteId" : "emoteName";
 
-    const table = userIds.length > 0
-        ? "emotes_daily_user"
-        : "emotes_daily";
+    const table = userIds.length > 0 ? "emotes_daily_user" : "emotes_daily";
 
     // Build WHERE clauses
     const where: string[] = [
@@ -153,23 +132,17 @@ function buildEmoteQuery(options: {
         "day <= {to: DateTime64}",
     ];
 
-    if (userIds.length > 0 && userScope !== 'all') {
-        const inOrNotIn = userScope == 'include' ? "IN" : "NOT IN";
+    if (userIds.length > 0 && userScope !== "all") {
+        const inOrNotIn = userScope == "include" ? "IN" : "NOT IN";
         where.push(`userId ${inOrNotIn} {userIds: Array(String)}`);
     }
 
     if (channelEmotes.length > 0) {
-        where.push(
-            isGroupById
-                ? "emoteId IN {emotesFilter: Array(String)}"
-                : "emoteName IN {emotesFilter: Array(String)}"
-        );
+        where.push(isGroupById ? "emoteId IN {emotesFilter: Array(String)}" : "emoteName IN {emotesFilter: Array(String)}");
     }
 
     // Optional limit
-    const limit = onlyCurrentEmoteSet && channelEmotes.length > 0
-        ? ""
-        : "LIMIT {take: Int32} OFFSET {skip: Int32}";
+    const limit = onlyCurrentEmoteSet && channelEmotes.length > 0 ? "" : "LIMIT {take: Int32} OFFSET {skip: Int32}";
 
     // Final SQL
     const sql = `

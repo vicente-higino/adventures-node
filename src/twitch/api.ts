@@ -66,38 +66,21 @@ export const getUserByUsername = async (
         // Note: profilePictureUrl and description are not stored/returned in this simplified DbUser type
     };
 };
-export const getUsersByUsername = async (
-    usernames: string[]
-): Promise<DbUser[] | null> => {
-    const normalized = Array.from(
-        new Set(
-            usernames
-                .map(u => u.toLowerCase().replaceAll("@", ""))
-                .filter(Boolean)
-        )
-    );
+export const getUsersByUsername = async (usernames: string[]): Promise<DbUser[] | null> => {
+    const normalized = Array.from(new Set(usernames.map(u => u.toLowerCase().replaceAll("@", "")).filter(Boolean)));
 
     if (!normalized.length) return [];
 
-    const dbUsers = await prisma.user.findMany({
-        where: { login: { in: normalized } },
-    });
+    const dbUsers = await prisma.user.findMany({ where: { login: { in: normalized } } });
 
-    const dbUsersByLogin = new Map(
-        dbUsers.map(u => [u.login.toLowerCase(), u])
-    );
+    const dbUsersByLogin = new Map(dbUsers.map(u => [u.login.toLowerCase(), u]));
 
-    const missingUsernames = normalized.filter(
-        login => !dbUsersByLogin.has(login)
-    );
+    const missingUsernames = normalized.filter(login => !dbUsersByLogin.has(login));
 
     let apiUsers: DbUser[] = [];
 
     if (missingUsernames.length > 0) {
-        const fetched = await handleApiRequest(
-            () => apiClient.users.getUsersByNames(missingUsernames),
-            authProvider
-        );
+        const fetched = await handleApiRequest(() => apiClient.users.getUsersByNames(missingUsernames), authProvider);
 
         if (fetched?.length) {
             // 4. Upsert fetched users
@@ -105,33 +88,18 @@ export const getUsersByUsername = async (
                 fetched.map(apiUser =>
                     prisma.user.upsert({
                         where: { providerId: apiUser.id },
-                        update: {
-                            login: apiUser.name.toLowerCase(),
-                            displayName: apiUser.displayName,
-                        },
-                        create: {
-                            providerId: apiUser.id,
-                            login: apiUser.name.toLowerCase(),
-                            displayName: apiUser.displayName,
-                        },
-                    })
-                )
+                        update: { login: apiUser.name.toLowerCase(), displayName: apiUser.displayName },
+                        create: { providerId: apiUser.id, login: apiUser.name.toLowerCase(), displayName: apiUser.displayName },
+                    }),
+                ),
             );
 
-            apiUsers = fetched.map(apiUser => ({
-                id: apiUser.id,
-                login: apiUser.name,
-                displayName: apiUser.displayName,
-            }));
+            apiUsers = fetched.map(apiUser => ({ id: apiUser.id, login: apiUser.name, displayName: apiUser.displayName }));
         }
     }
 
     const result: DbUser[] = [
-        ...dbUsers.map(dbUser => ({
-            id: dbUser.providerId,
-            login: dbUser.login,
-            displayName: dbUser.displayName,
-        })),
+        ...dbUsers.map(dbUser => ({ id: dbUser.providerId, login: dbUser.login, displayName: dbUser.displayName })),
         ...apiUsers,
     ];
 

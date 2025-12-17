@@ -100,11 +100,7 @@ export class EmoteTracker {
 
             if (emoteEvents.length > 0) {
                 try {
-                    clickhouse.insert({
-                        table: "emotes",
-                        values: emoteEvents,
-                        format: 'JSONEachRow',
-                    });
+                    clickhouse.insert({ table: "emotes", values: emoteEvents, format: "JSONEachRow" });
                     // await prisma.emoteUsageEventV2.createMany({ data: emoteEvents });
                 } catch (err) {
                     console.error(`[EmoteTracker] Failed to batch insert EmoteUsageEvents:`, err);

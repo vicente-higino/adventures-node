@@ -8,7 +8,6 @@ import { parse, format } from "ms";
 import clickhouse from "@/db/clickhouse";
 import { EmoteProvider } from "@prisma/client";
 
-
 const TOP_EMOTES_COUNT = 15;
 
 const ChannelSchema = z.string().min(3, "Broadcaster name required").optional();
@@ -69,12 +68,8 @@ export const emoteRankCommand = createBotCommand(
                 AND day >= {from: DateTime64} 
                 GROUP BY emoteName ORDER BY count DESC`,
             format: "JSON",
-            query_params: {
-                channelProviderId: broadcasterId,
-                from: startDate,
-                filterProviders,
-            },
-        })
+            query_params: { channelProviderId: broadcasterId, from: startDate, filterProviders },
+        });
         const queryResult = await query.json<{ emoteId: string; emoteName: string; provider: EmoteProvider; count: number }>();
         if (!queryResult?.rows) {
             say("No emotes have been found for this range.");
@@ -151,12 +146,8 @@ export const emoteCountCommand = createBotCommand(
                 AND day >= {from: DateTime64} 
                 GROUP BY emoteName ORDER BY count DESC LIMIT 1`,
             format: "JSON",
-            query_params: {
-                channelProviderId: broadcasterId,
-                from: startDate,
-                emoteName
-            },
-        })
+            query_params: { channelProviderId: broadcasterId, from: startDate, emoteName },
+        });
         const queryResult = await query.json<{ emoteName: string; count: number }>();
         let count = 0;
         if (queryResult.data.length > 0) {
@@ -193,12 +184,8 @@ export const myEmoteRankCommand = createBotCommand(
                 AND day >= {from: DateTime64} 
                 GROUP BY emoteName ORDER BY count DESC`,
             format: "JSON",
-            query_params: {
-                channelProviderId: broadcasterId,
-                from: startDate,
-                userId,
-            },
-        })
+            query_params: { channelProviderId: broadcasterId, from: startDate, userId },
+        });
         const queryResult = await query.json<{ emoteId: string; emoteName: string; provider: EmoteProvider; count: number }>();
         if (!queryResult?.rows) {
             say("You haven't used any emotes in this range.");
@@ -248,13 +235,8 @@ export const myEmoteCountCommand = createBotCommand(
                 AND day >= {from: DateTime64} 
                 GROUP BY emoteName ORDER BY count DESC LIMIT 1`,
             format: "JSON",
-            query_params: {
-                channelProviderId: broadcasterId,
-                from: startDate,
-                emoteName,
-                userId
-            },
-        })
+            query_params: { channelProviderId: broadcasterId, from: startDate, emoteName, userId },
+        });
         const queryResult = await query.json<{ emoteName: string; count: number }>();
         let count = 0;
         if (queryResult.data.length > 0) {
