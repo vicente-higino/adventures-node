@@ -69,42 +69,73 @@ export const getUserByUsername = async (
 export const getUsersByUsername = async (
     usernames: string[]
 ): Promise<DbUser[] | null> => {
-    // Change return type
-    // Check DB first
-    const users = usernames.map(u => u.toLowerCase().replaceAll("@", ""));
-    if (!users.length) return null;
-    const dbUsers = await prisma.user.findMany({ where: { login: { in: users } } });
-    if (dbUsers) {
-        return dbUsers.map(dbUser => {
-            return {
-                id: dbUser.providerId,
-                login: dbUser.login,
-                displayName: dbUser.displayName,
-            }
-        })
-    }
-    // If not in DB, fetch from Twitch API
-    const apiUsers = await handleApiRequest(() => apiClient.users.getUsersByNames(users), authProvider);
-    if (!apiUsers) {
-        return null;
-    }
+    const normalized = Array.from(
+        new Set(
+            usernames
+                .map(u => u.toLowerCase().replaceAll("@", ""))
+                .filter(Boolean)
+        )
+    );
 
-    // Upsert user into DB
-    for (const apiUser of apiUsers) {
-        prisma.user.upsert({
-            where: { providerId: apiUser.id },
-            update: { login: apiUser.name, displayName: apiUser.displayName },
-            create: { providerId: apiUser.id, login: apiUser.name, displayName: apiUser.displayName },
-        });
-    }
+    if (!normalized.length) return [];
 
-    return apiUsers.map(apiUser => {
-        return {
-            id: apiUser.id,
-            login: apiUser.name,
-            displayName: apiUser.displayName,
-        }
+    const dbUsers = await prisma.user.findMany({
+        where: { login: { in: normalized } },
     });
+
+    const dbUsersByLogin = new Map(
+        dbUsers.map(u => [u.login.toLowerCase(), u])
+    );
+
+    const missingUsernames = normalized.filter(
+        login => !dbUsersByLogin.has(login)
+    );
+
+    let apiUsers: DbUser[] = [];
+
+    if (missingUsernames.length > 0) {
+        const fetched = await handleApiRequest(
+            () => apiClient.users.getUsersByNames(missingUsernames),
+            authProvider
+        );
+
+        if (fetched?.length) {
+            // 4. Upsert fetched users
+            await prisma.$transaction(
+                fetched.map(apiUser =>
+                    prisma.user.upsert({
+                        where: { providerId: apiUser.id },
+                        update: {
+                            login: apiUser.name.toLowerCase(),
+                            displayName: apiUser.displayName,
+                        },
+                        create: {
+                            providerId: apiUser.id,
+                            login: apiUser.name.toLowerCase(),
+                            displayName: apiUser.displayName,
+                        },
+                    })
+                )
+            );
+
+            apiUsers = fetched.map(apiUser => ({
+                id: apiUser.id,
+                login: apiUser.name,
+                displayName: apiUser.displayName,
+            }));
+        }
+    }
+
+    const result: DbUser[] = [
+        ...dbUsers.map(dbUser => ({
+            id: dbUser.providerId,
+            login: dbUser.login,
+            displayName: dbUser.displayName,
+        })),
+        ...apiUsers,
+    ];
+
+    return result.length ? result : [];
 };
 
 export const getUserById = async (
