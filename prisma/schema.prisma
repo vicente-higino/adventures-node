@@ -100,6 +100,13 @@ model Fish {
     @@index([channelProviderId, userId])
 }
 
+model ChannelFishCount {
+    channelProviderId String   @id
+    total             Int      @default(0)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
 model UserStats {
     id                Int      @id @default(autoincrement())
     user              User     @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
