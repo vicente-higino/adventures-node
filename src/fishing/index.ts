@@ -6,6 +6,8 @@ import { getBotConfig } from "@/bot";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { formatMinutes } from "@/utils/time";
+import { EVENT_STARTED_EMOTES } from "@/emotes";
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
 let rarityWeights: Record<Rarity, number> = RARITY_WEIGHTS_DEFAULT;
@@ -187,15 +189,15 @@ function getRarityByChance(chance: number, weights: Record<Rarity, number> = rar
 export function formatRarityWeightDisplay(weights: Record<Rarity, number> = rarityWeights): string {
     const totalWeight = getTotalWeight(weights);
     return Object.entries(weights)
-        .map(([rarity, weight]) => `${rarity}: ${weightToChance(weight, totalWeight).toFixed(2)}%`)
+        .map(([rarity, weight]) => `${rarity}: ${roundToDecimalPlaces(weightToChance(weight, totalWeight), 2).toFixed(2)}%`)
         .join(", ");
 }
 
-function endLegendaryEvent() {
+function endLegendaryEvent(name: string) {
     if (!legendaryEventActive) return;
     legendaryEventActive = false;
     resetRarityWeights();
-    sendActionToAllChannel("⏰ The Legendary Fishing Event has ended. Legendary fish odds are back to normal.");
+    sendActionToAllChannel(`The ${name} has ended. Legendary fish odds are back to normal.`);
     if (legendaryEventTimeout) {
         clearTimeout(legendaryEventTimeout);
         legendaryEventTimeout = null;
@@ -212,24 +214,8 @@ export const legendaryEventTaskPerChannel = (channels: string[]) =>
         const chance = 5 / (7 * 24 * 60);
         const shouldRun = chance > Math.random();
         if (shouldRun) {
-            legendaryEventActive = true;
-            // Temporarily boost Legendary rarity
-            const legendaryChanceBefore = getChanceByRarity("Legendary");
             const legendaryWeight = Math.round(boxMullerTransform(25, 10, 20));
-            modifyRarityWeights({ Legendary: legendaryWeight, Common: w => w - legendaryWeight });
-            const legendaryChanceAfter = getChanceByRarity("Legendary");
-            const chanceStr = `${legendaryChanceBefore.toFixed(2)}% -> ${legendaryChanceAfter.toFixed(2)}%`;
-            sendActionToAllChannel(
-                `🌟 A Legendary Fishing Event has started! Legendary fish are much more likely for the next 90 minutes! ${chanceStr} 🎣`,
-            );
-            c.task?.stop();
-            legendaryEventTimeout = setTimeout(
-                () => {
-                    endLegendaryEvent();
-                    c.task?.start();
-                },
-                90 * 60 * 1000,
-            );
+            manualLegendaryEventTask(legendaryWeight, 90 * 60 * 1000);
         }
     });
 
@@ -238,20 +224,23 @@ export const legendaryEventTaskPerChannel = (channels: string[]) =>
  * @param legendaryWeight Legendary rarity weight to set during the event
  * @param durationMs Duration of the event in milliseconds
  */
-export function manualLegendaryEventTask(legendaryWeight: number, durationMs: number): boolean {
+export function manualLegendaryEventTask(
+    legendaryWeight: number,
+    durationMs: number,
+    name: string = "Legendary Fishing Event",
+    msg: string = "Legendary fish are much more likely for the next",
+): boolean {
     if (legendaryEventActive) {
         return false;
     }
     legendaryEventActive = true;
     const legendaryChanceBefore = getChanceByRarity("Legendary");
-    modifyRarityWeights({ Legendary: legendaryWeight, Common: w => w - legendaryWeight });
+    modifyRarityWeights({ Legendary: legendaryWeight, Common: w => w - legendaryWeight + 1 });
     const legendaryChanceAfter = getChanceByRarity("Legendary");
-    const chanceStr = `${legendaryChanceBefore.toFixed(2)}% -> ${legendaryChanceAfter.toFixed(2)}%`;
-    sendActionToAllChannel(
-        `🌟 A Legendary Fishing Event has started! Legendary fish are much more likely for the next ${dayjs.duration(durationMs).asMinutes()} minutes! ${chanceStr} 🎣`,
-    );
+    const chanceStr = `${roundToDecimalPlaces(legendaryChanceBefore, 2).toFixed(2)}% -> ${roundToDecimalPlaces(legendaryChanceAfter, 2).toFixed(2)}%`;
+    sendActionToAllChannel(`A ${name} has started! ${msg} ${formatMinutes(durationMs)}! ${chanceStr} ${pickRandom(EVENT_STARTED_EMOTES)}`);
     legendaryEventTimeout = setTimeout(() => {
-        endLegendaryEvent();
+        endLegendaryEvent(name);
     }, durationMs);
     return true;
 }
@@ -259,4 +248,16 @@ export function manualLegendaryEventTask(legendaryWeight: number, durationMs: nu
 export function startLegendaryTasks(): void {
     const { channels } = getBotConfig();
     legendaryEventTaskPerChannel(channels).start();
+    cron.schedule(
+        "0 0 25 12 *",
+        () => {
+            manualLegendaryEventTask(
+                100,
+                24 * 60 * 60 * 1000,
+                "Legendary Christmas Event",
+                "Holiday magic is in the water, and legendary fish are much more likely for the next",
+            );
+        },
+        { timezone: "UTC" },
+    );
 }

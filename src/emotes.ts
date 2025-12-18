@@ -107,3 +107,5 @@ export const VALUE_EMOTES_LIST = [
 ];
 
 export const ADVENTURE_GAMBA_EMOTE = "GAMBA";
+
+export const EVENT_STARTED_EMOTES = ["pogg", "YIPPIE", "POGGIES", "POGGERS", "Pog", "Cereal", "OOOO"];

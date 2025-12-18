@@ -10,5 +10,6 @@ export function startCron() {
         cancelExpiredDuels(prisma);
         deleteOldCompletedDuels(prisma, env.COOLDOWN_DUEL_IN_HOURS);
     });
+
     console.log("Cron jobs started");
 }
