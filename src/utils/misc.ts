@@ -126,7 +126,7 @@ export function calculateAmount(amountStr: string, availableAmount: number, curr
             if (suffix === "k") target *= 1_000;
             else if (suffix === "m") target *= 1_000_000;
             else if (suffix === "b") target *= 1_000_000_000;
-            if (currentAmount !== undefined) {
+            if (typeof currentAmount == 'number' && payoutRate == undefined) {
                 let toSend = target - currentAmount;
                 if (toSend < 0) toSend = 0;
                 if (toSend > availableAmount) toSend = availableAmount;
