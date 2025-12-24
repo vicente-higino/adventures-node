@@ -3,6 +3,7 @@ import { fishTable } from "./fishTable";
 import { Rarity, CatchDetails, RARITY_WEIGHTS_DEFAULT, SELL_MULTIPLIERS, SIZE_PREFIXES, VALUE_EMOTES } from "./constants";
 import cron from "node-cron";
 import { getBotConfig } from "@/bot";
+import { prisma } from "@/prisma";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -15,6 +16,7 @@ let rarityWeights: Record<Rarity, number> = RARITY_WEIGHTS_DEFAULT;
 // Track if a Legendary event is currently active
 let legendaryEventActive = false;
 let legendaryEventTimeout: NodeJS.Timeout | null = null;
+let legendaryEventRecordId: number | null = null;
 
 export function setRarityWeights(weights: Record<Rarity, number>) {
     rarityWeights = { ...RARITY_WEIGHTS_DEFAULT, ...weights };
@@ -194,6 +196,7 @@ export function formatRarityWeightDisplay(weights: Record<Rarity, number> = rari
 }
 
 function endLegendaryEvent(name: string) {
+    // will be replaced at runtime with async updater if DB is available
     if (!legendaryEventActive) return;
     legendaryEventActive = false;
     resetRarityWeights();
@@ -201,6 +204,13 @@ function endLegendaryEvent(name: string) {
     if (legendaryEventTimeout) {
         clearTimeout(legendaryEventTimeout);
         legendaryEventTimeout = null;
+    }
+    // persist end to DB (fire-and-forget)
+    if (legendaryEventRecordId) {
+        prisma
+            .legendaryEvent.update({ where: { id: legendaryEventRecordId }, data: { active: false } })
+            .catch(err => console.error("Failed to mark legendary event ended in DB:", err));
+        legendaryEventRecordId = null;
     }
 }
 
@@ -239,6 +249,16 @@ export function manualLegendaryEventTask(
     const legendaryChanceAfter = getChanceByRarity("Legendary");
     const chanceStr = `${roundToDecimalPlaces(legendaryChanceBefore, 2).toFixed(2)}% -> ${roundToDecimalPlaces(legendaryChanceAfter, 2).toFixed(2)}%`;
     sendActionToAllChannel(`A ${name} has started! ${msg} ${formatMinutes(durationMs)}! ${chanceStr} ${pickRandom(EVENT_STARTED_EMOTES)}`);
+
+    // persist event to DB
+    prisma
+        .legendaryEvent
+        .create({ data: { name, legendaryWeight, message: msg, startedAt: new Date(), endsAt: new Date(Date.now() + durationMs) } })
+        .then(rec => {
+            legendaryEventRecordId = rec.id;
+        })
+        .catch(err => console.error("Failed to persist legendary event:", err));
+
     legendaryEventTimeout = setTimeout(() => {
         endLegendaryEvent(name);
     }, durationMs);
@@ -247,6 +267,28 @@ export function manualLegendaryEventTask(
 
 export function startLegendaryTasks(): void {
     const { channels } = getBotConfig();
+    // resume active event from DB if present
+    prisma
+        .legendaryEvent
+        .findFirst({ where: { active: true }, orderBy: { startedAt: "desc" } })
+        .then(active => {
+            if (active) {
+                legendaryEventActive = true;
+                legendaryEventRecordId = active.id;
+                // apply weights
+                modifyRarityWeights({ Legendary: active.legendaryWeight, Common: w => w - active.legendaryWeight + 1 });
+                const remaining = new Date(active.endsAt).getTime() - Date.now();
+                if (remaining > 0) {
+                    legendaryEventTimeout = setTimeout(() => endLegendaryEvent(active.name), remaining);
+                    // sendActionToAllChannel(`Resuming ${active.name}! Legendary fish are still more likely for the next ${formatMinutes(remaining)}.`);
+                } else {
+                    // event expired but still marked active in DB; end it
+                    endLegendaryEvent(active.name);
+                }
+            }
+        })
+        .catch(err => console.error("Failed to load active legendary event:", err));
+
     legendaryEventTaskPerChannel(channels).start();
     cron.schedule(
         "0 0 25 12 *",
@@ -261,3 +303,29 @@ export function startLegendaryTasks(): void {
         { timezone: "UTC" },
     );
 }
+
+// Admin helpers
+export async function listLegendaryEvents(activeOnly = true) {
+    const where = activeOnly ? { active: true } : {};
+    return prisma.legendaryEvent.findMany({ where, orderBy: { startedAt: "desc" } });
+}
+
+export async function endLegendaryEventById(id: number): Promise<boolean> {
+    try {
+        const ev = await prisma.legendaryEvent.findUnique({ where: { id } });
+        if (!ev || !ev.active) return false;
+        // If this is the currently-running event in memory, end it properly
+        if (legendaryEventRecordId === id) {
+            endLegendaryEvent(ev.name);
+        } else {
+            // Mark inactive and announce
+            await prisma.legendaryEvent.update({ where: { id }, data: { active: false } });
+            sendActionToAllChannel(`The ${ev.name} has been force-ended by an admin.`);
+        }
+        return true;
+    } catch (err) {
+        console.error("Failed to end legendary event by id:", err);
+        return false;
+    }
+}
+

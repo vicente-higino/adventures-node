@@ -14,7 +14,7 @@ export const startEventCommand = createAdminBotCommand(
             say(`Usage: ${getBotConfig().prefix}startEvent <legendaryWeight> <durationMinutes>`);
             return;
         }
-        if (manualLegendaryEventTask(legendaryWeight, durationMinutes * 60 * 1000, customMsg)) {
+        if (manualLegendaryEventTask(legendaryWeight, durationMinutes * 60 * 1000, customMsg.length > 0 ? customMsg : undefined)) {
             say(`Started Legendary Fishing Event with weight ${legendaryWeight} for ${ms(durationMinutes * 60 * 1000, { long: true })}.`);
         } else {
             say(`A Legendary Fishing Event is already active. Please wait until it ends.`);

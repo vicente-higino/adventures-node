@@ -267,6 +267,20 @@ model FishDexCompletion {
     @@index([channelProviderId, userId, rarity])
 }
 
+model LegendaryEvent {
+    id              Int      @id @default(autoincrement())
+    name            String
+    legendaryWeight Int
+    message         String?
+    startedAt       DateTime @default(now())
+    endsAt          DateTime
+    active          Boolean  @default(true)
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+
+    @@index([active])
+}
+
 enum DuelStatus {
     Pending
     Accepted

@@ -8,6 +8,8 @@ import { fishOddsCommand } from "./fishOdds";
 import { fishRecordsCommand } from "./fishRecords";
 import { flexFishCommand } from "./flexFish";
 import { refreshEmotesCommand, refreshEmotesAdminCommand } from "./refreshEmotesCommand";
+import { legendaryListCommand } from "./legendaryList";
+import { legendaryEndCommand } from "./legendaryEnd";
 import { resetRarityWeightCommand } from "./resetFishWeight";
 import { setRarityWeightCommand } from "./setFishWeight";
 import { silverCommand } from "./silver";
@@ -49,6 +51,8 @@ export const commands: BotCommand[] = [
     myEmoteRankCommand,
     refreshEmotesCommand,
     refreshEmotesAdminCommand,
+    legendaryListCommand,
+    legendaryEndCommand,
     forceEndAdventureCommand,
     reloadCommand,
     startEventCommand,
