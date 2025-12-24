@@ -242,7 +242,7 @@ export const AdventureJoinParamsSchema = z.object({
 export const amountParamSchema = AdventureJoinParamsSchema.shape.amount;
 
 export const adventureCommandSyntax = (prefix: string = "!") =>
-    `Usage: ${prefix}adventure|adv [silver(K/M/B)|%|all|+/-delta|to:silver(K/M/B)|k(eep):silver(K/M/B)]`;
+    `Usage: ${prefix}adventure | ${prefix}adv [silver(K/M/B)|%|all|+/-delta|to:silver(K/M/B)|k(eep):silver(K/M/B)]`;
 
 export async function handleAdventureJoin(params: {
     channelLogin: string;
@@ -324,7 +324,7 @@ export async function handleAdventureJoin(params: {
 
         scheduleAdventureWarnings(prisma, adventure.id);
 
-        return `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "${prefix ?? "!"}adventure|adv [silver(K/M/B)|%|all|to:silver|k:silver]" to join in!
+        return `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "${prefix ?? "!"}adventure | ${prefix ?? "!"}adv [silver(K/M/B)|%|all|to:silver|k:silver]" to join in!
                 This adventure offers a ${formattedPayoutRate}x payout rate! ${ADVENTURE_GAMBA_EMOTE}
                 $(newline)@${userDisplayName} joined the adventure with ${newBuyin} silver.`;
     }
