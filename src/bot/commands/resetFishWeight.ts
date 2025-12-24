@@ -1,5 +1,5 @@
 import { createAdminBotCommand } from "../BotCommandWithKeywords";
-import { resetRarityWeights } from "@/fishing";
+import { resetRarityWeights } from "@/fishing/rarities";
 
 export const resetRarityWeightCommand = createAdminBotCommand(
     "resetweights",

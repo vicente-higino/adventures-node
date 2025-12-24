@@ -24,6 +24,7 @@ export const CONGRATULATIONS_TRASH_FISH_DEX_EMOTES = ["peepoClap", "clappi", "ca
 export const DUEL_WIN_EMOTES = ["EZ", "EZ Clap", "Pog", "pogg", "poggSpin", "POGGERS", "POGGIES", "WW", "HOLY", "OOOO", "MUGA", "Cereal", "gg"];
 export const FACTS_EMOTES = ["fusNotes", "NERD", "mhm", "Nerdge", "yapping", "YAPPP", "fusG", "peepoTalk", "CatNerd", "PepoG"];
 export const QUOTES_EMOTES = ["fusNotes", "NERD", "mhm", "Nerdge", "yapping", "YAPPP", "fusG", "peepoTalk", "CatNerd", "PepoG", "Life", "Gaze"];
+export const SAD_EMOTES = ["Sadge", "SAJ", "PepeHands", "imNOTcrying", "widepeepoSad", "Sadding", "Sigh", "waaa", "BLUBBERS", "Pointless"];
 
 const COOLDOWN_EMOTES = [
     "Waiting",
