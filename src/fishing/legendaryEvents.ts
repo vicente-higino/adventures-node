@@ -50,15 +50,6 @@ async function endLegendaryEvent(name: string) {
                     channelMap[ch].push({ userId: row.userId, count: row._count.id });
                 }
 
-                const channelIds = Object.keys(channelMap);
-                if (channelIds.length === 0) {
-                    await prisma.legendaryEvent.update({ where: { id: ev.id }, data: { active: false } });
-                    legendaryEventState.recordId = null;
-                    sendActionToAllChannel(`The ${name} has ended. Legendary fish odds are back to normal.`);
-                    return;
-                }
-
-                // Pre-fetch all user display names used
                 const allUserIds = Array.from(new Set(grouped.map(g => g.userId)));
                 const users =
                     allUserIds.length > 0
@@ -67,7 +58,6 @@ async function endLegendaryEvent(name: string) {
                 const nameById: Record<string, string> = {};
                 for (const u of users) nameById[u.providerId] = u.displayName;
 
-                // Only send summaries to channels configured in bot config
                 const { channels: configuredChannels } = getBotConfig();
                 const channels = await getUsersByUsername(configuredChannels);
                 if (!channels || channels.length === 0) {
@@ -82,7 +72,6 @@ async function endLegendaryEvent(name: string) {
                     const top = entries.sort((a, b) => b.count - a.count).slice(0, 3);
                     const topStrings = top.map(t => `${nameById[t.userId] ?? t.userId} (${t.count})`);
 
-                    // prefer the configured login if available
                     const endMsg = `The ${name} has ended. Legendary fish odds are back to normal.`;
                     const summary = `Summary: ${totalLegendary} legendary fish caught by ${uniqueCatchers} player${uniqueCatchers === 1 ? "" : "s"}. Top: ${topStrings.join(", ") || "none"}. ${pickRandom(CONGRATULATIONS_EMOTES)}`;
                     const noSummary = `No legendary fish were caught during the event. ${pickRandom(SAD_EMOTES)}`;
