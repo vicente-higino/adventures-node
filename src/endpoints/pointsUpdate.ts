@@ -4,7 +4,7 @@ import { z } from "zod";
 import { OpenAPIRoute } from "chanfana";
 import { getUserById } from "@/twitch/api";
 import { createUserIdParam } from "@/utils/params";
-import { handleUpdateSilver } from "@/common/handleAdventure";
+import { handleUpdateSilver } from "@/common/handleUpdateSilver";
 import { prisma } from "@/prisma";
 
 export class PointUpdate extends OpenAPIRoute {

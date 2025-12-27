@@ -4,7 +4,7 @@ import { HonoEnv, FossaHeaders } from "@/types";
 import { Context } from "hono";
 import { getUserById } from "@/twitch/api";
 import { createUserIdParam } from "@/utils/params";
-import { handleAddSilver } from "@/common/handleAdventure";
+import { handleAddSilver } from "@/common/handleAddSilver";
 import { prisma } from "@/prisma";
 
 export class PointAdd extends OpenAPIRoute {

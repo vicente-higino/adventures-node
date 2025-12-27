@@ -1,6 +1,6 @@
 import { getBotConfig } from "@/bot";
 import { createBotCommand } from "../BotCommandWithKeywords";
-import { handleUpdateSilver } from "@/common/handleAdventure";
+import { handleUpdateSilver } from "@/common/handleUpdateSilver";
 import { getUserByUsername } from "@/twitch/api";
 import { prisma } from "@/prisma";
 
