@@ -369,7 +369,7 @@ export async function handleAdventureJoin(params: {
             prisma.player.update({ where: { id: player.id }, data: { buyin: updatedBuyin } }),
         ]);
 
-        return `@${userDisplayName}, you updated your adventure silver from ${player.buyin} to ${updatedBuyin}. You have ${newUpdatedBalance} left.`;
+        return `@${userDisplayName}, you updated your adventure silver from ${player.buyin} to ${updatedBuyin}. You have ${newUpdatedBalance} silver left.`;
     }
     return `@${userDisplayName} already joined the adventure with ${player.buyin} silver.`;
 }
