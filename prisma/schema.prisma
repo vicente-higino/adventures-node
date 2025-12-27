@@ -154,7 +154,9 @@ model FishStats {
     epicFishCount      Int      @default(0)
     legendaryFishCount Int      @default(0)
     fishFines          Int      @default(0)
+    fishFinesCount     Int      @default(0)
     treasureSilver     Int      @default(0)
+    treasureCount      Int      @default(0)
     totalSilverWorth   Int      @default(0)
     createdAt          DateTime @default(now())
     updatedAt          DateTime @updatedAt

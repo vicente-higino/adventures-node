@@ -1,18 +1,14 @@
-import {
-    boxMullerTransform,
-    formatSize,
-    formatWeight,
-    pickRandom,
-    roundToDecimalPlaces,
-    UnitSystem,
-} from "@/utils/misc";
+import { boxMullerTransform, formatSize, formatWeight, pickRandom, roundToDecimalPlaces, UnitSystem } from "@/utils/misc";
 import { CatchDetails, Rarity, SELL_MULTIPLIERS, SIZE_PREFIXES, VALUE_EMOTES } from "./constants";
 import { fishTable } from "./fishTable";
 import { getRarityWeights } from "./rarities";
 
 export {
-    endLegendaryEventById, legendaryEventTaskPerChannel,
-    listLegendaryEvents, manualLegendaryEventTask, startLegendaryTasks
+    endLegendaryEventById,
+    legendaryEventTaskPerChannel,
+    listLegendaryEvents,
+    manualLegendaryEventTask,
+    startLegendaryTasks,
 } from "./legendaryEvents";
 
 // Example usage in getSize function:

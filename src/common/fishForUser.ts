@@ -73,14 +73,17 @@ export async function fishForUser({
         const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);
 
         // 1% chance to get caught
-        if (fishStats.totalSilverWorth > 0 && Math.random() < 0.01) {
+        if (fishStats.totalSilverWorth > 0 && Math.random() < 0.01 && balance.value >= 50) {
             const fine = Math.min(100, Math.floor(boxMullerTransform(50, 25, 25)));
             const place = pickRandom(wrongPlaces);
             if (!balance) {
                 return `@${userDisplayName} Something went wrong finding your balance.`;
             }
             const updateCaughtTimestamp = prisma.fishStats.update({ where: { id: fishStats.id }, data: { updatedAt: dayjs().toISOString() } });
-            const updateFishFinesInFishStats = prisma.fishStats.update({ where: { id: fishStats.id }, data: { fishFines: { increment: fine } } });
+            const updateFishFinesInFishStats = prisma.fishStats.update({
+                where: { id: fishStats.id },
+                data: { fishFines: { increment: fine }, fishFinesCount: { increment: 1 } },
+            });
             await Promise.all([increaseBalance(prisma, balance.id, -fine), updateFishFinesInFishStats, updateCaughtTimestamp]);
             return `@${userDisplayName} POLICE You got caught fishing in ${place} and were fined ${fine} silver! ${pickRandom(FISH_FINE_EMOTES)}`;
         }
@@ -199,6 +202,7 @@ export async function fishForUser({
         let fishStatsUpdateData: Prisma.FishStatsUpdateInput = {
             totalSilverWorth: { increment: fish.sellValue + bonus + treasureBonus },
             treasureSilver: { increment: treasureBonus },
+            treasureCount: { increment: 1 },
         };
         switch (fish.rarity) {
             case Rarity.Trash:
