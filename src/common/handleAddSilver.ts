@@ -1,7 +1,7 @@
 import { getBotConfig } from "@/bot";
 import { findOrCreateBalance } from "@/db";
 import { prisma } from "@/prisma";
-import z from "zod/v3/external.cjs";
+import z from "zod";
 
 export async function handleAddSilver(params: {
     channelLogin: string;

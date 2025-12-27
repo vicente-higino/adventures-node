@@ -202,7 +202,7 @@ export async function fishForUser({
         let fishStatsUpdateData: Prisma.FishStatsUpdateInput = {
             totalSilverWorth: { increment: fish.sellValue + bonus + treasureBonus },
             treasureSilver: { increment: treasureBonus },
-            treasureCount: { increment: 1 },
+            treasureCount: { increment: treasureBonus > 0 ? 1 : 0 },
         };
         switch (fish.rarity) {
             case Rarity.Trash:

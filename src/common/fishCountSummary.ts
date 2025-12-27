@@ -11,7 +11,9 @@ function formatFishCountSummary({
     avgSilverPerFish,
     fishCountsByRarity,
     fines,
+    finesCount,
     treasure,
+    treasureCount,
     isChannel = false,
 }: {
     displayName: string;
@@ -20,7 +22,9 @@ function formatFishCountSummary({
     avgSilverPerFish: number;
     fishCountsByRarity: { rarity: Rarity; count: number }[];
     fines: number;
+    finesCount: number;
     treasure: number;
+    treasureCount: number;
     isChannel?: boolean;
 }) {
     const rarityBreakdown = fishCountsByRarity
@@ -29,11 +33,14 @@ function formatFishCountSummary({
         .map(f => `${f.count} ${f.rarity.toLowerCase()}`)
         .join(", ");
 
-    const finesText = fines > 0 ? `been fined ${formatSilver(fines)} silver` : "";
-    const treasureText = treasure > 0 ? `found ${formatSilver(treasure)} silver in treasure` : "";
+    // Improved fines and treasure text
+    const finesText = fines > 0 ? `received ${finesCount} fine${finesCount !== 1 ? "s" : ""} totaling ${formatSilver(fines)} silver` : "";
+    const treasureText =
+        treasure > 0 ? `discovered ${formatSilver(treasure)} silver in ${treasureCount} treasure chest${treasureCount !== 1 ? "s" : ""}` : "";
+
     let extras = "";
     if (finesText && treasureText) {
-        extras = isChannel ? `The channel has ${finesText} and ${treasureText}.` : `They have ${finesText} and ${treasureText}.`;
+        extras = isChannel ? `The channel has ${finesText} and has ${treasureText}.` : `They have ${finesText} and have ${treasureText}.`;
     } else if (finesText) {
         extras = isChannel ? `The channel has ${finesText}.` : `They have ${finesText}.`;
     } else if (treasureText) {
@@ -76,7 +83,9 @@ export async function getFishCountSummary({
                 epicFishCount: true,
                 legendaryFishCount: true,
                 fishFines: true,
+                fishFinesCount: true,
                 treasureSilver: true,
+                treasureCount: true,
                 totalSilverWorth: true,
             },
         });
@@ -99,7 +108,9 @@ export async function getFishCountSummary({
             avgSilverPerFish,
             fishCountsByRarity,
             fines: stats._sum.fishFines ?? 0,
+            finesCount: stats._sum.fishFinesCount ?? 0,
             treasure: stats._sum.treasureSilver ?? 0,
+            treasureCount: stats._sum.treasureCount ?? 0,
             isChannel: true,
         });
     }
@@ -133,7 +144,9 @@ export async function getFishCountSummary({
         avgSilverPerFish,
         fishCountsByRarity,
         fines: fishStats.fishFines,
+        finesCount: fishStats.fishFinesCount,
         treasure: fishStats.treasureSilver,
+        treasureCount: fishStats.treasureCount,
         isChannel: false,
     });
 }
