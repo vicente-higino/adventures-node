@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import { getBotConfig } from "@/bot";
+import { getBotConfig, isChannelLive } from "@/bot";
 import { prisma } from "@/prisma";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
@@ -66,6 +66,7 @@ async function endLegendaryEvent(name: string) {
                 }
 
                 for (const channel of channels) {
+                    if (isChannelLive(channel.id)) continue;
                     const entries = channelMap[channel.id] || [];
                     const totalLegendary = entries.reduce((s, e) => s + e.count, 0);
                     const uniqueCatchers = entries.length;
