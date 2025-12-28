@@ -49,5 +49,5 @@ export const fishRecordsCommand = createBotCommand(
 
         say(`@${userDisplayName} [${page}/${totalPages}] ${recordsText}`);
     },
-    { aliases: ["fishrecs", "fishrecord"], ignoreCase: true },
+    { aliases: ["fishrecs", "fishrecord", "fr"], ignoreCase: true },
 );
