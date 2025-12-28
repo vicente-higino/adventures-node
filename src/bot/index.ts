@@ -42,7 +42,7 @@ class LiveChannel {
     constructor(
         public userId: string,
         public userName: string,
-    ) {}
+    ) { }
 
     matches(channel: string) {
         return this.userId === channel || this.userName.toLowerCase() === channel.toLowerCase();
@@ -50,10 +50,14 @@ class LiveChannel {
 }
 const liveChannels = new Set<LiveChannel>();
 
+export function checkIfChannelIsForcedSend(channel: string) {
+    const overrides = botConfig.forceSendChannels ?? [];
+    return overrides.includes(channel.toLowerCase());
+}
+
 export function isChannelLive(channel: string) {
     // If channel explicitly allowed to receive messages even when live, treat as not live
-    const overrides = botConfig.forceSendChannels ?? [];
-    if (overrides.includes(channel.toLowerCase())) {
+    if (checkIfChannelIsForcedSend(channel)) {
         return false;
     }
     // Properly iterate liveChannels and check matches
