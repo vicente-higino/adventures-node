@@ -24,6 +24,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { fishTable } from "@/fishing/fishTable";
 import { fishingFacts } from "@/fishing/facts";
 import { friendlyCooldownMessages, fishingFriendlyQuestions, wrongPlaces, motivationalQuotes } from "./phrases";
+import logger from "@/logger";
 dayjs.extend(relativeTime);
 
 interface FishForUserParams {
@@ -276,7 +277,7 @@ export async function fishForUser({
                     It sold for ${totalValueMessage} silver! ${recordMessage} ${fishDexMessage} ${valueEmote}`;
         return resText;
     } catch (error) {
-        console.error("Fish error: ", error);
+        logger.error(error, "Fish error");
         return "oopsie Something went wrong.";
     }
 }

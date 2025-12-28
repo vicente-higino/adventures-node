@@ -9,6 +9,7 @@ import { EmoteTracker } from "./emote-tracker";
 import { commands } from "./commands";
 import { restartAdventureWarnings } from "@/common/helpers/schedule";
 import { sendActionToChannelWithAPI, sendMessageToChannelWithAPI } from "@/utils/misc";
+import logger from "@/logger";
 const clientId = env.TWITCH_CLIENT_ID;
 const clientSecret = env.TWITCH_CLIENT_SECRET;
 
@@ -68,10 +69,7 @@ async function fetchLiveChannels() {
     for (const stream of streams) {
         liveChannels.add(new LiveChannel(stream.userId, stream.userName));
     }
-    console.log(
-        "Live channels:",
-        Array.from(liveChannels).map(lc => ({ id: lc.userId, name: lc.userName })),
-    );
+    logger.info(Array.from(liveChannels).map(lc => ({ id: lc.userId, name: lc.userName }), "Initially fetched live channels"));
 }
 
 // Track which userIds have listeners to avoid duplicate listeners
@@ -86,10 +84,10 @@ async function createEventsubListeners(users: string[]) {
         }
         listener.onStreamOnline(user, e => {
             liveChannels.add(new LiveChannel(e.broadcasterId, e.broadcasterName));
-            console.log(`${e.broadcasterDisplayName} just went live!`);
-            console.log(
-                "Live channels:",
+            logger.info(`${e.broadcasterDisplayName} just went live!`);
+            logger.info(
                 Array.from(liveChannels).map(lc => ({ id: lc.userId, name: lc.userName })),
+                "Live channels",
             );
         });
         listener.onStreamOffline(user, e => {
@@ -100,10 +98,10 @@ async function createEventsubListeners(users: string[]) {
                 }
             }
             restartAdventureWarnings(user.id);
-            console.log(`${e.broadcasterDisplayName} just went offline`);
-            console.log(
-                "Live channels:",
+            logger.info(`${e.broadcasterDisplayName} just went offline`);
+            logger.info(
                 Array.from(liveChannels).map(lc => ({ id: lc.userId, name: lc.userName })),
+                "Live channels",
             );
         });
         eventsubListeners.add(user.id);
@@ -156,13 +154,13 @@ export const createBot = async (forceRecreate?: boolean) => {
             bot?.api.users
                 .getAuthenticatedUser(userId)
                 .then(user => {
-                    console.log(`Logged in as ${user.name}`);
+                    logger.info(`Logged in as ${user.name}`);
                     getChannelsModForUser(user.id, bot!.api).then(modChannels => {
-                        console.log(`Bot is mod in channels: ${modChannels.join(", ")}`);
+                        logger.info(`Bot is mod in channels: ${modChannels.join(", ")}`);
                     });
                 })
                 .catch(err => {
-                    console.error("Error fetching user:", err);
+                    logger.error(err, "Error fetching user");
                 });
         });
 
@@ -176,8 +174,8 @@ export const createBot = async (forceRecreate?: boolean) => {
         emoteTracker = new EmoteTracker(bot);
         currentBotUserId = userId; // Update the current userId
     } catch (err) {
-        console.error(err);
-        console.error(`Token file not found: ${tokenFile}`);
+        logger.error(err);
+        logger.error(`Token file not found: ${tokenFile}`);
         // Optionally handle initialization without tokens here
     }
 };
@@ -187,7 +185,7 @@ async function loadBotConfig() {
         const raw = await fs.readFile("./config/bot-config.json", "utf-8");
         botConfig = BotConfigSchema.parse(JSON.parse(raw));
     } catch (e) {
-        console.error(e);
+        logger.error(e);
         throw new Error("Failed to load or validate bot-config.json");
     }
 }

@@ -1,5 +1,6 @@
 import { BotCommand, BotCommandContext, CreateBotCommandOptions } from "@twurple/easy-bot";
 import { getBotConfig, isChannelLive } from "@/bot";
+import logger from "@/logger";
 
 interface KeywordCommand {
     name: string;
@@ -106,7 +107,7 @@ export function createBotCommand(
             try {
                 await handler(params, context);
             } catch (error) {
-                console.error(`[${new Date().toISOString()}] Bot command ${this.name} error: `, error)
+                logger.error(error, `Bot command ${this.name} error`);
             }
         }
     })(options);

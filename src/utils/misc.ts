@@ -1,4 +1,5 @@
 import { GetBot, getBotConfig, isChannelLive } from "@/bot";
+import logger from "@/logger";
 import { prisma } from "@/prisma";
 import { getUserByUsername, sendChatMessageToChannel } from "@/twitch/api";
 import Qty from "js-quantities";
@@ -278,11 +279,11 @@ export function limitAdvMessage(base: string, advMsg: string): string {
 export function sendMessageToChannel(channel: string, message: string) {
     // Placeholder function to send a message to a channel
     // Replace with actual implementation
-    console.log(`Sending message to ${channel}: ${message}`);
+    logger.info(`Sending message to ${channel}: ${message}`);
     GetBot()
         ?.say(channel, message)
         .catch(err => {
-            console.error(`Error sending message to ${channel}:`, err);
+            logger.error(err, `Error sending message to ${channel}:`);
         });
 }
 export async function sendMessageToChannelWithAPI(channel: string, message: string, max_length = 500) {
@@ -290,7 +291,7 @@ export async function sendMessageToChannelWithAPI(channel: string, message: stri
     // Replace with actual implementation
     const broadcaster = await getUserByUsername(prisma, channel);
     if (!broadcaster) {
-        console.error(`User not found: ${channel}`);
+        logger.error(`User not found: ${channel}`);
         return;
     }
     const texts = splitOnSpaces(message, max_length);
@@ -301,7 +302,7 @@ export async function sendActionToChannelWithAPI(channel: string, message: strin
     // Replace with actual implementation
     const broadcaster = await getUserByUsername(prisma, channel);
     if (!broadcaster) {
-        console.error(`User not found: ${channel}`);
+        logger.error(`User not found: ${channel}`);
         return;
     }
     const texts = splitOnSpaces(message, max_length);
@@ -310,11 +311,11 @@ export async function sendActionToChannelWithAPI(channel: string, message: strin
 export function sendActionToChannel(channel: string, message: string) {
     // Placeholder function to send a message to a channel
     // Replace with actual implementation
-    console.log(`Sending message to ${channel}: ${message}`);
+    logger.info(`Sending message to ${channel}: ${message}`);
     GetBot()
         ?.action(channel, message)
         .catch(err => {
-            console.error(`Error sending message to ${channel}:`, err);
+            logger.error(err, `Error sending message to ${channel}:`);
         });
 }
 
@@ -323,11 +324,11 @@ export function sendMessageToAllChannel(message: string) {
     // Replace with actual implementation
     const { channels } = getBotConfig();
     for (const channel of channels) {
-        console.log(`Sending message to ${channel}: ${message}`);
+        logger.info(`Sending message to ${channel}: ${message}`);
         GetBot()
             ?.say(channel, message)
             .catch(err => {
-                console.error(`Error sending message to ${channel}:`, err);
+                logger.error(err, `Error sending message to ${channel}:`);
             });
     }
 }
@@ -337,11 +338,11 @@ export function sendActionToAllChannel(message: string, onlyOffline = true) {
     const { channels } = getBotConfig();
     for (const channel of channels) {
         if (onlyOffline && isChannelLive(channel)) continue;
-        console.log(`Sending message to ${channel}: ${message}`);
+        logger.info(`Sending message to ${channel}: ${message}`);
         GetBot()
             ?.action(channel, message)
             .catch(err => {
-                console.error(`Error sending message to ${channel}:`, err);
+                logger.error(err, `Error sending message to ${channel}:`);
             });
     }
 }

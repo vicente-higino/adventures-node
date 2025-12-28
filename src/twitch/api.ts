@@ -5,6 +5,7 @@ import { AppTokenAuthProvider } from "@twurple/auth";
 import env from "@/env";
 import Queue from "queue";
 import { prisma } from "@/prisma";
+import logger from "@/logger";
 const { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = env;
 export function buildUrl(baseUrl: string, params: Record<string, string>): string {
     const url = new URL(baseUrl);
@@ -28,7 +29,7 @@ async function handleApiRequest<T>(apiCall: () => Promise<T>, authProvider: AppT
     try {
         return await apiCall();
     } catch (error) {
-        console.error("API call failed:", error);
+        logger.error(error, "API call failed:");
         // await authProvider.getAppAccessToken(true);
         return null; // Return null on failure
     }
@@ -156,7 +157,7 @@ export async function sendChatMessageToChannel(broadcaster_id: string, sender_id
             const res = await apiClient.chat.sendChatMessageAsApp(sender_id, broadcaster_id, message);
             return res;
         } catch (error) {
-            console.error(`Error sending chat ${message} to channel ${broadcaster_id}`, error);
+            logger.error(error, `Error sending chat ${message} to channel ${broadcaster_id}`);
             return null;
         }
     });
@@ -167,7 +168,7 @@ export async function getChannelsModForUser(userId: string, api: ApiClient): Pro
         const mods = await api.moderation.getModeratedChannelsPaginated(userId).getAll();
         return mods.map(mod => mod.name);
     } catch (error) {
-        console.error(`Error fetching mod channels for user ${userId}`, error);
+        logger.error(error, `Error fetching mod channels for user ${userId}`);
         return [];
     }
 }
@@ -177,7 +178,7 @@ export async function getStreamByUsername(username: string) {
         const stream = await apiClient.streams.getStreamByUserName(username);
         return stream;
     } catch (error) {
-        console.error(`Error fetching stream for user ${username}`, error);
+        logger.error(error, `Error fetching stream for user ${username}`);
         return null;
     }
 }
@@ -186,7 +187,7 @@ export async function getStreamByUserId(userid: string) {
         const stream = await apiClient.streams.getStreamByUserId(userid);
         return stream;
     } catch (error) {
-        console.error(`Error fetching stream for user ${userid}`, error);
+        logger.error(error, `Error fetching stream for user ${userid}`);
         return null;
     }
 }

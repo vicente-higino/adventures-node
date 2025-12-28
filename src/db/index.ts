@@ -1,3 +1,4 @@
+import logger from "@/logger";
 import { FishDexEntry, FishStats, Prisma, PrismaClient, Rarity } from "@prisma/client";
 
 export async function findOrCreateBalance(
@@ -181,16 +182,16 @@ export async function cancelExpiredDuels(prisma: dbClient): Promise<void> {
     const expiredDuels = await prisma.duel.findMany({ where: { status: "Pending", createdAt: { lt: oneHourAgo } } });
 
     if (expiredDuels.length === 0) {
-        console.log("No expired duels found.");
+        logger.info("No expired duels found.");
         return;
     }
 
-    console.log(`Found ${expiredDuels.length} expired duels to cancel.`);
+    logger.info(`Found ${expiredDuels.length} expired duels to cancel.`);
 
     const tasks: Promise<unknown>[] = [];
 
     for (const duel of expiredDuels) {
-        console.log(
+        logger.info(
             `Cancelling duel ID ${duel.id} between ${duel.challengerId} and ${duel.challengedId}. Refunding ${duel.wagerAmount} to ${duel.challengerId}.`,
         );
         // Refund the wager to the challenger
@@ -209,9 +210,9 @@ export async function cancelExpiredDuels(prisma: dbClient): Promise<void> {
     // Execute all refunds and deletions
     try {
         await Promise.all(tasks);
-        console.log(`Successfully cancelled ${expiredDuels.length} expired duels.`);
+        logger.info(`Successfully cancelled ${expiredDuels.length} expired duels.`);
     } catch (error) {
-        console.error("Error cancelling expired duels:", error);
+        logger.error(error, "Error cancelling expired duels");
     }
 }
 
@@ -334,6 +335,6 @@ export async function deleteOldCompletedDuels(prisma: dbClient, duelCooldownHour
     const cutoff = new Date(Date.now() - duelCooldownHours * 60 * 60 * 1000);
     const { count } = await prisma.duel.deleteMany({ where: { status: "Completed", updatedAt: { lt: cutoff } } });
     if (count > 0) {
-        console.log(`Deleted ${count} old completed duels.`);
+        logger.info(`Deleted ${count} old completed duels.`);
     }
 }

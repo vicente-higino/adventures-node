@@ -1,6 +1,7 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { z } from "zod";
 import { LeaderboardResult, LeaderboardType, handleAdventure, handleDuel, handleFish, handleSilver } from "@/common/leaderboards";
+import logger from "@/logger";
 
 export const leaderboardSchema = z.object({
     amount: z.number().min(1).max(25).default(5),
@@ -95,11 +96,11 @@ export async function getLeaderboard(
             result = await handleSilver(prisma, channelProviderId, order, amount);
         }
     } catch (error) {
-        console.error("Leaderboard generation error:", error);
+        logger.error(error, "Leaderboard generation error");
         // Check if error is a Prisma error and provide more details if needed
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error("Prisma Error Code:", error.code);
-            console.error("Prisma Error Meta:", error.meta);
+            logger.error(error, "Prisma Error Code: " + error.code);
+            logger.error(error, "Prisma Error Meta: " + error.meta);
         }
         return "An error occurred while generating the leaderboard.";
     }

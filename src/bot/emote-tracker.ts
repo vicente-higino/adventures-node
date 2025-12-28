@@ -4,9 +4,9 @@ import { EmoteFetcher, Emote } from "@/common/emotes";
 import { Bot, MessageEvent } from "@twurple/easy-bot";
 import { prisma } from "@/prisma";
 import cron from "node-cron";
-import { uuidv7 } from "uuidv7";
 import { EmoteProvider, Prisma } from "@prisma/client";
 import clickhouse from "@/db/clickhouse";
+import logger from "@/logger";
 // Tracks emote usage per channel
 export class EmoteTracker {
     private emoteFetcher = new EmoteFetcher();
@@ -103,7 +103,7 @@ export class EmoteTracker {
                     clickhouse.insert({ table: "emotes", values: emoteEvents, format: "JSONEachRow" });
                     // await prisma.emoteUsageEventV2.createMany({ data: emoteEvents });
                 } catch (err) {
-                    console.error(`[EmoteTracker] Failed to batch insert EmoteUsageEvents:`, err);
+                    logger.error(err, `[EmoteTracker] Failed to batch insert EmoteUsageEvents`);
                 }
             }
         });
@@ -144,7 +144,7 @@ export class EmoteTracker {
         cron.schedule(
             "0 0,12 * * *",
             c => {
-                console.log(`[${c.dateLocalIso}] Running Refresh Emotes Task`);
+                logger.info(`Running Refresh Emotes Task`);
                 this.refreshAllEmotes();
             },
             { timezone: "UTC" },

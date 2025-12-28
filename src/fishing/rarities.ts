@@ -1,3 +1,4 @@
+import logger from "@/logger";
 import { RARITY_WEIGHTS_DEFAULT, Rarity } from "./constants";
 import { roundToDecimalPlaces } from "@/utils/misc";
 
@@ -24,7 +25,7 @@ export function modifyRarityWeights(
             newWeights[key as Rarity] = typeof change === "function" ? (change as any)(current) : (change as number);
         }
     }
-    console.log(formatRarityWeightDisplay(newWeights));
+    logger.debug(formatRarityWeightDisplay(newWeights));
     setRarityWeights(newWeights);
 }
 

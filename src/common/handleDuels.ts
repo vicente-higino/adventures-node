@@ -178,7 +178,11 @@ export async function handleDuelAccept(params: {
                 wagerAmount: lockedDuel.wagerAmount,
                 winAmount: lockedDuel.wagerAmount * 2,
             }),
-            updateUseDuelsStats(prisma, channelLogin, channelProviderId, loserId, { didWin: false, wagerAmount: lockedDuel.wagerAmount, winAmount: 0 }),
+            updateUseDuelsStats(prisma, channelLogin, channelProviderId, loserId, {
+                didWin: false,
+                wagerAmount: lockedDuel.wagerAmount,
+                winAmount: 0,
+            }),
         ]);
 
         await prisma.duel.update({ where: { id: lockedDuel.id }, data: { status: "Completed" } });

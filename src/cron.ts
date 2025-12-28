@@ -3,6 +3,7 @@ import cron from "node-cron";
 import { cancelExpiredDuels, deleteOldCompletedDuels } from "./db";
 import { prisma } from "./prisma";
 import env from "@/env";
+import logger from "@/logger";
 
 export function startCron() {
     startLegendaryTasks();
@@ -11,5 +12,5 @@ export function startCron() {
         deleteOldCompletedDuels(prisma, env.COOLDOWN_DUEL_IN_HOURS);
     });
 
-    console.log("Cron jobs started");
+    logger.info("Cron jobs started");
 }

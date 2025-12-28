@@ -2,6 +2,7 @@ import { createBotCommand } from "../BotCommandWithKeywords";
 import { getUserByUsername } from "@/twitch/api";
 import { prisma } from "@/prisma";
 import z from "zod";
+import logger from "@/logger";
 
 const rankSchema = z.array(z.object({ position: z.coerce.number() })).nonempty();
 
@@ -29,7 +30,7 @@ async function getRank(userId: string, channelProviderId: string) {
         }
         return null;
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         return null;
     }
 }

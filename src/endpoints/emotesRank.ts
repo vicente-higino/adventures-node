@@ -8,6 +8,7 @@ import { EmoteProvider, Prisma } from "@prisma/client";
 import { parseProviders } from "@/utils/params";
 import { emoteTracker } from "@/bot";
 import clickhouse from "@/db/clickhouse";
+import logger from "@/logger";
 
 export class emotesRank extends OpenAPIRoute {
     schema = {
@@ -73,7 +74,7 @@ export class emotesRank extends OpenAPIRoute {
             query_params: { channelProviderId, take, skip, from, to, userIds, filterProviders, emotesFilter: channelEmotes },
         });
         const queryResult = await query.json<{ emoteId: string; emoteName: string; provider: EmoteProvider; total: number }>();
-        console.log({ ...queryResult, data: null });
+        logger.debug({ ...queryResult, data: null });
         const emotes = queryResult.data;
         let total = queryResult.rows_before_limit_at_least!;
         let totalPages = Math.max(1, Math.ceil(total / perPage));

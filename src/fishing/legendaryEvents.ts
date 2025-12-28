@@ -6,9 +6,10 @@ import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { formatMinutes } from "@/utils/time";
 import { CONGRATULATIONS_EMOTES, EVENT_STARTED_EMOTES, SAD_EMOTES } from "@/emotes";
-import { getUserById, getUsersByUsername } from "@/twitch/api";
+import { getUsersByUsername } from "@/twitch/api";
 import { pickRandom, sendActionToAllChannel, sendActionToChannel, boxMullerTransform, roundToDecimalPlaces } from "@/utils/misc";
 import { modifyRarityWeights, resetRarityWeights, getChanceByRarity } from "./rarities";
+import logger from "@/logger";
 
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
@@ -61,7 +62,7 @@ async function endLegendaryEvent(name: string) {
                 const { channels: configuredChannels } = getBotConfig();
                 const channels = await getUsersByUsername(configuredChannels);
                 if (!channels || channels.length === 0) {
-                    console.error("No configured channels found for legendary event summary.");
+                    logger.warn("No configured channels found for legendary event summary.");
                     return;
                 }
 
@@ -91,7 +92,7 @@ async function endLegendaryEvent(name: string) {
             }
         }
     } catch (err) {
-        console.error("Failed to compute legendary event summary:", err);
+        logger.error(err, "Failed to compute legendary event summary");
     }
 
     // Fallback announcement if DB not available or something failed
@@ -101,10 +102,10 @@ async function endLegendaryEvent(name: string) {
 export const legendaryEventTaskPerChannel = (channels: string[]) =>
     cron.createTask("*/1 * * * *", c => {
         if (legendaryEventState.active) {
-            console.log(`[${c.dateLocalIso}] Legendary event already active, skipping random event.`);
+            logger.info(`Legendary event already active, skipping random event.`);
             return;
         }
-        // console.log(`[${c.dateLocalIso}] Running legendary event task for channels: ${channels.join(", ")}`);
+        // logger.info(`[${c.dateLocalIso}] Running legendary event task for channels: ${channels.join(", ")}`);
         const chance = 5 / (7 * 24 * 60);
         const shouldRun = chance > Math.random();
         if (shouldRun) {
@@ -138,7 +139,7 @@ export function manualLegendaryEventTask(
         .then(rec => {
             legendaryEventState.recordId = rec.id;
         })
-        .catch(err => console.error("Failed to persist legendary event:", err));
+        .catch(err => logger.error(err, "Failed to persist legendary event"));
 
     legendaryEventState.timeout = setTimeout(() => {
         endLegendaryEvent(name);
@@ -167,7 +168,7 @@ export function startLegendaryTasks(): void {
                 }
             }
         })
-        .catch(err => console.error("Failed to load active legendary event:", err));
+        .catch(err => logger.error(err, "Failed to load active legendary event"));
 
     legendaryEventTaskPerChannel(channels).start();
     cron.schedule(
@@ -204,7 +205,7 @@ export async function endLegendaryEventById(id: number): Promise<boolean> {
         }
         return true;
     } catch (err) {
-        console.error("Failed to end legendary event by id:", err);
+        logger.error(err, "Failed to end legendary event by id");
         return false;
     }
 }

@@ -4,6 +4,7 @@ import { delay, sendActionToChannel, sendMessageToChannel } from "@/utils/misc";
 import { PrismaClient } from "@prisma/client";
 import { handleAdventureEnd } from "../handleAdventure";
 import { getStreamByUserId } from "@/twitch/api";
+import logger from "@/logger";
 
 export interface AdventureWarning {
     delay: number; // milliseconds
@@ -44,17 +45,17 @@ export function scheduleAdventureWarnings(prisma: PrismaClient, adventureId: num
         const timer = setTimeout(async () => {
             const adv = await prisma.adventure.findUnique({ where: { id: adventureId } });
             if (!adv) {
-                console.log(`Adventure ID ${adventureId} not found, skipping warning "${message}"`);
+                logger.info(`Adventure ID ${adventureId} not found, skipping warning "${message}"`);
                 return;
             }
             const live = await getStreamByUserId(adv?.channelProviderId || "");
             if (adv.name === "DONE" || live) {
                 if (live && !isChannelLive(adv.channel)) {
-                    console.log(`Channel ${adv.channel} is mismatched as not live, skipping adventure end warning "${message}"`);
+                    logger.info(`Channel ${adv.channel} is mismatched as not live, skipping adventure end warning "${message}"`);
                 }
                 for (const t of timers) {
                     clearTimeout(t);
-                    console.log("clear timeout #", t);
+                    logger.info("clear timeout #" + t.toString() + " for adventure ID " + adventureId);
                 }
                 return;
             }
@@ -76,14 +77,14 @@ export function scheduleAdventureWarnings(prisma: PrismaClient, adventureId: num
         timer.unref();
         timers.push(timer);
     }
-    console.log(`Scheduled ${timers.length} timers #${timers.join(", #")} adventure warnings for adventure ID ${adventureId}`);
+    logger.info(`Scheduled ${timers.length} timers #${timers.join(", #")} adventure warnings for adventure ID ${adventureId}`);
 }
 
 export async function restartAdventureWarnings(channelProviderId?: string) {
     // Find all adventures that are not DONE and not ended
     const adventures = await prisma.adventure.findMany({ where: { name: { not: "DONE" }, channelProviderId } });
     for (const adv of adventures) {
-        console.log("Rescheduling adventure warning for channel: ", adv.channel);
+        logger.info("Rescheduling adventure warning for channel: " + adv.channel);
 
         // Calculate the elapsed time since the adventure started
         const startTime = new Date(adv.createdAt).getTime();
