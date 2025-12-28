@@ -1,15 +1,23 @@
-import { PrismaClient } from "@prisma/client";
-import { getUserById } from "@/twitch/api";
 import { findOrCreateBalance, increaseBalanceWithChannelID, updateUseDuelsStats } from "@/db";
-import { pickRandom, calculateAmount } from "@/utils/misc";
-import { DUEL_CREATE_EMOTES, DUEL_WIN_EMOTES, DUEL_DENY_EMOTES, ADVENTURE_COOLDOWN_EMOTES } from "@/emotes";
-import { prisma } from "@/prisma";
-import { amountParamSchema } from "./handleAdventure";
+import { ADVENTURE_COOLDOWN_EMOTES, DUEL_CREATE_EMOTES, DUEL_DENY_EMOTES, DUEL_WIN_EMOTES } from "@/emotes";
 import env from "@/env";
-import dayjs from "dayjs";
+import { prisma } from "@/prisma";
+import { getUserById } from "@/twitch/api";
+import { calculateAmount, delay, pickRandom } from "@/utils/misc";
 import { formatTimeToWithSeconds } from "@/utils/time";
+import { Mutex } from "async-mutex";
+import dayjs from "dayjs";
+import { amountParamSchema } from "./handleAdventure";
 
 const duelCooldownMs = () => 1000 * 60 * 60 * env.COOLDOWN_DUEL_IN_HOURS;
+const duelMutexMap: Map<string, Mutex> = new Map();
+
+function getDuelMutex(duelKey: string): Mutex {
+    if (!duelMutexMap.has(duelKey)) {
+        duelMutexMap.set(duelKey, new Mutex());
+    }
+    return duelMutexMap.get(duelKey)!;
+}
 
 export async function handleDuelCreate(params: {
     channelLogin: string;
@@ -135,48 +143,58 @@ export async function handleDuelAccept(params: {
         }
     }
 
-    if (duel.status !== "Pending") {
-        return `@${userDisplayName}, this duel is no longer pending.`;
-    }
+    // Use mutex per duel id
+    const duelKey = String(duel.id);
+    const mutex = getDuelMutex(duelKey);
+    return await mutex.runExclusive(async () => {
+        // Re-fetch duel inside lock to ensure up-to-date status
+        const lockedDuel = await prisma.duel.findUnique({ where: { id: duel.id }, include: { challenger: true } });
+        if (!lockedDuel || lockedDuel.status !== "Pending") {
+            return `@${userDisplayName}, this duel is no longer pending.`;
+        }
 
-    const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, challengedId, userlogin, userDisplayName);
-    if (duel.wagerAmount > balance.value) {
-        return `@${userDisplayName}, you don't have enough silver (${balance.value}) to accept the ${duel.wagerAmount} silver duel from ${duel.challenger.displayName}.`;
-    }
-    const isChallengerWinner = Math.random() < 0.5;
-    const winnerId = isChallengerWinner ? duel.challengerId : duel.challengedId;
-    const loserId = isChallengerWinner ? duel.challengedId : duel.challengerId;
-    let winnerDisplayName = isChallengerWinner ? duel.challenger.displayName : userDisplayName;
-    let loserDisplayName = isChallengerWinner ? userDisplayName : duel.challenger.displayName;
+        const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, challengedId, userlogin, userDisplayName);
+        if (lockedDuel.wagerAmount > balance.value) {
+            return `@${userDisplayName}, you don't have enough silver (${balance.value}) to accept the ${lockedDuel.wagerAmount} silver duel from ${lockedDuel.challenger.displayName}.`;
+        }
+        const isChallengerWinner = Math.random() < 0.5;
+        const winnerId = isChallengerWinner ? lockedDuel.challengerId : lockedDuel.challengedId;
+        const loserId = isChallengerWinner ? lockedDuel.challengedId : lockedDuel.challengerId;
+        let winnerDisplayName = isChallengerWinner ? lockedDuel.challenger.displayName : userDisplayName;
+        let loserDisplayName = isChallengerWinner ? userDisplayName : lockedDuel.challenger.displayName;
 
-    if (isChallengerWinner) {
-        await Promise.all([
-            increaseBalanceWithChannelID(prisma, channelProviderId, loserId, -duel.wagerAmount),
-            increaseBalanceWithChannelID(prisma, channelProviderId, winnerId, duel.wagerAmount * 2),
+        if (isChallengerWinner) {
+            await Promise.all([
+                increaseBalanceWithChannelID(prisma, channelProviderId, loserId, -lockedDuel.wagerAmount),
+                increaseBalanceWithChannelID(prisma, channelProviderId, winnerId, lockedDuel.wagerAmount * 2),
+            ]);
+        } else {
+            await increaseBalanceWithChannelID(prisma, channelProviderId, winnerId, lockedDuel.wagerAmount);
+        }
+
+        const [winnerStats, loserStats] = await Promise.all([
+            updateUseDuelsStats(prisma, channelLogin, channelProviderId, winnerId, {
+                didWin: true,
+                wagerAmount: lockedDuel.wagerAmount,
+                winAmount: lockedDuel.wagerAmount * 2,
+            }),
+            updateUseDuelsStats(prisma, channelLogin, channelProviderId, loserId, { didWin: false, wagerAmount: lockedDuel.wagerAmount, winAmount: 0 }),
         ]);
-    } else {
-        await increaseBalanceWithChannelID(prisma, channelProviderId, winnerId, duel.wagerAmount);
-    }
 
-    const [winnerStats, loserStats] = await Promise.all([
-        updateUseDuelsStats(prisma, channelLogin, channelProviderId, winnerId, {
-            didWin: true,
-            wagerAmount: duel.wagerAmount,
-            winAmount: duel.wagerAmount * 2,
-        }),
-        updateUseDuelsStats(prisma, channelLogin, channelProviderId, loserId, { didWin: false, wagerAmount: duel.wagerAmount, winAmount: 0 }),
-    ]);
+        await prisma.duel.update({ where: { id: lockedDuel.id }, data: { status: "Completed" } });
 
-    await prisma.duel.update({ where: { id: duel.id }, data: { status: "Completed" } });
+        // Clear mutex after completion
+        duelMutexMap.delete(duelKey);
 
-    if (winnerStats.duelWinStreak > 1) {
-        winnerDisplayName += ` (${winnerStats.duelWinStreak} wins in a row)`;
-    }
-    if (loserStats.duelLoseStreak > 1) {
-        loserDisplayName += ` (${loserStats.duelLoseStreak} losses in a row)`;
-    }
+        if (winnerStats.duelWinStreak > 1) {
+            winnerDisplayName += ` (${winnerStats.duelWinStreak} wins in a row)`;
+        }
+        if (loserStats.duelLoseStreak > 1) {
+            loserDisplayName += ` (${loserStats.duelLoseStreak} losses in a row)`;
+        }
 
-    return `@${winnerDisplayName} won the duel against ${loserDisplayName} and claimed ${duel.wagerAmount} silver! ${pickRandom(DUEL_WIN_EMOTES)}`;
+        return `@${winnerDisplayName} won the duel against ${loserDisplayName} and claimed ${lockedDuel.wagerAmount} silver! ${pickRandom(DUEL_WIN_EMOTES)}`;
+    });
 }
 
 export async function handleDuelCancel(params: {
@@ -222,21 +240,31 @@ export async function handleDuelCancel(params: {
         }
     }
 
-    if (duel.status !== "Pending") {
-        return `@${userDisplayName}, this duel is no longer pending.`;
-    }
+    // Use mutex per duel id
+    const duelKey = String(duel.id);
+    const mutex = getDuelMutex(duelKey);
+    return await mutex.runExclusive(async () => {
+        // Re-fetch duel inside lock to ensure up-to-date status
+        const lockedDuel = await prisma.duel.findUnique({ where: { id: duel.id }, include: { challenged: true, challenger: true } });
+        if (!lockedDuel || lockedDuel.status !== "Pending") {
+            return `@${userDisplayName}, this duel is no longer pending.`;
+        }
 
-    await Promise.all([
-        increaseBalanceWithChannelID(prisma, channelProviderId, duel.challengerId, duel.wagerAmount),
-        prisma.duel.delete({ where: { id: duel.id } }),
-    ]);
+        await Promise.all([
+            increaseBalanceWithChannelID(prisma, channelProviderId, lockedDuel.challengerId, lockedDuel.wagerAmount),
+            prisma.duel.delete({ where: { id: lockedDuel.id } }),
+        ]);
 
-    const otherUser = currentUserId === duel.challengerId ? duel.challenged : duel.challenger;
-    otherUserName = otherUser.displayName;
+        // Clear mutex after cancellation
+        duelMutexMap.delete(duelKey);
 
-    if (currentUserId === duel.challengerId) {
-        return `@${userDisplayName} cancelled their duel challenge to ${otherUserName}!`;
-    } else {
-        return `@${userDisplayName} declined the duel challenge from ${otherUserName}! ${pickRandom(DUEL_DENY_EMOTES)}`;
-    }
+        const otherUser = currentUserId === lockedDuel.challengerId ? lockedDuel.challenged : lockedDuel.challenger;
+        otherUserName = otherUser.displayName;
+
+        if (currentUserId === lockedDuel.challengerId) {
+            return `@${userDisplayName} cancelled their duel challenge to ${otherUserName}!`;
+        } else {
+            return `@${userDisplayName} declined the duel challenge from ${otherUserName}! ${pickRandom(DUEL_DENY_EMOTES)}`;
+        }
+    });
 }
