@@ -7,7 +7,7 @@
 		"dev": "npx tsx --watch src/index.ts",
 		"type-check": "npx tsc --noEmit",
 		"build": "node esbuild.config.cjs",
-		"start": "node build/main.min.js",
+		"start": "node --enable-source-maps build/main.min.js",
 		"db:deploy": "npx prisma migrate deploy",
 		"prisma:generate": "npx prisma generate",
 		"test": "vitest run",
