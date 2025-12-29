@@ -12,7 +12,6 @@ export class EmoteTracker {
     private emoteFetcher = new EmoteFetcher();
     private channelEmotes: Map<string, Map<string, Emote>> = new Map(); // channel login -> emotes
     private globalEmotes: Map<string, Emote> = new Map();
-    // private emoteUsage: Map<string, Map<string, number>> = new Map(); // channel login -> emote name -> count
 
     constructor(private bot: Bot) {
         this.initialize();
@@ -21,21 +20,28 @@ export class EmoteTracker {
     async initialize() {
         const config = getBotConfig();
         const channels = config.channels;
-        this.globalEmotes = await this.emoteFetcher.fetchAllGlobal();
-        for (const channel of channels) {
-            const user = await getUserByUsername(prisma, channel);
-            if (!user) continue;
-            const emotes = await this.emoteFetcher.fetchAll(user.id);
-            this.channelEmotes.set(channel, emotes);
-            // this.emoteUsage.set(channel, new Map());
-        }
+        // Fetch global emotes and users in parallel
+        const [globalEmotes, users] = await Promise.all([
+            this.emoteFetcher.fetchAllGlobal(),
+            Promise.all(
+                channels.map(channel => getUserByUsername(prisma, channel))
+            )
+        ]);
+        this.globalEmotes = globalEmotes;
+        const emoteMaps = await Promise.all(
+            users.map(user => user ? this.emoteFetcher.fetchAll(user.id) : Promise.resolve(new Map()))
+        );
+        channels.forEach((channel, idx) => {
+            const emotes = emoteMaps[idx];
+            if (users[idx] && emotes) {
+                this.channelEmotes.set(channel, emotes);
+            }
+        });
         this.listenToChat();
         this.startRefreshAllEmotesCronjobTask();
     }
 
     private extractNativeTwitchEmotes(ctx: MessageEvent): Map<string, Emote> {
-        // ctx.emoteOffsets: { [emoteId: string]: [start, end][] }
-        // Returns Map<emoteName, string[]> where string[] are index ranges
         const emoteMap = new Map<string, Emote>();
         if (!ctx.emoteOffsets.size) return emoteMap;
         for (const [emoteId, ranges] of ctx.emoteOffsets) {
@@ -127,18 +133,19 @@ export class EmoteTracker {
         const emotes = await this.emoteFetcher.fetchAll(user.id);
         this.channelEmotes.set(channel, emotes);
         return emotes.size;
-        // Optionally reset usage for refreshed emotes:
-        // this.emoteUsage.set(channel, new Map());
     }
 
     async refreshAllEmotes() {
         const config = getBotConfig();
-        this.globalEmotes = await this.emoteFetcher.fetchAllGlobal();
-        let total = 0;
-        for (const channel of config.channels) {
-            total += await this.refreshEmotes(channel);
-        }
-        return total;
+        // Fetch global emotes and all channel emotes in parallel
+        const [globalEmotes, emoteCounts] = await Promise.all([
+            this.emoteFetcher.fetchAllGlobal(),
+            Promise.all(
+                config.channels.map(channel => this.refreshEmotes(channel))
+            )
+        ]);
+        this.globalEmotes = globalEmotes;
+        return emoteCounts.reduce((a, b) => a + b, 0);
     }
     startRefreshAllEmotesCronjobTask() {
         cron.schedule(
