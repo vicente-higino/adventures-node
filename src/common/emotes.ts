@@ -70,7 +70,12 @@ class EmoteFetcher {
                 return this.seventvCache.get(userId) ?? [];
             }
             logger.info(`[EmoteFetcher] 7TV fetch and validation succeeded for userId: ${userId}`);
-            const emotes = parsed.data.emote_set.emotes.map(emote => ({ name: emote.name, id: emote.id, provider: EmoteProvider.SevenTV, data: emote }));
+            const emotes = parsed.data.emote_set.emotes.map(emote => ({
+                name: emote.name,
+                id: emote.id,
+                provider: EmoteProvider.SevenTV,
+                data: emote,
+            }));
             this.seventvCache.set(userId, emotes);
             return emotes;
         } catch (error) {

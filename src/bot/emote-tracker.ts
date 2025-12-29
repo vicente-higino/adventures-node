@@ -23,14 +23,10 @@ export class EmoteTracker {
         // Fetch global emotes and users in parallel
         const [globalEmotes, users] = await Promise.all([
             this.emoteFetcher.fetchAllGlobal(),
-            Promise.all(
-                channels.map(channel => getUserByUsername(prisma, channel))
-            )
+            Promise.all(channels.map(channel => getUserByUsername(prisma, channel))),
         ]);
         this.globalEmotes = globalEmotes;
-        const emoteMaps = await Promise.all(
-            users.map(user => user ? this.emoteFetcher.fetchAll(user.id) : Promise.resolve(new Map()))
-        );
+        const emoteMaps = await Promise.all(users.map(user => (user ? this.emoteFetcher.fetchAll(user.id) : Promise.resolve(new Map()))));
         channels.forEach((channel, idx) => {
             const emotes = emoteMaps[idx];
             if (users[idx] && emotes) {
@@ -140,9 +136,7 @@ export class EmoteTracker {
         // Fetch global emotes and all channel emotes in parallel
         const [globalEmotes, emoteCounts] = await Promise.all([
             this.emoteFetcher.fetchAllGlobal(),
-            Promise.all(
-                config.channels.map(channel => this.refreshEmotes(channel))
-            )
+            Promise.all(config.channels.map(channel => this.refreshEmotes(channel))),
         ]);
         this.globalEmotes = globalEmotes;
         return emoteCounts.reduce((a, b) => a + b, 0);

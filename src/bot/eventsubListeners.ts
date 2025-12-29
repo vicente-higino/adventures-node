@@ -17,19 +17,13 @@ export async function createEventsubListeners(users: string[]) {
         listener.onStreamOnline(user, e => {
             liveChannels.setStatus(e.broadcasterId, e.broadcasterName, true);
             logger.info(`${e.broadcasterDisplayName} just went live!`);
-            logger.info(
-                liveChannels.listLive(),
-                "Live channels",
-            );
+            logger.info(liveChannels.listLive(), "Live channels");
         });
         listener.onStreamOffline(user, e => {
             liveChannels.setStatus(e.broadcasterId, e.broadcasterName, false);
             restartAdventureWarnings(user.id);
             logger.info(`${e.broadcasterDisplayName} just went offline`);
-            logger.info(
-                liveChannels.listLive(),
-                "Live channels",
-            );
+            logger.info(liveChannels.listLive(), "Live channels");
         });
         eventsubListeners.add(user.id);
     }
