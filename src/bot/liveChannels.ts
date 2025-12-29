@@ -44,10 +44,12 @@ export function checkIfChannelIsForcedSend(channel: string) {
 }
 
 export function isChannelLive(channel: string) {
+    const isLive = liveChannels.isLive(channel);
+    logger.debug({ channel, forced: checkIfChannelIsForcedSend(channel), isLive }, "Checking if channel is live");
     if (checkIfChannelIsForcedSend(channel)) {
         return false;
     }
-    return liveChannels.isLive(channel);
+    return isLive;
 }
 
 export async function fetchLiveChannels(channels: string[]) {
