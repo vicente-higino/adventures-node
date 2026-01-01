@@ -268,7 +268,7 @@ export async function fishForUser({
             }
         }
 
-        Promise.all(promises);
+        await Promise.all(promises);
 
         const totalValueMessage = bonus > 0 ? `${fish.sellValue} + ${bonus} (Bonus) = ${fish.sellValue + bonus}` : `${fish.sellValue}`;
         const valueEmote = bonus > 0 ? getValueEmote(fish.sellValue + bonus) : fish.rarityEmote;
