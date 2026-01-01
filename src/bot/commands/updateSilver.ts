@@ -11,7 +11,7 @@ export const updateSilverCommand = createBotCommand(
         const { isMod, isBroadcaster, userId, displayName } = ctx.msg.userInfo;
         if (!isMod && !isBroadcaster && getBotConfig().superUserId !== userId) return;
         let targetUsername = params.shift()?.replaceAll("@", "");
-        const newBalance = params[1];
+        const newBalance = params.shift();
         if (!targetUsername || !newBalance) {
             say(`Usage: ${getBotConfig().prefix}updatesilver <username> <new_balance>`);
             return;
