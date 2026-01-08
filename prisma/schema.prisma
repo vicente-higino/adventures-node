@@ -35,7 +35,7 @@ model Balance {
     id                Int      @id() @default(autoincrement())
     channel           String
     channelProviderId String
-    value             Int      @default(500)
+    value             BigInt   @default(500)
     createdAt         DateTime @default(now())
     updatedAt         DateTime @updatedAt
     user              User     @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
@@ -48,7 +48,7 @@ model Player {
     id          Int       @id() @default(autoincrement())
     user        User      @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
     userId      String
-    buyin       Int       @default(0)
+    buyin       BigInt    @default(0)
     adventure   Adventure @relation(fields: [adventureId], references: [id], onDelete: Cascade, onUpdate: Cascade)
     adventureId Int
     createdAt   DateTime  @default(now())
@@ -102,7 +102,7 @@ model Fish {
 
 model ChannelFishCount {
     channelProviderId String   @id
-    total             Int      @default(0)
+    total             BigInt   @default(0)
     createdAt         DateTime @default(now())
     updatedAt         DateTime @updatedAt
 }
@@ -116,13 +116,13 @@ model UserStats {
     // General game stats (example, adjust as needed)
     gamesPlayed       Int      @default(0)
     gamesWon          Int      @default(0)
-    totalWagers       Int      @default(0) // Consider if this should include duel wagers or be separate
-    totalWinnings     Int      @default(0) // Consider if this should include duel winnings or be separate
+    totalWagers       BigInt   @default(0) // Consider if this should include duel wagers or be separate
+    totalWinnings     BigInt   @default(0) // Consider if this should include duel winnings or be separate
     // Duel specific stats
     duelsPlayed       Int      @default(0)
     duelsWon          Int      @default(0)
-    duelsWagered      Int      @default(0)
-    duelsWonAmount    Int      @default(0)
+    duelsWagered      BigInt   @default(0)
+    duelsWonAmount    BigInt   @default(0)
     createdAt         DateTime @default(now())
     updatedAt         DateTime @updatedAt
 
@@ -193,7 +193,7 @@ model Duel {
     challengedId      String
     channelProviderId String
     channel           String
-    wagerAmount       Int
+    wagerAmount       BigInt
     status            DuelStatus @default(Pending)
     createdAt         DateTime   @default(now())
     updatedAt         DateTime   @updatedAt

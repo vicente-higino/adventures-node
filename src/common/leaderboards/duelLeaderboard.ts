@@ -1,9 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import { dbClient } from "@/prisma";
 import { formatSilver } from "@/utils/misc";
 import { LeaderboardResult } from ".";
 
 export async function handleDuel(
-    prisma: PrismaClient,
+    prisma: dbClient,
     channelProviderId: string,
     metric: "wins" | "played" | "wagered" | "profit" | "streak",
     order: "asc" | "desc",

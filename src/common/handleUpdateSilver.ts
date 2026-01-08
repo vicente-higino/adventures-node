@@ -1,5 +1,5 @@
 import { getBotConfig } from "@/bot";
-import { findOrCreateBalance, increaseBalance } from "@/db";
+import { findOrCreateBalance, increaseBalance, setBalance } from "@/db";
 import { prisma } from "@/prisma";
 import z from "zod";
 
@@ -13,13 +13,13 @@ export async function handleUpdateSilver(params: {
     prefix?: string;
 }): Promise<string> {
     const { channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName, newBalance, prefix } = params;
-    const parseResult = z.coerce.number().int().min(0).safeParse(newBalance);
+    const parseResult = z.coerce.bigint().min(0n).max(BigInt(Number.MAX_SAFE_INTEGER)).safeParse(newBalance);
     if (!parseResult.success) {
         const error = parseResult.error.errors.map(e => e.message).join(", ");
         return `Usage: ${prefix ?? getBotConfig().prefix}updatesilver <username> <new_balance> (${error})`;
     }
-    const value = parseResult.data;
+    const value = Number(parseResult.data);
     const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName, value);
-    const newBal = await increaseBalance(prisma, balance.id, value - balance.value);
+    const newBal = await setBalance(prisma, balance.id, value);
     return `Updated @${userDisplayName} silver to ${newBal.value}.`;
 }

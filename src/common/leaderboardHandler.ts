@@ -1,7 +1,8 @@
-import { PrismaClient, Prisma } from "@prisma/client";
-import { z } from "zod";
 import { LeaderboardResult, LeaderboardType, handleAdventure, handleDuel, handleFish, handleSilver } from "@/common/leaderboards";
 import logger from "@/logger";
+import { dbClient } from "@/prisma";
+import { Prisma } from "@prisma/client";
+import { z } from "zod";
 
 export const leaderboardSchema = z.object({
     amount: z.number().min(1).max(25).default(5),
@@ -14,7 +15,7 @@ export const leaderboardSchema = z.object({
 });
 
 export async function getLeaderboard(
-    prisma: PrismaClient,
+    prisma: dbClient,
     channelProviderId: string,
     params: z.infer<typeof leaderboardSchema>,
 ): Promise<(LeaderboardResult & { order: "asc" | "desc" }) | string> {

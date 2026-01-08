@@ -1,7 +1,8 @@
-import { PrismaClient, Rarity } from "@prisma/client";
-import { formatWeight, roundToDecimalPlaces, formatSilver } from "@/utils/misc";
 import { findOrCreateFishStats } from "@/db";
+import { dbClient } from "@/prisma";
 import { getUserById } from "@/twitch/api";
+import { formatSilver, roundToDecimalPlaces } from "@/utils/misc";
+import { Rarity } from "@prisma/client";
 
 // Helper to format the summary for both user and channel stats
 function formatFishCountSummary({
@@ -63,7 +64,7 @@ export async function getFishCountSummary({
     userLogin,
     userDisplayName,
 }: {
-    prisma: PrismaClient;
+    prisma: dbClient;
     channelLogin: string;
     channelProviderId: string;
     userProviderId: string | null;

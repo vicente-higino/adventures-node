@@ -1,10 +1,10 @@
-import { Context } from "hono";
-import { FossaHeaders, HonoEnv } from "@/types"; // Import Env
-import { z } from "zod";
-import { OpenAPIRoute } from "chanfana";
-import { getUserById } from "@/twitch/api"; // Ensure getUserById is imported
 import { getUserSilverString } from "@/common/userSilver";
+import { getUserById } from "@/twitch/api"; // Ensure getUserById is imported
+import { FossaHeaders, HonoEnv } from "@/types"; // Import Env
 import { createUserIdParam } from "@/utils/params";
+import { OpenAPIRoute } from "chanfana";
+import { Context } from "hono";
+import { z } from "zod";
 export class Point extends OpenAPIRoute {
     override schema = { request: { headers: FossaHeaders, params: z.object({ userId: createUserIdParam() }) }, responses: {} };
     override handleValidationError(): Response {

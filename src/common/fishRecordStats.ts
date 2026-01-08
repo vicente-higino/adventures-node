@@ -1,5 +1,6 @@
-import { formatSize, formatSilver, formatWeight } from "@/utils/misc";
-import { Fish, PrismaClient, Rarity } from "@prisma/client";
+import { dbClient } from "@/prisma";
+import { formatSilver, formatSize, formatWeight } from "@/utils/misc";
+import { Fish, Rarity } from "@prisma/client";
 
 export async function getFishRecordStats({
     prisma,
@@ -7,7 +8,7 @@ export async function getFishRecordStats({
     userProviderId,
     page = 1,
 }: {
-    prisma: PrismaClient;
+    prisma: dbClient;
     channelProviderId: string;
     userProviderId: string;
     page?: number;

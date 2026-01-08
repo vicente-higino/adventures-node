@@ -1,12 +1,12 @@
-import { PrismaClient } from "@prisma/client";
-import { getUserById } from "@/twitch/api";
 import { findOrCreateBalance, increaseBalance } from "@/db";
+import { dbClient } from "@/prisma";
+import { getUserById } from "@/twitch/api";
 import { calculateAmount } from "@/utils/misc";
-import z from "zod";
 import { createUserIdParam } from "@/utils/params";
+import z from "zod";
 
 interface GiveSilverParams {
-    prisma: PrismaClient;
+    prisma: dbClient;
     channelLogin: string;
     channelProviderId: string;
     fromUserProviderId: string;

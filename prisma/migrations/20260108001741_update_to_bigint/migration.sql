@@ -1,0 +1,22 @@
+-- AlterTable
+ALTER TABLE "Balance" ALTER COLUMN "value" SET DATA TYPE BIGINT;
+
+-- AlterTable
+ALTER TABLE "Player" ALTER COLUMN "buyin" SET DATA TYPE BIGINT;
+
+ALTER TABLE "Player"
+ADD CONSTRAINT buyin_value_non_negative
+CHECK (buyin >= 0);
+
+
+-- AlterTable
+ALTER TABLE "ChannelFishCount" ALTER COLUMN "total" SET DATA TYPE BIGINT;
+
+-- AlterTable
+ALTER TABLE "Duel" ALTER COLUMN "wagerAmount" SET DATA TYPE BIGINT;
+
+-- AlterTable
+ALTER TABLE "UserStats" ALTER COLUMN "totalWagers" SET DATA TYPE BIGINT,
+ALTER COLUMN "totalWinnings" SET DATA TYPE BIGINT,
+ALTER COLUMN "duelsWagered" SET DATA TYPE BIGINT,
+ALTER COLUMN "duelsWonAmount" SET DATA TYPE BIGINT;

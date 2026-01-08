@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
-import { formatSilver, roundToDecimalPlaces } from "@/utils/misc";
 import { LeaderboardResult } from "@/common/leaderboards";
+import { dbClient } from "@/prisma";
+import { formatSilver, roundToDecimalPlaces } from "@/utils/misc";
 
 type FishMetric =
     | "count"
@@ -18,7 +18,7 @@ type FishMetric =
     | "treasure";
 
 export async function handleFish(
-    prisma: PrismaClient,
+    prisma: dbClient,
     channelProviderId: string,
     metric: FishMetric,
     order: "asc" | "desc",

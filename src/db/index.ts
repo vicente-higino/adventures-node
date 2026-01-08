@@ -1,5 +1,6 @@
 import logger from "@/logger";
-import { FishDexEntry, FishStats, Prisma, PrismaClient, Rarity } from "@prisma/client";
+import { dbClient } from "@/prisma";
+import { FishDexEntry, FishStats, Rarity } from "@prisma/client";
 
 export async function findOrCreateBalance(
     db: dbClient,
@@ -283,8 +284,6 @@ export async function addBonusToUserStats(
     // Also add to balance
     await increaseBalanceWithChannelID(db, channelProviderId, userProviderId, bonusAmount);
 }
-
-type dbClient = PrismaClient | Prisma.TransactionClient;
 
 /**
  * Finds an existing FishDex record for a user, channel, and fish name, or creates a new one if it doesn't exist.

@@ -1,10 +1,8 @@
-import { PrismaClient } from "@prisma/client"; // Import PrismaClient and User
 import { ApiClient } from "@twurple/api";
-// import { AppTokenAuthProviderWithStore } from "./auth";
 import { AppTokenAuthProvider } from "@twurple/auth";
 import env from "@/env";
 import Queue from "queue";
-import { prisma } from "@/prisma";
+import { dbClient, prisma } from "@/prisma";
 import logger from "@/logger";
 const { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } = env;
 export function buildUrl(baseUrl: string, params: Record<string, string>): string {
@@ -36,7 +34,7 @@ async function handleApiRequest<T>(apiCall: () => Promise<T>, authProvider: AppT
 }
 
 export const getUserByUsername = async (
-    prisma: PrismaClient, // Add prisma client
+    prisma: dbClient, // Add prisma client
     username: string,
 ): Promise<DbUser | null> => {
     // Change return type
@@ -108,7 +106,7 @@ export const getUsersByUsername = async (usernames: string[]): Promise<DbUser[] 
 };
 
 export const getUserById = async (
-    prisma: PrismaClient, // Add prisma client
+    prisma: dbClient, // Add prisma client
     id: string,
 ): Promise<DbUser | null> => {
     // Change return type

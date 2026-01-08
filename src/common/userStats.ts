@@ -1,9 +1,9 @@
-import { PrismaClient } from "@prisma/client";
 import { findOrCreateBalance, findOrCreateUserStats } from "@/db";
+import { dbClient } from "@/prisma";
 import { formatSilver } from "@/utils/misc";
 
 interface GetUserStatsStringParams {
-    prisma: PrismaClient;
+    prisma: dbClient;
     channelLogin: string;
     channelProviderId: string;
     userProviderId: string;

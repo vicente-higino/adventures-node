@@ -1,5 +1,5 @@
 import { checkIfChannelIsForcedSend, getBotConfig, isChannelLive } from "@/bot";
-import { prisma } from "@/prisma";
+import { dbClient, prisma } from "@/prisma";
 import { delay, sendActionToChannel, sendMessageToChannel } from "@/utils/misc";
 import { PrismaClient } from "@prisma/client";
 import { handleAdventureEnd } from "../handleAdventure";
@@ -39,7 +39,7 @@ export const RESTART_WARNINGS: AdventureWarning[] = [
     { delay: 15 * 60 * 1000, message: `!adventureend` },
 ];
 
-export function scheduleAdventureWarnings(prisma: PrismaClient, adventureId: number, warnings: AdventureWarning[] = DEFAULT_WARNINGS) {
+export function scheduleAdventureWarnings(prisma: dbClient, adventureId: number, warnings: AdventureWarning[] = DEFAULT_WARNINGS) {
     const timers: NodeJS.Timeout[] = [];
     for (const { delay, message } of warnings) {
         const timer = setTimeout(async () => {

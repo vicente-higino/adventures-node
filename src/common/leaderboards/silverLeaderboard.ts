@@ -1,13 +1,8 @@
-import { PrismaClient } from "@prisma/client";
-import { formatSilver } from "@/utils/misc";
 import { LeaderboardResult } from "@/common/leaderboards";
+import { dbClient } from "@/prisma";
+import { formatSilver } from "@/utils/misc";
 
-export async function handleSilver(
-    prisma: PrismaClient,
-    channelProviderId: string,
-    order: "asc" | "desc",
-    amount: number,
-): Promise<LeaderboardResult> {
+export async function handleSilver(prisma: dbClient, channelProviderId: string, order: "asc" | "desc", amount: number): Promise<LeaderboardResult> {
     const balances = await prisma.balance.findMany({
         where: { channelProviderId: channelProviderId },
         include: { user: { select: { displayName: true, login: true } } },

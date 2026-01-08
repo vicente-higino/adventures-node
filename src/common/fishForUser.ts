@@ -25,10 +25,11 @@ import { fishTable } from "@/fishing/fishTable";
 import { fishingFacts } from "@/fishing/facts";
 import { friendlyCooldownMessages, fishingFriendlyQuestions, wrongPlaces, motivationalQuotes } from "./phrases";
 import logger from "@/logger";
+import { dbClient } from "@/prisma";
 dayjs.extend(relativeTime);
 
 interface FishForUserParams {
-    prisma: PrismaClient;
+    prisma: dbClient;
     channelLogin: string;
     channelProviderId: string;
     userProviderId: string;
@@ -291,7 +292,7 @@ export async function fishForUser({
  * @returns Promise<boolean>
  */
 export async function isFishDexCompletedForRarity(
-    prisma: PrismaClient,
+    prisma: dbClient,
     channelProviderId: string,
     userProviderId: string,
     rarity: Rarity,
