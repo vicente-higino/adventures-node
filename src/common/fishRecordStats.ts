@@ -33,7 +33,7 @@ export async function getFishRecordStats({
                     const id = fish.id;
                     if (!acc.has(id)) {
                         acc.set(id, {
-                            text: `${record.fishName} #${fish.id} (${formatSize(parseFloat(fish.size))}, ${formatWeight(parseFloat(fish.weight))}, ${formatSilver(fish.value)} Silver)`,
+                            text: `${record.fishName} #${fish.fishId} (${formatSize(parseFloat(fish.size))}, ${formatWeight(parseFloat(fish.weight))}, ${formatSilver(fish.value)} Silver)`,
                             value: parseFloat(fish.size),
                             silver: fish.value,
                             types: [],

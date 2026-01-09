@@ -27,7 +27,7 @@ function formatFishSummary(fish: Fish) {
     const weightStr = formatWeight(parseFloat(fish.weight));
     const sizeStr = formatSize(parseFloat(fish.size));
     const howLongAgo = dayjs(fish.createdAt).fromNow();
-    return `[${fish.rarity}] ${fish.prefix} ${fish.name} #${fish.id} (${weightStr}, ${sizeStr}) ${fish.value} silver - ${howLongAgo}`;
+    return `[${fish.rarity}] ${fish.prefix} ${fish.name} #${fish.fishId} (${weightStr}, ${sizeStr}) ${fish.value} silver - ${howLongAgo}`;
 }
 
 const tryParsePage = (val: string | undefined) => {

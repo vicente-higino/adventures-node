@@ -92,11 +92,13 @@ model Fish {
     rarity            Rarity
     value             Int
     prefix            String
+    fishId            String
     LargestRecord     FishRecord[] @relation("LargestFish")
     SmallestRecord    FishRecord[] @relation("SmallestFish")
     HeaviestRecord    FishRecord[] @relation("HeaviestFish")
     LightestRecord    FishRecord[] @relation("LightestFish")
 
+    @@unique([channelProviderId, fishId])
     @@index([channelProviderId, userId])
 }
 

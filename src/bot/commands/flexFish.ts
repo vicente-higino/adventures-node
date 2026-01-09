@@ -60,7 +60,7 @@ function formatFishDisplay(fish: FishWithRecords) {
         sameElse: "DD/MM/YYYY", // Everything else ( 17/10/2011 )
     });
     const records = getRecords(fish);
-    return `[${fish.rarity}] ${fish.prefix} ${fish.name} #${fish.id} ${sizeStr} ${weightStr}, ${records} worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
+    return `[${fish.rarity}] ${fish.prefix} ${fish.name} #${fish.fishId} ${sizeStr} ${weightStr}, ${records} worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
 }
 
 export const flexFishCommand = createBotCommand(
@@ -79,8 +79,8 @@ export const flexFishCommand = createBotCommand(
                 say(`${userDisplayName}, invalid fish id. Usage: ${getBotConfig().prefix}flexfish [#fishId]`);
                 return;
             }
-            const fishId = Number(first.slice(1));
-            fish = await prisma.fish.findFirst({ where: { id: fishId, userId, channelProviderId: broadcasterId }, include: fishRecordsInclude });
+            const fishId = first.replace("#", "");
+            fish = await prisma.fish.findFirst({ where: { fishId, userId, channelProviderId: broadcasterId }, include: fishRecordsInclude });
             if (!fish) {
                 say(`${userDisplayName}, you don't own a fish with id ${fishId}.`);
                 return;

@@ -106,8 +106,13 @@ export async function fishForUser({
             }, 2000);
         }
 
-        const [createdFish, channelFishCount, existingRecord] = await prisma.$transaction([
-            prisma.fish.create({
+        const [createdFish, channelFishCount] = await prisma.$transaction(async tx => {
+            const channelFishCount = await prisma.channelFishCount.upsert({
+                where: { channelProviderId },
+                create: { channelProviderId, total: 1 },
+                update: { total: { increment: 1 } },
+            });
+            const createdFish = await prisma.fish.create({
                 data: {
                     name: fish.name,
                     rarity: fish.rarity,
@@ -118,18 +123,15 @@ export async function fishForUser({
                     channel: channelLogin,
                     channelProviderId: channelProviderId,
                     userId: userProviderId,
+                    fishId: channelFishCount.total.toString(),
                 },
-            }),
-            prisma.channelFishCount.upsert({
-                where: { channelProviderId },
-                create: { channelProviderId, total: 1 },
-                update: { total: { increment: 1 } },
-            }),
-            prisma.fishRecord.findUnique({
-                where: { channelProviderId_fishName: { channelProviderId, fishName: fish.name } },
-                include: { largestFish: true, smallestFish: true, heaviestFish: true, lightestFish: true },
-            }),
-        ]);
+            });
+            return [createdFish, channelFishCount];
+        });
+        const existingRecord = await prisma.fishRecord.findUnique({
+            where: { channelProviderId_fishName: { channelProviderId, fishName: fish.name } },
+            include: { largestFish: true, smallestFish: true, heaviestFish: true, lightestFish: true },
+        });
 
         let recordMessage = "";
         const size = fish.size;
