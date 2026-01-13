@@ -337,7 +337,7 @@ export function sendActionToAllChannel(message: string, onlyOffline = true) {
     // Replace with actual implementation
     const { channels } = getBotConfig();
     for (const channel of channels) {
-        if (onlyOffline && isChannelLive(channel)) continue;
+        if (onlyOffline && isChannelLive({ username: channel })) continue;
         logger.info(`Sending message to ${channel}: ${message}`);
         GetBot()
             ?.action(channel, message)
@@ -390,3 +390,9 @@ export function splitOnSpaces(text: string, maxMsgLength: number): string[] {
 
     return res;
 }
+
+export type AtLeastOne<T, K extends keyof T = keyof T> =
+    Partial<T> & {
+        [P in K]: Required<Pick<T, P>>;
+    }[K];
+

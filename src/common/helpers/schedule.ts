@@ -49,9 +49,9 @@ export function scheduleAdventureWarnings(prisma: dbClient, adventureId: number,
                 return;
             }
             const live = await getStreamByUserId(adv?.channelProviderId || "");
-            const isForceSend = checkIfChannelIsForcedSend(adv.channel);
+            const isForceSend = checkIfChannelIsForcedSend({ id: adv.channelProviderId });
             if (adv.name === "DONE" || (live && !isForceSend)) {
-                if (live && !isChannelLive(adv.channel)) {
+                if (live && !isChannelLive({ id: adv.channelProviderId })) {
                     logger.info(`Channel ${adv.channel} is mismatched as not live, skipping adventure end warning "${message}"`);
                 }
                 for (const t of timers) {
@@ -99,9 +99,9 @@ export async function restartAdventureWarnings(channelProviderId?: string) {
             elapsedTime >= totalDuration
                 ? RESTART_WARNINGS // Use default delays if the adventure has passed the end time
                 : RESTART_WARNINGS.map(warning => ({
-                      ...warning,
-                      delay: warning.delay + Math.max(0, totalDuration - elapsedTime), // Add the delayOffset
-                  }));
+                    ...warning,
+                    delay: warning.delay + Math.max(0, totalDuration - elapsedTime), // Add the delayOffset
+                }));
 
         scheduleAdventureWarnings(prisma, adv.id, adjustedWarnings);
     }

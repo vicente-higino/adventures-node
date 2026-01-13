@@ -67,7 +67,7 @@ async function endLegendaryEvent(name: string) {
                 }
 
                 for (const channel of channels) {
-                    if (isChannelLive(channel.id)) continue;
+                    if (isChannelLive({ id: channel.id })) continue;
                     const entries = channelMap[channel.id] || [];
                     const totalLegendary = entries.reduce((s, e) => s + e.count, 0);
                     const uniqueCatchers = entries.length;

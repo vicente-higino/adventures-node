@@ -98,7 +98,7 @@ export function createBotCommand(
             if (userId == getBotConfig().userId) return false;
             if (this.offlineOnly) {
                 // If the command is offline only, check if the channel is live
-                return !isChannelLive(channelId);
+                return !isChannelLive({ id: channelId });
             }
             return true;
         }

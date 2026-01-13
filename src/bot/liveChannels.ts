@@ -1,6 +1,7 @@
 import logger from "@/logger";
 import { apiClient } from "@/twitch/api";
 import { getBotConfig } from "./index";
+import { AtLeastOne } from "@/utils/misc";
 
 class LiveChannelManager {
     private byId = new Map<string, { userId: string; userName: string; isLive: boolean }>();
@@ -38,13 +39,14 @@ class LiveChannelManager {
 
 export const liveChannels = new LiveChannelManager();
 
-export function checkIfChannelIsForcedSend(channel: string) {
+export function checkIfChannelIsForcedSend(channel: AtLeastOne<{ username: string; id: string }>) {
     const overrides = getBotConfig().forceSendChannels ?? [];
-    return overrides.includes(channel.toLowerCase());
+    const c = channel.id ?? channel.username ?? "";
+    return overrides.includes(c.toLowerCase());
 }
 
-export function isChannelLive(channel: string) {
-    const isLive = liveChannels.isLive(channel);
+export function isChannelLive(channel: AtLeastOne<{ username: string; id: string }>) {
+    const isLive = liveChannels.isLive(channel.id ?? channel.username ?? "");
     logger.debug({ channel, forced: checkIfChannelIsForcedSend(channel), isLive }, "Checking if channel is live");
     if (checkIfChannelIsForcedSend(channel)) {
         return false;
