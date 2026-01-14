@@ -18,7 +18,7 @@ const clientSecret = env.TWITCH_CLIENT_SECRET;
 // Validate bot config
 const BotConfigSchema = z.object({
     channels: z.array(z.string().min(3).toLowerCase()).min(1),
-    modChannels: z.array(z.string().min(3).toLowerCase()).min(1),
+    modChannels: z.array(z.string().min(3).toLowerCase()).default([]),
     prefix: z.string(),
     userId: z.string(),
     debug: z.boolean(),
@@ -87,14 +87,15 @@ export const createBot = async (forceRecreate?: boolean) => {
                 .then(user => {
                     logger.info(`Logged in as ${user.name}`);
                     getChannelsModForUser(user.id, bot!.api).then(modChannels => {
-                        logger.info(`Bot is mod in channels: ${modChannels.join(", ")}`);
+                        botConfig.modChannels = new Set([...botConfig.modChannels, ...modChannels, user.name]).values().toArray();
+                        logger.info(`Bot is mod in channels: ${botConfig.modChannels.join(", ")}`);
                     });
+                    bot?.join(user.name);
                 })
                 .catch(err => {
                     logger.error(err, "Error fetching user");
                 });
         });
-
         bot.onMessage(ctx => {
             const { broadcasterName, text } = ctx;
             const temuBotslieRegex = /temu botslie/i;
@@ -102,6 +103,7 @@ export const createBot = async (forceRecreate?: boolean) => {
                 bot?.say(broadcasterName, `SideEye`);
             }
         });
+
         emoteTracker = new EmoteTracker(bot);
         currentBotUserId = userId; // Update the current userId
     } catch (err) {
