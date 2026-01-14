@@ -31,6 +31,7 @@
 		"chanfana": "^2.0.2",
 		"clickhouse-migrations": "^1.1.1",
 		"dayjs": "^1.11.13",
+		"decimal.js": "^10.6.0",
 		"dotenv": "^16.5.0",
 		"esbuild-plugin-pino": "^2.3.3",
 		"hono": "^4.4.7",
