@@ -44,11 +44,11 @@ let currentBotUserId: string | null = null; // Track the userId for the singleto
 export let emoteTracker: EmoteTracker | null = null; // Placeholder for emote tracker
 export const GetBot = () => bot;
 
-export const createBot = async (forceRecreate?: boolean) => {
+export const createBot = async (forceRecreate?: boolean): Promise<boolean> => {
     await loadBotConfig();
 
     if (bot && currentBotUserId === botConfig.userId && !forceRecreate) {
-        return; // Return existing bot if userId matches
+        return true; // Already ready
     }
     await fetchLiveChannels(botConfig.channels);
     await createEventsubListeners(botConfig.channels);
@@ -81,21 +81,28 @@ export const createBot = async (forceRecreate?: boolean) => {
                 bot?.chat.action(channel, message);
             }
         };
-        bot.onAuthenticationSuccess(() => {
-            bot?.api.users
-                .getAuthenticatedUser(userId)
-                .then(user => {
-                    logger.info(`Logged in as ${user.name}`);
-                    getChannelsModForUser(user.id, bot!.api).then(modChannels => {
-                        botConfig.modChannels = new Set([...botConfig.modChannels, ...modChannels, user.name]).values().toArray();
-                        logger.info(`Bot is mod in channels: ${botConfig.modChannels.join(", ")}`);
+
+        const authenticated = await new Promise<boolean>((resolve) => {
+            bot!.onAuthenticationSuccess(() => {
+                bot?.api.users
+                    .getAuthenticatedUser(userId)
+                    .then(user => {
+                        logger.info(`Logged in as ${user.name}`);
+                        getChannelsModForUser(user.id, bot!.api).then(modChannels => {
+                            botConfig.modChannels = new Set([...botConfig.modChannels, ...modChannels, user.name]).values().toArray();
+                            logger.info(`Bot is mod in channels: ${botConfig.modChannels.join(", ")}`);
+                        });
+                        bot?.join(user.name);
+                        resolve(true);
+                    })
+                    .catch(err => {
+                        logger.error(err, "Error fetching user");
+                        resolve(false);
                     });
-                    bot?.join(user.name);
-                })
-                .catch(err => {
-                    logger.error(err, "Error fetching user");
-                });
+            });
+            // Optionally, add a timeout to resolve(false) if authentication doesn't happen
         });
+
         bot.onMessage(ctx => {
             const { broadcasterName, text } = ctx;
             const temuBotslieRegex = /temu botslie/i;
@@ -106,10 +113,12 @@ export const createBot = async (forceRecreate?: boolean) => {
 
         emoteTracker = new EmoteTracker(bot);
         currentBotUserId = userId; // Update the current userId
+        return authenticated;
     } catch (err) {
         logger.error(err);
         logger.error(`Token file not found: ${tokenFile}`);
         // Optionally handle initialization without tokens here
+        return false;
     }
 };
 

@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { PointUpdate } from "@/endpoints/pointsUpdate";
 import { HTTPException } from "hono/http-exception";
-import { logger } from "hono/logger";
+import { logger as honoLogger } from "hono/logger";
 import { timeout } from "hono/timeout";
 import { AdventureJoin } from "@/endpoints/adventureJoin";
 import { AdventureEnd } from "@/endpoints/adventureEnd";
@@ -28,10 +28,10 @@ import { startCron } from "@/cron";
 import { authMiddleware } from "@/middleware/authMiddleware";
 import { ignoreMiddleware } from "@/middleware/ignoreUsers";
 import { restartAdventureWarnings } from "@/common/helpers/schedule";
-import { delay } from "@/utils/misc";
 import { emotesRank } from "@/endpoints/emotesRank";
 import { emotesChannel } from "@/endpoints/emotesChannel";
-import { cors } from 'hono/cors'
+import { cors } from "hono/cors";
+import logger from "./logger";
 // Start a Hono app
 const hono = new Hono<HonoEnv>();
 const honoWithAuth = new Hono<HonoEnv>();
@@ -43,12 +43,16 @@ const app = fromHono(hono);
 const authenticatedRoute = fromHono(honoWithAuth);
 
 createBot()
-    .then(async () => {
-        await delay(5000); // wait for the bot to be ready
+    .then((ready) => {
+        if (!ready) {
+            logger.error("Bot failed to start");
+            return;
+        }
+        logger.info("Bot started successfully");
         restartAdventureWarnings();
     })
     .catch(e => console.error);
-app.use(logger());
+app.use(honoLogger());
 
 // Add validation middleware before routes
 app.use("*", timeout(9500, new HTTPException(408, { message: "oopsie Something went wrong. Please try again in a few seconds." })));
@@ -96,7 +100,7 @@ app.get("/api/duel/accept/:challengerId", DuelAccept);
 app.get("/api/duel/cancel/:challengedId", DuelCancel);
 
 app.get("/api/leaderboard/:amount/:sortBy", ConsolidatedLeaderboard);
-app.use("/api/emotes/*", cors({ origin: '*' }))
+app.use("/api/emotes/*", cors({ origin: "*" }));
 app.get("/api/emotes/rank/:username", emotesRank);
 app.get("/api/emotes/channel/:username", emotesChannel);
 
