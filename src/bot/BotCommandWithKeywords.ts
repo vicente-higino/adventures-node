@@ -60,7 +60,13 @@ class BotCommandWithKeywords extends BotCommand {
     }
 
     async execute(params: string[], context: BotCommandContext): Promise<void> {
-        await this._action(params, context);
+        const { userId, userName, userDisplayName, broadcasterId, broadcasterName } = context;
+        logger.debug({ userId, userName, userDisplayName, broadcasterId, broadcasterName, params }, `Executing bot command: ${this.name}`);
+        try {
+            await this._action(params, context);
+        } catch (error) {
+            logger.error(error, `Bot command ${this.name} error`);
+        }
     }
 }
 
@@ -103,13 +109,6 @@ export function createBotCommand(
             return true;
         }
 
-        async execute(params: string[], context: BotCommandContext) {
-            try {
-                await handler(params, context);
-            } catch (error) {
-                logger.error(error, `Bot command ${this.name} error`);
-            }
-        }
     })(options);
 }
 export function createAdminBotCommand(
@@ -140,8 +139,5 @@ export function createAdminBotCommand(
             return userId == getBotConfig().superUserId;
         }
 
-        async execute(params: string[], context: BotCommandContext) {
-            await handler(params, context);
-        }
     })(options);
 }
