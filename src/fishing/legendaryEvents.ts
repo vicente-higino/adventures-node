@@ -171,6 +171,10 @@ export function startLegendaryTasks(): void {
         .catch(err => logger.error(err, "Failed to load active legendary event"));
 
     legendaryEventTaskPerChannel(channels).start();
+    christmasLegendaryEvent();
+}
+
+function christmasLegendaryEvent() {
     cron.schedule(
         "0 0 25 12 *",
         () => {
@@ -178,10 +182,10 @@ export function startLegendaryTasks(): void {
                 100,
                 24 * 60 * 60 * 1000,
                 "Legendary Christmas Event",
-                "Holiday magic is in the water, and legendary fish are much more likely for the next",
+                "Holiday magic is in the water, and legendary fish are much more likely for the next"
             );
         },
-        { timezone: "UTC" },
+        { timezone: "UTC" }
     );
 }
 
