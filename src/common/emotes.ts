@@ -57,10 +57,14 @@ class EmoteFetcher {
 
     async fetch7TV(userId: string): Promise<Emote[]> {
         try {
-            logger.info(`[EmoteFetcher] Fetching 7TV emotes for userId: ${userId}`);
+            logger.debug(`[EmoteFetcher] Fetching 7TV emotes for userId: ${userId}`);
             const res = await fetch(SEVENTV_URL(userId));
             if (!res.ok) {
-                logger.error(`[EmoteFetcher] 7TV fetch failed for userId: ${userId}`);
+                if (res.status === 404) {
+                    logger.debug(`[EmoteFetcher] No 7TV emotes found for userId: ${userId}`);
+                } else {
+                    logger.error(`[EmoteFetcher] 7TV fetch failed for userId: ${userId}`);
+                }
                 return this.seventvCache.get(userId) ?? [];
             }
             const data = await res.json();
@@ -69,7 +73,7 @@ class EmoteFetcher {
                 logger.error(`[EmoteFetcher] 7TV validation failed for userId: ${userId}`);
                 return this.seventvCache.get(userId) ?? [];
             }
-            logger.info(`[EmoteFetcher] 7TV fetch and validation succeeded for userId: ${userId}`);
+            logger.debug(`[EmoteFetcher] 7TV fetch and validation succeeded for userId: ${userId}`);
             const emotes = parsed.data.emote_set.emotes.map(emote => ({
                 name: emote.name,
                 id: emote.id,
@@ -86,10 +90,14 @@ class EmoteFetcher {
 
     async fetchFFZ(userId: string): Promise<Emote[]> {
         try {
-            logger.info(`[EmoteFetcher] Fetching FFZ emotes for userId: ${userId}`);
+            logger.debug(`[EmoteFetcher] Fetching FFZ emotes for userId: ${userId}`);
             const res = await fetch(FFZ_URL(userId));
             if (!res.ok) {
-                logger.error(`[EmoteFetcher] FFZ fetch failed for userId: ${userId}`);
+                if (res.status === 404) {
+                    logger.debug(`[EmoteFetcher] No FFZ emotes found for userId: ${userId}`);
+                } else {
+                    logger.error(`[EmoteFetcher] FFZ fetch failed for userId: ${userId}`);
+                }
                 return this.ffzCache.get(userId) ?? [];
             }
             const data = await res.json();
@@ -98,7 +106,7 @@ class EmoteFetcher {
                 logger.error(`[EmoteFetcher] FFZ validation failed for userId: ${userId}`);
                 return this.ffzCache.get(userId) ?? [];
             }
-            logger.info(`[EmoteFetcher] FFZ fetch and validation succeeded for userId: ${userId}`);
+            logger.debug(`[EmoteFetcher] FFZ fetch and validation succeeded for userId: ${userId}`);
             const sets = parsed.data.sets || {};
             let emotes: Emote[] = [];
             for (const setId in sets) {
@@ -119,10 +127,14 @@ class EmoteFetcher {
 
     async fetchBTTV(userId: string): Promise<Emote[]> {
         try {
-            logger.info(`[EmoteFetcher] Fetching BTTV emotes for userId: ${userId}`);
+            logger.debug(`[EmoteFetcher] Fetching BTTV emotes for userId: ${userId}`);
             const res = await fetch(BBTV_URL(userId));
             if (!res.ok) {
-                logger.error(`[EmoteFetcher] BTTV fetch failed for userId: ${userId}`);
+                if (res.status === 404) {
+                    logger.debug(`[EmoteFetcher] No BTTV emotes found for userId: ${userId}`);
+                } else {
+                    logger.error(`[EmoteFetcher] BTTV fetch failed for userId: ${userId}`);
+                }
                 return this.bttvCache.get(userId) ?? [];
             }
             const data = await res.json();
@@ -131,7 +143,7 @@ class EmoteFetcher {
                 logger.error(`[EmoteFetcher] BTTV validation failed for userId: ${userId}`);
                 return this.bttvCache.get(userId) ?? [];
             }
-            logger.info(`[EmoteFetcher] BTTV fetch and validation succeeded for userId: ${userId}`);
+            logger.debug(`[EmoteFetcher] BTTV fetch and validation succeeded for userId: ${userId}`);
             const emotes: Emote[] = [];
             if (Array.isArray(parsed.data.channelEmotes)) {
                 emotes.push(
@@ -153,7 +165,7 @@ class EmoteFetcher {
 
     async fetch7TVGlobal(): Promise<Emote[]> {
         try {
-            logger.info(`[EmoteFetcher] Fetching 7TV global emotes`);
+            logger.debug(`[EmoteFetcher] Fetching 7TV global emotes`);
             const res = await fetch(SEVENTV_GLOBAL_URL);
             if (!res.ok) {
                 logger.error(`[EmoteFetcher] 7TV global fetch failed`);
@@ -176,7 +188,7 @@ class EmoteFetcher {
 
     async fetchFFZGlobal(): Promise<Emote[]> {
         try {
-            logger.info(`[EmoteFetcher] Fetching FFZ global emotes`);
+            logger.debug(`[EmoteFetcher] Fetching FFZ global emotes`);
             const res = await fetch(FFZ_GLOBAL_URL);
             if (!res.ok) {
                 logger.error(`[EmoteFetcher] FFZ global fetch failed`);
@@ -206,7 +218,7 @@ class EmoteFetcher {
 
     async fetchBTTVGlobal(): Promise<Emote[]> {
         try {
-            logger.info(`[EmoteFetcher] Fetching BTTV global emotes`);
+            logger.debug(`[EmoteFetcher] Fetching BTTV global emotes`);
             const res = await fetch(BTTV_GLOBAL_URL);
             if (!res.ok) {
                 logger.error(`[EmoteFetcher] BTTV global fetch failed`);
@@ -250,12 +262,6 @@ class EmoteFetcher {
         }
         const map = new Map(Object.entries(merged));
         logger.info(`[EmoteFetcher] Merged emotes for userId ${userId}: ${map.size} unique emotes`);
-        // for (const [name, emote] of map.entries()) {
-        //     logger.info(`[EmoteFetcher] Emote: ${name}, ID: ${emote.id}, Providers: ${emote.sources?.join(", ")}`);
-        // }
-        if (map.size === 0) {
-            logger.info(`[EmoteFetcher] No emotes found for userId: ${userId}`);
-        }
         return map;
     }
 }
