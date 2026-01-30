@@ -64,7 +64,7 @@ app.get("/health", async c => {
         await prisma.$queryRaw`SELECT 1`;
         return c.text("ok");
     } catch (e) {
-        console.error(e);
+        logger.error(e, "Database connection error");
         return c.text("db error", 500);
     }
 });
