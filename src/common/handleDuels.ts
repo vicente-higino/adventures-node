@@ -57,7 +57,7 @@ export async function handleDuelCreate(params: {
         let challengedDisplay = isAnyone ? "Anyone" : existingDuel.challenged.displayName || challengedId;
         return `@${userDisplayName}, this duel already exists with a ${existingDuel.wagerAmount} silver bet. 
                 Use "${prefix ?? "!"}cancelduel" to cancel this duel.
-                $(newline)@${challengedDisplay}, you can use "${prefix ?? "!"}accept|deny".`;
+                $(newline)@${challengedDisplay}, you can use "${prefix ?? "!"}accept${isAnyone ? "" : "|deny"}".`;
     }
 
     const reverseDuel = await prisma.duel.findFirst({
@@ -67,7 +67,7 @@ export async function handleDuelCreate(params: {
 
     if (reverseDuel) {
         return `@${userDisplayName}, ${challenged.displayName} has already challenged you for a duel with a ${reverseDuel.wagerAmount} silver bet! 
-                You can use "${prefix ?? "!"}accept|deny" to respond.`;
+                You can use "${prefix ?? "!"}accept${isAnyone ? "" : "|deny"}" to respond.`;
     }
 
     const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, challengerId, userlogin, userDisplayName);
@@ -105,7 +105,7 @@ export async function handleDuelCreate(params: {
     ]);
 
     return `@${userDisplayName} challenges ${challenged.displayName} to a duel for ${actualWagerAmount} silver! ${pickRandom(DUEL_CREATE_EMOTES)}
-                $(newline)@${challenged.displayName}, you can use "${prefix ?? "!"}accept|deny".`;
+                $(newline)@${challenged.displayName}, you can use "${prefix ?? "!"}accept${isAnyone ? "" : "|deny"}".`;
 }
 
 export async function handleDuelAccept(params: {
