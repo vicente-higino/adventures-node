@@ -143,23 +143,25 @@ export async function handleDuelAccept(params: {
             return `@${userDisplayName}, you have no pending duels to accept.`;
         }
     }
-    if (duel.challenged.login === "anyone") {
-        await prisma.duel.update({ where: { id: duel.id }, data: { challengedId } });
-    }
 
+    const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, challengedId, userlogin, userDisplayName);
+    if (duel.wagerAmount > balance.value) {
+        return `@${userDisplayName}, you don't have enough silver (${balance.value}) to accept the ${duel.wagerAmount} silver duel from ${duel.challenger.displayName}.`;
+    }
     // Use mutex per duel id
     const duelKey = String(duel.id);
     const mutex = getDuelMutex(duelKey);
     return await mutex.runExclusive(async () => {
         // Re-fetch duel inside lock to ensure up-to-date status
-        const lockedDuel = await prisma.duel.findUnique({ where: { id: duel.id }, include: { challenger: true } });
+        let lockedDuel = await prisma.duel.findUnique({ where: { id: duel.id }, include: { challenger: true, challenged: true } });
         if (!lockedDuel || lockedDuel.status !== "Pending") {
             return `@${userDisplayName}, this duel is no longer pending.`;
         }
-
-        const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, challengedId, userlogin, userDisplayName);
         if (lockedDuel.wagerAmount > balance.value) {
             return `@${userDisplayName}, you don't have enough silver (${balance.value}) to accept the ${lockedDuel.wagerAmount} silver duel from ${lockedDuel.challenger.displayName}.`;
+        }
+        if (lockedDuel.challenged.login === "anyone") {
+            lockedDuel = await prisma.duel.update({ where: { id: lockedDuel.id }, data: { challengedId }, include: { challenger: true, challenged: true } });
         }
         const isChallengerWinner = Math.random() < 0.5;
         const winnerId = isChallengerWinner ? lockedDuel.challengerId : lockedDuel.challengedId;
