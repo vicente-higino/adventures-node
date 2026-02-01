@@ -20,7 +20,7 @@ import { Mutex } from "async-mutex";
 import dayjs from "dayjs";
 import z from "zod";
 import { scheduleAdventureWarnings } from "./helpers/schedule";
-import Decimal from 'decimal.js';
+import Decimal from "decimal.js";
 
 // Replace single mutex with a map of mutexes per channel
 const advEndMutexMap: Map<string, Mutex> = new Map();
@@ -126,7 +126,9 @@ export async function handleAdventureEnd(params: {
                     const pr = new Decimal(payoutRate);
                     const winAmount = buyin.mul(pr).ceil().toNumber();
                     const profit = winAmount - p.buyin;
-                    logger.debug(`Calculating win for ${p.user.displayName}: buyin=${buyin.toString()}, payoutRate=${pr.toString()}, winAmount=${winAmount}, profit=${profit}`);
+                    logger.debug(
+                        `Calculating win for ${p.user.displayName}: buyin=${buyin.toString()}, payoutRate=${pr.toString()}, winAmount=${winAmount}, profit=${profit}`,
+                    );
 
                     promises.push(
                         (async () => {

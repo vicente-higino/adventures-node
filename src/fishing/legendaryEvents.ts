@@ -182,10 +182,10 @@ function christmasLegendaryEvent() {
                 100,
                 24 * 60 * 60 * 1000,
                 "Legendary Christmas Event",
-                "Holiday magic is in the water, and legendary fish are much more likely for the next"
+                "Holiday magic is in the water, and legendary fish are much more likely for the next",
             );
         },
-        { timezone: "UTC" }
+        { timezone: "UTC" },
     );
 }
 

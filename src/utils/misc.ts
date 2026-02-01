@@ -391,8 +391,4 @@ export function splitOnSpaces(text: string, maxMsgLength: number): string[] {
     return res;
 }
 
-export type AtLeastOne<T, K extends keyof T = keyof T> =
-    Partial<T> & {
-        [P in K]: Required<Pick<T, P>>;
-    }[K];
-
+export type AtLeastOne<T, K extends keyof T = keyof T> = Partial<T> & { [P in K]: Required<Pick<T, P>> }[K];

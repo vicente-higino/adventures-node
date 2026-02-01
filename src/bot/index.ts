@@ -82,7 +82,7 @@ export const createBot = async (forceRecreate?: boolean): Promise<boolean> => {
             }
         };
 
-        const authenticated = await new Promise<boolean>((resolve) => {
+        const authenticated = new Promise<boolean>(resolve => {
             bot!.onAuthenticationSuccess(() => {
                 bot?.api.users
                     .getAuthenticatedUser(userId)
