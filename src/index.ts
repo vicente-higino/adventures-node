@@ -43,7 +43,7 @@ const app = fromHono(hono);
 const authenticatedRoute = fromHono(honoWithAuth);
 
 createBot()
-    .then((ready) => {
+    .then(ready => {
         if (!ready) {
             logger.error("Bot failed to start");
             return;
@@ -51,7 +51,7 @@ createBot()
         logger.info("Bot started successfully");
         restartAdventureWarnings();
     })
-    .catch(e => console.error);
+    .catch(e => logger.error(e, "Bot failed to start"));
 app.use(honoLogger());
 
 // Add validation middleware before routes
