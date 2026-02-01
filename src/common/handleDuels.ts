@@ -42,20 +42,22 @@ export async function handleDuelCreate(params: {
 
     const challenged = await getUserById(prisma, challengedId);
     if (!challenged) {
-        return "user not found";
+        return `@${userDisplayName}, user not found.`;
     }
     if (challengerId == challengedId) {
         return `@${userDisplayName}, you can't duel yourself.`;
     }
+    const isAnyone = challenged.login === "anyone";
 
     const existingDuel = await prisma.duel.findFirst({
         where: { channelProviderId, challengerId, challengedId, status: "Pending" },
         include: { challenger: true, challenged: true },
     });
     if (existingDuel) {
+        let challengedDisplay = isAnyone ? "Anyone" : existingDuel.challenged.displayName || challengedId;
         return `@${userDisplayName}, this duel already exists with a ${existingDuel.wagerAmount} silver bet. 
                 Use "${prefix ?? "!"}cancelduel" to cancel this duel.
-                $(newline)@${existingDuel.challenged.displayName} you can use "${prefix ?? "!"}accept|deny".`;
+                $(newline)@${challengedDisplay}, you can use "${prefix ?? "!"}accept|deny".`;
     }
 
     const reverseDuel = await prisma.duel.findFirst({
@@ -102,8 +104,8 @@ export async function handleDuelCreate(params: {
         }),
     ]);
 
-    return `@${userDisplayName} challenged ${challenged.displayName} for a duel with a ${actualWagerAmount} silver bet! ${pickRandom(DUEL_CREATE_EMOTES)}
-             $(newline)@${challenged.displayName} you can use "${prefix ?? "!"}accept|deny".`;
+    return `@${userDisplayName} challenges ${challenged.displayName} to a duel for ${actualWagerAmount} silver! ${pickRandom(DUEL_CREATE_EMOTES)}
+                $(newline)@${challenged.displayName}, you can use "${prefix ?? "!"}accept|deny".`;
 }
 
 export async function handleDuelAccept(params: {
@@ -122,25 +124,27 @@ export async function handleDuelAccept(params: {
             return `@${userDisplayName}, you can't duel yourself.`;
         }
         duel = await prisma.duel.findFirst({
-            where: { channelProviderId, challengerId, challengedId, status: "Pending" },
-            include: { challenger: true },
+            where: { channelProviderId, challengerId, OR: [{ challengedId }, { challenged: { login: "anyone" } }], status: "Pending" },
+            include: { challenger: true, challenged: true },
         });
-
         if (!duel) {
             const challengerInfo = await getUserById(prisma, challengerId);
             const challengerName = challengerInfo?.displayName ?? challengerId;
             return `@${userDisplayName}, you have no pending duels from ${challengerName}.`;
         }
     } else {
+        // Accept a duel where challengedId is this user, or 'anyone'
         duel = await prisma.duel.findFirst({
-            where: { channelProviderId, challengedId, status: "Pending" },
+            where: { channelProviderId, status: "Pending", OR: [{ challengedId }, { challenged: { login: "anyone" } }] },
             orderBy: { createdAt: "asc" },
-            include: { challenger: true },
+            include: { challenger: true, challenged: true },
         });
-
         if (!duel) {
             return `@${userDisplayName}, you have no pending duels to accept.`;
         }
+    }
+    if (duel.challenged.login === "anyone") {
+        await prisma.duel.update({ where: { id: duel.id }, data: { challengedId } });
     }
 
     // Use mutex per duel id
