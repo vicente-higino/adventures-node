@@ -71,11 +71,10 @@ async function endLegendaryEvent(name: string) {
                     const entries = channelMap[channel.id] || [];
                     const totalLegendary = entries.reduce((s, e) => s + e.count, 0);
                     const uniqueCatchers = entries.length;
-                    const top = entries.sort((a, b) => b.count - a.count).slice(0, 3);
+                    const top = entries.sort((a, b) => b.count - a.count);
                     const topStrings = top.map(t => `${nameById[t.userId] ?? t.userId} (${t.count})`);
-
                     const endMsg = `The ${name} has ended. Legendary fish odds are back to normal.`;
-                    const summary = `Summary: ${totalLegendary} legendary fish caught by ${uniqueCatchers} player${uniqueCatchers === 1 ? "" : "s"}. Top: ${topStrings.join(", ") || "none"}. ${pickRandom(CONGRATULATIONS_EMOTES)}`;
+                    const summary = `${totalLegendary} legendary fish caught by ${uniqueCatchers} player${uniqueCatchers === 1 ? "" : "s"}: ${topStrings.join(", ") || "none"}. ${pickRandom(CONGRATULATIONS_EMOTES)}`;
                     const noSummary = `No legendary fish were caught during the event. ${pickRandom(SAD_EMOTES)}`;
                     sendActionToChannel(channel.login, endMsg);
                     if (entries.length > 0) {
