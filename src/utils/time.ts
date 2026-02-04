@@ -44,7 +44,7 @@ export const formatTimeToWithSeconds = (date: Date, hourWithSeconds = false): st
 export function formatMinutes(totalMilliseconds: number): string {
     const d = dayjs.duration(totalMilliseconds, "milliseconds");
 
-    const hours = Math.floor(d.asHours());
+    const hours = d.hours();
     const minutes = d.minutes();
 
     const parts: string[] = [];

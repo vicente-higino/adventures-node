@@ -31,6 +31,7 @@ import { updateSilverCommand } from "./updateSilver";
 import { addSilverCommand } from "./addSilver";
 import { forceSendCommand } from "./forceSend";
 import { rankCommand } from "./rank";
+import { remindMeCommand } from "./remindme";
 
 export const commands: BotCommand[] = [
     fishCommand,
@@ -71,4 +72,5 @@ export const commands: BotCommand[] = [
     addSilverCommand,
     forceSendCommand,
     rankCommand,
+    remindMeCommand,
 ];

@@ -161,7 +161,11 @@ export async function handleDuelAccept(params: {
             return `@${userDisplayName}, you don't have enough silver (${balance.value}) to accept the ${lockedDuel.wagerAmount} silver duel from ${lockedDuel.challenger.displayName}.`;
         }
         if (lockedDuel.challenged.login === "anyone") {
-            lockedDuel = await prisma.duel.update({ where: { id: lockedDuel.id }, data: { challengedId }, include: { challenger: true, challenged: true } });
+            lockedDuel = await prisma.duel.update({
+                where: { id: lockedDuel.id },
+                data: { challengedId },
+                include: { challenger: true, challenged: true },
+            });
         }
         const isChallengerWinner = Math.random() < 0.5;
         const winnerId = isChallengerWinner ? lockedDuel.challengerId : lockedDuel.challengedId;

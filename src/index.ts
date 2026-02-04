@@ -31,7 +31,8 @@ import { restartAdventureWarnings } from "@/common/helpers/schedule";
 import { emotesRank } from "@/endpoints/emotesRank";
 import { emotesChannel } from "@/endpoints/emotesChannel";
 import { cors } from "hono/cors";
-import logger from "./logger";
+import logger from "@/logger";
+import { initializeReminderQueue } from "./bot/remider";
 // Start a Hono app
 const hono = new Hono<HonoEnv>();
 const honoWithAuth = new Hono<HonoEnv>();
@@ -50,8 +51,16 @@ createBot()
         }
         logger.info("Bot started successfully");
         restartAdventureWarnings();
+        initializeReminderQueue()
+            .then(() => {
+                logger.info("Reminder queue initialized");
+            })
+            .catch(e => {
+                logger.error(e, "Failed to initialize reminder queue");
+            });
     })
     .catch(e => logger.error(e, "Bot failed to start"));
+
 app.use(honoLogger());
 
 // Add validation middleware before routes
