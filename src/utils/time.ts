@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import duration from "dayjs/plugin/duration";
 
 const thresholds = [
     { l: "s", r: 1 },
@@ -15,6 +16,7 @@ const thresholds = [
     { l: "yy", d: "year" },
 ];
 const config = { thresholds };
+dayjs.extend(duration, config);
 dayjs.extend(relativeTime, config);
 
 /**
@@ -58,4 +60,11 @@ export function formatMinutes(totalMilliseconds: number): string {
     }
 
     return parts.join(" ");
+}
+
+export function dateToNow(date: Date): string {
+    return dayjs(date).toNow(true);
+}
+export function dateFromNow(date: Date): string {
+    return dayjs(date).fromNow(true);
 }
