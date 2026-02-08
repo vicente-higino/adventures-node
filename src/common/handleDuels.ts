@@ -135,7 +135,7 @@ export async function handleDuelAccept(params: {
     } else {
         // Accept a duel where challengedId is this user, or 'anyone'
         duel = await prisma.duel.findFirst({
-            where: { channelProviderId, status: "Pending", OR: [{ challengedId }, { challenged: { login: "anyone" } }] },
+            where: { channelProviderId, status: "Pending", challengerId: { not: challengedId }, OR: [{ challengedId }, { challenged: { login: "anyone" } }] },
             orderBy: { createdAt: "asc" },
             include: { challenger: true, challenged: true },
         });
