@@ -62,9 +62,19 @@ export function formatMinutes(totalMilliseconds: number): string {
     return parts.join(" ");
 }
 
+/**
+ * Formats a date relative to the current time.
+ * @param date - The date to format
+ * @returns A string representing the time difference from now (e.g., "2 hours", "3 days")
+ */
 export function dateToNow(date: Date): string {
     return dayjs(date).toNow(true);
 }
+/**
+ * Calculates the time difference between a given date and now.
+ * @param date - The date to calculate the time difference from.
+ * @returns A string representing the relative time difference (e.g., "2 hours", "3 days").
+ */
 export function dateFromNow(date: Date): string {
     return dayjs(date).fromNow(true);
 }
