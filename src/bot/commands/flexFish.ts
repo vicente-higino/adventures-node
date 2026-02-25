@@ -1,13 +1,13 @@
-import { createBotCommand } from "../BotCommandWithKeywords";
 import { prisma } from "@/prisma";
+import { getUserByUsername } from "@/twitch/api";
 import { formatSize, formatWeight } from "@/utils/misc";
+import { Prisma } from "@prisma/client";
 import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
 import calendar from "dayjs/plugin/calendar";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { Fish, FishRecord, Prisma } from "@prisma/client";
+import utc from "dayjs/plugin/utc";
 import z from "zod";
-import { getBotConfig } from "..";
+import { createBotCommand } from "../BotCommandWithKeywords";
 dayjs.extend(relativeTime);
 dayjs.extend(utc);
 dayjs.extend(calendar);
@@ -70,31 +70,45 @@ export const flexFishCommand = createBotCommand(
         const [first] = params;
 
         let fish;
-        let flexLabel = "most valuable fish";
+        let flexLabel = `${userDisplayName} most valuable fish`;;
+
         if (first) {
-            // Use zod to validate and extract id with #
+            // Check if it's a fish ID (starts with #)
             const idSchema = z.string().regex(/^#\d+$/, { message: "Must start with # followed by a number" });
             const idParsed = idSchema.safeParse(first);
-            if (!idParsed.success) {
-                say(`${userDisplayName}, invalid fish id. Usage: ${getBotConfig().prefix}flexfish [#fishId]`);
-                return;
+            
+            if (idParsed.success) {
+                // It's a specific fish ID - look up from current user
+                const fishId = first.replace("#", "");
+                fish = await prisma.fish.findFirst({ where: { fishId, userId, channelProviderId: broadcasterId }, include: fishRecordsInclude });
+                if (!fish) {
+                    say(`${userDisplayName}, you don't own a fish with id ${fishId}.`);
+                    return;
+                }
+                flexLabel = `${userDisplayName} fish #${fishId}`;
+            } else {
+                // It's a username - look up that player's most valuable fish
+                const targetUser = await getUserByUsername(prisma, first);
+                if (!targetUser) {
+                    say(`${userDisplayName}, I couldn't find a player named "${first}" in this channel.`);
+                    return;
+                }
+                fish = await getUserMostValuableFish(targetUser.id, broadcasterId);
+                if (!fish) {
+                    say(`${userDisplayName}, ${first} doesn't have any fish to flex! They need to go fishing first.`);
+                    return;
+                }
+                flexLabel = `${targetUser.displayName} most valuable fish`;
             }
-            const fishId = first.replace("#", "");
-            fish = await prisma.fish.findFirst({ where: { fishId, userId, channelProviderId: broadcasterId }, include: fishRecordsInclude });
-            if (!fish) {
-                say(`${userDisplayName}, you don't own a fish with id ${fishId}.`);
-                return;
-            }
-            flexLabel = `fish #${fishId}`;
         } else {
-            // Fetch the user's most valuable fish
+            // Fetch the current user's most valuable fish
             fish = await getUserMostValuableFish(userId, broadcasterId);
             if (!fish) {
                 say(`${userDisplayName}, you don't have any fish to flex! Go fishing first.`);
                 return;
             }
         }
-        say(`${userDisplayName} ${flexLabel}: ${formatFishDisplay(fish)}. EZ`);
+        say(`${flexLabel}: ${formatFishDisplay(fish)}.`);
     },
     { ignoreCase: true, aliases: ["fishflex", "ff"] },
 );
