@@ -90,12 +90,12 @@ export const flexFishCommand = createBotCommand(
                 // It's a username - look up that player's most valuable fish
                 const targetUser = await getUserByUsername(prisma, first);
                 if (!targetUser) {
-                    say(`${userDisplayName}, I couldn't find a player named "${first}" in this channel.`);
+                    say(`${userDisplayName}, user "${first}" not found.`);
                     return;
                 }
                 fish = await getUserMostValuableFish(targetUser.id, broadcasterId);
                 if (!fish) {
-                    say(`${userDisplayName}, ${first} doesn't have any fish to flex! They need to go fishing first.`);
+                    say(`${userDisplayName}, ${targetUser.displayName} doesn't have any fish to flex! They need to go fishing first.`);
                     return;
                 }
                 flexLabel = `${targetUser.displayName} most valuable fish`;
