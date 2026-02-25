@@ -5,7 +5,7 @@
 	"type": "commonjs",
 	"scripts": {
 		"dev": "npx tsx --watch src/index.ts",
-		"type-check": "npx tsc --noEmit",
+		"type-check": "npx tsgo --noEmit",
 		"build": "node esbuild.config.cjs",
 		"start": "node --enable-source-maps build/main.min.js",
 		"db:deploy": "npx prisma migrate deploy",
@@ -51,6 +51,7 @@
 		"@eslint/js": "^9.28.0",
 		"@types/js-quantities": "^1.6.6",
 		"@types/node": "20.8.3",
+		"@typescript/native-preview": "^7.0.0-dev.20260224.1",
 		"@vitest/coverage-v8": "^3.1.1",
 		"esbuild": "^0.25.4",
 		"eslint": "^9.28.0",
