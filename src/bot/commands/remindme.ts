@@ -1,27 +1,30 @@
 import boss from "@/db/boss";
-import { createBotCommand } from "../BotCommandWithKeywords";
-import { parse, ms } from "ms";
-import dayjs from "dayjs";
-import { getBotConfig } from "@/bot";
-import { uuidv7 } from "uuidv7";
 import logger from "@/logger";
+import * as chrono from 'chrono-node';
+import dayjs from "dayjs";
+import { format, ms } from "ms";
+import { uuidv7 } from "uuidv7";
+import { createBotCommand } from "../BotCommandWithKeywords";
 
 export const remindMeCommand = createBotCommand(
     "remindme",
     async (params, ctx) => {
         const { broadcasterId, broadcasterName, say } = ctx;
         let { userDisplayName, userId, userName } = ctx;
-        let timeArg = params.shift();
-        if (!timeArg) {
+        let message = params.join(" ");
+        let timeArg = chrono.parse(message, { timezone: "UTC" });
+        if (timeArg.length == 0) {
             say("Please specify a time for the reminder.");
             return;
         }
-        const reminderDuration = parse(timeArg);
+        logger.debug({ timeArg }, "Parsed time argument");
+        const time = timeArg[0].date();
+        message = message.replace(timeArg[0].text, "").trim();
+        const reminderDuration = time.getTime() - Date.now();
         if (!reminderDuration || reminderDuration < 1000 || reminderDuration > ms("10y")) {
             say("Please provide a valid time between 1 second and 10 years.");
             return;
         }
-        let message = params.join(" ");
         if (!message) {
             message = `This is your reminder!`;
         }
@@ -36,8 +39,7 @@ export const remindMeCommand = createBotCommand(
             null,
             reminderDuration / 1000,
         );
-        say(`@${userDisplayName}, reminder set for ${timeArg} from now. 
-                ${getBotConfig().prefix}cancelremindme #${cancelId} to cancel this reminder.`);
+        say(`@${userDisplayName}, reminder #${cancelId} is set in ${format(reminderDuration)}.`);
     },
     { aliases: ["rm"], offlineOnly: false },
 );
