@@ -40,7 +40,7 @@ class BotCommandWithKeywords extends BotCommand {
     match(line: string, prefix: string): string[] | null {
         let [command, ...params] = line.split(" ");
         if (this.matchesKeyword(line, this._ignoreCase)) {
-            return [];
+            return [command, ...params];
         }
         if (!command.startsWith(prefix)) {
             return null;
@@ -108,7 +108,6 @@ export function createBotCommand(
             }
             return true;
         }
-
     })(options);
 }
 export function createAdminBotCommand(
@@ -138,6 +137,5 @@ export function createAdminBotCommand(
         canExecute(channelId: string, userId: string): boolean {
             return userId == getBotConfig().superUserId;
         }
-
     })(options);
 }

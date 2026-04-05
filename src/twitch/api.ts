@@ -189,3 +189,11 @@ export async function getStreamByUserId(userid: string) {
         return null;
     }
 }
+
+export async function sendWhisper(api: ApiClient, senderId: string, recipientId: string, message: string) {
+    try {
+        await api.whispers.sendWhisper(senderId, recipientId, message);
+    } catch (error) {
+        logger.error(error, `Error sending whisper from ${senderId} to ${recipientId}: ${message}`);
+    }
+}

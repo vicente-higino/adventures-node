@@ -111,9 +111,9 @@ export class EmoteTracker {
         });
     }
 
-    // getUsage(channel: string, emoteName: string): number {
-    //     return this.emoteUsage.get(channel)?.get(emoteName) || 0;
-    // }
+    channelHasEmote(channel: string, emoteName: string): boolean {
+        return this.channelEmotes.get(channel)?.has(emoteName) || this.globalEmotes.has(emoteName) || false;
+    }
 
     getChannelEmotes(channel: string): Map<string, Emote> {
         return this.channelEmotes.get(channel) || new Map();

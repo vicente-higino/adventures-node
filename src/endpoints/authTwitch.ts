@@ -68,7 +68,7 @@ export class AuthTwitchRedirect extends OpenAPIRoute {
             return c.json({ error: "Server configuration error: Redirect URI is not set." }, 500);
         }
         const scope =
-            data.query.scope ?? "chat:read chat:edit user:write:chat user:bot user:read:chat user:manage:chat_color user:read:moderated_channels";
+            data.query.scope ?? "chat:read chat:edit user:write:chat user:bot user:read:chat user:manage:chat_color user:read:moderated_channels user:manage:whispers";
         // Generate random state if not provided
         let state = data.query.state;
         if (!state) {

@@ -7,8 +7,9 @@ import { Bot } from "@twurple/easy-bot";
 import { promises as fs, readFileSync } from "fs";
 import { z } from "zod";
 import { commands } from "./commands";
+import { whispers } from "./commands/whispers";
 import { EmoteTracker } from "./emote-tracker";
-import { createEventsubListeners } from "./eventsubListeners";
+import { createEventsubListeners, createWhisperListener } from "./eventsubListeners";
 import { checkIfChannelIsForcedSend, fetchLiveChannels, isChannelLive } from "./liveChannels";
 export { checkIfChannelIsForcedSend, isChannelLive };
 
@@ -110,7 +111,7 @@ export const createBot = async (forceRecreate?: boolean): Promise<boolean> => {
                 bot?.say(broadcasterName, `SideEye`);
             }
         });
-
+        createWhisperListener(botConfig.userId, whispers);
         emoteTracker = new EmoteTracker(bot);
         currentBotUserId = userId; // Update the current userId
         return authenticated;
