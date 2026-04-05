@@ -13,19 +13,18 @@ export interface CatchDetails {
     weight: number; // in kilograms
     emote?: () => string;
 }
-
 export const VALUE_EMOTES: { threshold: number; emote: string }[] = [
-    { threshold: 10, emote: VALUE_EMOTES_LIST[0] }, //  < 10
-    { threshold: 50, emote: VALUE_EMOTES_LIST[1] }, //  < 50
-    { threshold: 100, emote: VALUE_EMOTES_LIST[2] }, //  < 100
-    { threshold: 140, emote: VALUE_EMOTES_LIST[3] }, //  < 140
-    { threshold: 300, emote: VALUE_EMOTES_LIST[4] }, //  < 300
-    { threshold: 600, emote: VALUE_EMOTES_LIST[5] }, //  < 600
-    { threshold: 800, emote: VALUE_EMOTES_LIST[6] }, //  < 800
-    { threshold: 1000, emote: VALUE_EMOTES_LIST[7] }, //  < 1000
-    { threshold: 2500, emote: VALUE_EMOTES_LIST[8] }, //  < 2500
-    { threshold: 5000, emote: VALUE_EMOTES_LIST[9] }, //  < 5000
-    { threshold: Infinity, emote: VALUE_EMOTES_LIST[10] }, // >= 5000
+    { threshold: 10, emote: VALUE_EMOTES_LIST.WAJAJA.name }, //  < 10
+    { threshold: 50, emote: VALUE_EMOTES_LIST.pogg.name }, //  < 50
+    { threshold: 100, emote: VALUE_EMOTES_LIST.poggSpin.name }, //  < 100
+    { threshold: 140, emote: VALUE_EMOTES_LIST.YIPPIE.name }, //  < 140
+    { threshold: 300, emote: VALUE_EMOTES_LIST.POGGIES.name }, //  < 300
+    { threshold: 600, emote: VALUE_EMOTES_LIST.POGGERS.name }, //  < 600
+    { threshold: 800, emote: VALUE_EMOTES_LIST.Pog.name }, //  < 800
+    { threshold: 1000, emote: VALUE_EMOTES_LIST.HOLY.name }, //  < 1000
+    { threshold: 2500, emote: VALUE_EMOTES_LIST.Cereal.name }, //  < 2500
+    { threshold: 5000, emote: VALUE_EMOTES_LIST.MUGA.name }, //  < 5000
+    { threshold: Infinity, emote: VALUE_EMOTES_LIST.OOOO.name }, // >= 5000
 ];
 
 // Define rarity weights

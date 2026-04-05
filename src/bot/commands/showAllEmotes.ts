@@ -11,12 +11,7 @@ export const showAllEmotesCommand = createBotCommand(
             return;
         }
         // Gather all emote arrays from emotes.ts
-        const allEmotes: string[] = [];
-        for (const value of Object.values(emotes)) {
-            if (Array.isArray(value)) {
-                allEmotes.push(...value);
-            }
-        }
+        const allEmotes = emotes.EmoteManager.getAllEmotes().map(e => e.name);
         // Remove duplicates and sort
         const uniqueEmotes = Array.from(new Set(allEmotes));
         say(uniqueEmotes.join(" "));

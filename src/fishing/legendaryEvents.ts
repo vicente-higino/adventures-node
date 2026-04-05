@@ -74,8 +74,8 @@ async function endLegendaryEvent(name: string) {
                     const top = entries.sort((a, b) => b.count - a.count);
                     const topStrings = top.map(t => `${nameById[t.userId] ?? t.userId} (${t.count})`);
                     const endMsg = `The ${name} has ended. Legendary fish odds are back to normal.`;
-                    const summary = `${totalLegendary} legendary fish caught by ${uniqueCatchers} player${uniqueCatchers === 1 ? "" : "s"}: ${topStrings.join(", ") || "none"}. ${pickRandom(CONGRATULATIONS_EMOTES)}`;
-                    const noSummary = `No legendary fish were caught during the event. ${pickRandom(SAD_EMOTES)}`;
+                    const summary = `${totalLegendary} legendary fish caught by ${uniqueCatchers} player${uniqueCatchers === 1 ? "" : "s"}: ${topStrings.join(", ") || "none"}. ${CONGRATULATIONS_EMOTES(channel.login)}`;
+                    const noSummary = `No legendary fish were caught during the event. ${SAD_EMOTES(channel.login)}`;
                     sendActionToChannel(channel.login, endMsg);
                     if (entries.length > 0) {
                         sendActionToChannel(channel.login, summary);
@@ -130,7 +130,7 @@ export function manualLegendaryEventTask(
     modifyRarityWeights({ Legendary: legendaryWeight, Common: w => w - legendaryWeight + 1 });
     const legendaryChanceAfter = getChanceByRarity("Legendary");
     const chanceStr = `${roundToDecimalPlaces(legendaryChanceBefore, 2).toFixed(2)}% -> ${roundToDecimalPlaces(legendaryChanceAfter, 2).toFixed(2)}%`;
-    sendActionToAllChannel(`A ${name} has started! ${msg} ${formatMinutes(durationMs)}! ${chanceStr} ${pickRandom(EVENT_STARTED_EMOTES)}`);
+    sendActionToAllChannel(`A ${name} has started! ${msg} ${formatMinutes(durationMs)}! ${chanceStr} ${EVENT_STARTED_EMOTES()}`);
 
     // persist event to DB
     prisma.legendaryEvent

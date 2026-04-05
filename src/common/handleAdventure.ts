@@ -295,7 +295,7 @@ export async function handleAdventureJoin(params: {
         if (secondsLeft >= 1) {
             const timeUntilNext = dayjs(nextAvailable);
             return `@${userDisplayName}, adventure is in cooldown, please wait ${formatTimeToWithSeconds(timeUntilNext.toDate())} before starting a new one. 
-                    ${pickRandom(ADVENTURE_COOLDOWN_EMOTES)}`;
+                    ${ADVENTURE_COOLDOWN_EMOTES(channelLogin)}`;
         }
     }
     const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);
@@ -341,7 +341,7 @@ export async function handleAdventureJoin(params: {
             scheduleAdventureWarnings(prisma, adventure.id);
 
             return `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "${prefix ?? "!"}adventure | ${prefix ?? "!"}adv [silver(K/M/B)|%|all|to:silver|k:silver]" to join in!
-                    This adventure offers a ${formattedPayoutRate}x payout rate! ${ADVENTURE_GAMBA_EMOTE}
+                    This adventure offers a ${formattedPayoutRate}x payout rate! ${ADVENTURE_GAMBA_EMOTE(channelLogin)}
                     $(newline)@${userDisplayName} joined the adventure with ${newBuyin} silver.`;
         });
     }

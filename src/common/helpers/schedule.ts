@@ -1,10 +1,10 @@
 import { checkIfChannelIsForcedSend, getBotConfig, isChannelLive } from "@/bot";
 import { dbClient, prisma } from "@/prisma";
 import { delay, sendActionToChannel, sendMessageToChannel } from "@/utils/misc";
-import { PrismaClient } from "@prisma/client";
 import { handleAdventureEnd } from "../handleAdventure";
 import { getStreamByUserId } from "@/twitch/api";
 import logger from "@/logger";
+import { ADVENTURE_GAMBA_EMOTE, ADVENTURE_ENDING_EMOTE } from "@/emotes";
 
 export interface AdventureWarning {
     delay: number; // milliseconds
@@ -14,27 +14,27 @@ export interface AdventureWarning {
 const DEFAULT_WARNINGS: AdventureWarning[] = [
     {
         delay: 30 * 60 * 1000,
-        message: `Ending the adventure in 15 minutes! Join now or update your silver with !adventure | !adv to participate! GAMBA`,
+        message: `Ending the adventure in 15 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_GAMBA_EMOTE()}`,
     },
     {
         delay: 40 * 60 * 1000,
-        message: `Alarm Ending the adventure in 5 minutes! Join now or update your silver with !adventure | !adv to participate! dinkDonk`,
+        message: `${ADVENTURE_ENDING_EMOTE.Alert.name} Ending the adventure in 5 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
     },
     {
         delay: 43 * 60 * 1000,
-        message: `Alarm Ending the adventure in 2 minutes! Join now or update your silver with !adventure | !adv to participate! dinkDonk`,
+        message: `${ADVENTURE_ENDING_EMOTE.Alert.name} Ending the adventure in 2 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
     },
     { delay: 45 * 60 * 1000, message: `!adventureend` },
 ];
 export const RESTART_WARNINGS: AdventureWarning[] = [
-    { delay: 1000, message: `Ending the adventure in 15 minutes! Join now or update your silver with !adventure | !adv to participate! GAMBA` },
+    { delay: 1000, message: `Ending the adventure in 15 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_GAMBA_EMOTE()}` },
     {
         delay: 10 * 60 * 1000,
-        message: `Alarm Ending the adventure in 5 minutes! Join now or update your silver with !adventure | !adv to participate! dinkDonk`,
+        message: `${ADVENTURE_ENDING_EMOTE.Alert.name} Ending the adventure in 5 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
     },
     {
         delay: 13 * 60 * 1000,
-        message: `Alarm Ending the adventure in 2 minutes! Join now or update your silver with !adventure | !adv to participate! dinkDonk`,
+        message: `${ADVENTURE_ENDING_EMOTE.Alert.name} Ending the adventure in 2 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
     },
     { delay: 15 * 60 * 1000, message: `!adventureend` },
 ];
@@ -99,9 +99,9 @@ export async function restartAdventureWarnings(channelProviderId?: string) {
             elapsedTime >= totalDuration
                 ? RESTART_WARNINGS // Use default delays if the adventure has passed the end time
                 : RESTART_WARNINGS.map(warning => ({
-                      ...warning,
-                      delay: warning.delay + Math.max(0, totalDuration - elapsedTime), // Add the delayOffset
-                  }));
+                    ...warning,
+                    delay: warning.delay + Math.max(0, totalDuration - elapsedTime), // Add the delayOffset
+                }));
 
         scheduleAdventureWarnings(prisma, adv.id, adjustedWarnings);
     }

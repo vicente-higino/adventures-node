@@ -62,13 +62,13 @@ export async function fishForUser({
                     return (
                         cooldownMessage +
                         pickRandom([
-                            ` ${pickRandom(FISH_COOLDOWN_EMOTES)} ${pickRandom(friendlyCooldownMessages)}`,
-                            ` ${pickRandom(QUOTES_EMOTES)} ${pickRandom(motivationalQuotes)}`,
-                            ` ${pickRandom(FACTS_EMOTES)} ${pickRandom(fishingFacts)}`,
+                            ` ${FISH_COOLDOWN_EMOTES(channelLogin)} ${pickRandom(friendlyCooldownMessages)}`,
+                            ` ${QUOTES_EMOTES(channelLogin)} ${pickRandom(motivationalQuotes)}`,
+                            ` ${FACTS_EMOTES(channelLogin)} ${pickRandom(fishingFacts)}`,
                         ])
                     );
                 }
-                return `${cooldownMessage} ${pickRandom(FISH_COOLDOWN_EMOTES)}`;
+                return `${cooldownMessage} ${FISH_COOLDOWN_EMOTES(channelLogin)}`;
             }
         }
 
@@ -87,7 +87,7 @@ export async function fishForUser({
                 data: { fishFines: { increment: fine }, fishFinesCount: { increment: 1 } },
             });
             await Promise.all([increaseBalance(prisma, balance.id, -fine), updateFishFinesInFishStats, updateCaughtTimestamp]);
-            return `@${userDisplayName} POLICE You got caught fishing in ${place} and were fined ${fine} silver! ${pickRandom(FISH_FINE_EMOTES)}`;
+            return `@${userDisplayName} POLICE You got caught fishing in ${place} and were fined ${fine} silver! ${FISH_FINE_EMOTES(channelLogin)}`;
         }
 
         const unitSystem = balance.user.unitSystem ?? "metric";
@@ -100,7 +100,7 @@ export async function fishForUser({
             treasureBonus += chestBonus;
             treasureMessage = `💰 While sifting through the trash, you discovered a hidden treasure chest containing ${chestBonus} silver! ${getValueEmote(chestBonus)}`;
             setTimeout(async () => {
-                sendActionToChannel(channelLogin, `@${userDisplayName} Hold on... something's glimmering in the trash! ${pickRandom(PAUSE_EMOTES)}`);
+                sendActionToChannel(channelLogin, `@${userDisplayName} Hold on... something's glimmering in the trash! ${PAUSE_EMOTES(channelLogin)}`);
                 await delay(2000);
                 sendActionToChannel(channelLogin, `@${userDisplayName} ${treasureMessage}`);
             }, 2000);
@@ -258,12 +258,12 @@ export async function fishForUser({
                         if (fish.rarity === Rarity.Trash) {
                             sendActionToChannel(
                                 channelLogin,
-                                `@${userDisplayName} completed the Trash FishDex and earned ${bonus} silver! EarthDay Thanks for cleaning up the ocean and helping nature! ${pickRandom(CONGRATULATIONS_TRASH_FISH_DEX_EMOTES)}`,
+                                `@${userDisplayName} completed the Trash FishDex and earned ${bonus} silver! EarthDay Thanks for cleaning up the ocean and helping nature! ${CONGRATULATIONS_TRASH_FISH_DEX_EMOTES(channelLogin)}`,
                             );
                         } else {
                             sendActionToChannel(
                                 channelLogin,
-                                `@${userDisplayName} has completed the FishDex for [${fish.rarity}] rarity and earned a bonus of ${bonus} silver! ${pickRandom(CONGRATULATIONS_EMOTES)}`,
+                                `@${userDisplayName} has completed the FishDex for [${fish.rarity}] rarity and earned a bonus of ${bonus} silver! ${CONGRATULATIONS_EMOTES(channelLogin)}`,
                             );
                         }
                     }, 1000);

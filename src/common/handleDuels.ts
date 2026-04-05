@@ -8,6 +8,7 @@ import { formatTimeToWithSeconds } from "@/utils/time";
 import { Mutex } from "async-mutex";
 import dayjs from "dayjs";
 import { amountParamSchema } from "./handleAdventure";
+import { channel } from "diagnostics_channel";
 
 const duelCooldownMs = () => 1000 * 60 * 60 * env.COOLDOWN_DUEL_IN_HOURS;
 const duelMutexMap: Map<string, Mutex> = new Map();
@@ -93,7 +94,7 @@ export async function handleDuelCreate(params: {
         const secondsLeft = Math.floor((nextAvailable.getTime() - now.getTime()) / 1000);
         if (secondsLeft >= 1) {
             const timeUntilNext = dayjs(nextAvailable);
-            return `@${userDisplayName}, you are on cooldown for ${formatTimeToWithSeconds(timeUntilNext.toDate())}. ${pickRandom(ADVENTURE_COOLDOWN_EMOTES)}`;
+            return `@${userDisplayName}, you are on cooldown for ${formatTimeToWithSeconds(timeUntilNext.toDate())}. ${ADVENTURE_COOLDOWN_EMOTES(channelLogin)}`;
         }
     }
 
@@ -104,7 +105,7 @@ export async function handleDuelCreate(params: {
         }),
     ]);
 
-    return `@${userDisplayName} challenges ${challenged.displayName} to a duel for ${actualWagerAmount} silver! ${pickRandom(DUEL_CREATE_EMOTES)}
+    return `@${userDisplayName} challenges ${challenged.displayName} to a duel for ${actualWagerAmount} silver! ${DUEL_CREATE_EMOTES(channelLogin)}
                 $(newline)@${challenged.displayName}, you can use "${prefix ?? "!"}accept${isAnyone ? "" : "|deny"}".`;
 }
 
@@ -207,17 +208,18 @@ export async function handleDuelAccept(params: {
             loserDisplayName += ` (${loserStats.duelLoseStreak} losses in a row)`;
         }
 
-        return `@${winnerDisplayName} won the duel against ${loserDisplayName} and claimed ${lockedDuel.wagerAmount} silver! ${pickRandom(DUEL_WIN_EMOTES)}`;
+        return `@${winnerDisplayName} won the duel against ${loserDisplayName} and claimed ${lockedDuel.wagerAmount} silver! ${DUEL_WIN_EMOTES(channelLogin)}`;
     });
 }
 
 export async function handleDuelCancel(params: {
     channelProviderId: string;
+    channelLogin: string;
     currentUserId: string;
     userDisplayName: string;
     challengedId?: string | null;
 }) {
-    const { channelProviderId, currentUserId, userDisplayName, challengedId } = params;
+    const { channelProviderId, channelLogin, currentUserId, userDisplayName, challengedId } = params;
 
     let duel;
     let otherUserName: string | null = null;
@@ -278,7 +280,7 @@ export async function handleDuelCancel(params: {
         if (currentUserId === lockedDuel.challengerId) {
             return `@${userDisplayName} cancelled their duel challenge to ${otherUserName}!`;
         } else {
-            return `@${userDisplayName} declined the duel challenge from ${otherUserName}! ${pickRandom(DUEL_DENY_EMOTES)}`;
+            return `@${userDisplayName} declined the duel challenge from ${otherUserName}! ${DUEL_DENY_EMOTES(channelLogin)}`;
         }
     });
 }

@@ -17,11 +17,12 @@ export class DuelCancel extends OpenAPIRoute {
     async handle(c: Context<HonoEnv>) {
         const data = await this.getValidatedData<typeof this.schema>();
         const channelProviderId = data.headers["x-fossabot-channelproviderid"];
+        const channelLogin = data.headers["x-fossabot-channellogin"];
         const currentUserId = data.headers["x-fossabot-message-userproviderid"];
         const userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
         const { challengedId } = data.params;
 
-        const result = await handleDuelCancel({ channelProviderId, currentUserId, userDisplayName, challengedId });
+        const result = await handleDuelCancel({ channelProviderId, channelLogin, currentUserId, userDisplayName, challengedId });
         return c.text(result);
     }
 }
