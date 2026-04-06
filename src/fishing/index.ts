@@ -12,7 +12,7 @@ export {
 } from "./legendaryEvents";
 
 // Example usage in getSize function:
-type GetFishFunc = (args?: { rndFish?: () => CatchDetails; unitSystem?: UnitSystem }) => {
+type GetFishFunc = (args?: { rndFish?: () => CatchDetails; unitSystem?: UnitSystem, channel?: string }) => {
     name: string;
     rarity: Rarity;
     rarityEmote: string;
@@ -28,7 +28,7 @@ type GetFishFunc = (args?: { rndFish?: () => CatchDetails; unitSystem?: UnitSyst
 };
 
 export const getFish: GetFishFunc = (args = {}) => {
-    const { rndFish = randomFish, unitSystem = "metric" } = args;
+    const { rndFish = randomFish, unitSystem = "metric", channel } = args;
 
     const fish = rndFish();
     const { rarity, size, weight, sellValue, emote } = fish;
@@ -62,7 +62,7 @@ export const getFish: GetFishFunc = (args = {}) => {
         formatedWeight: formatWeight(actualWeight, unitSystem),
         sellMultiplier: sellMultiplier,
         sellValue: actualSellValue,
-        emote: emote ? emote() : "",
+        emote: emote ? emote(channel) : "",
     };
 };
 

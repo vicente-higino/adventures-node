@@ -11,7 +11,7 @@ export interface CatchDetails {
     rarity: Rarity;
     size: number; // in centimeters
     weight: number; // in kilograms
-    emote?: () => string;
+    emote?: (channel?: string) => string;
 }
 export const VALUE_EMOTES: { threshold: number; emote: string }[] = [
     { threshold: 10, emote: VALUE_EMOTES_LIST.WAJAJA.name }, //  < 10

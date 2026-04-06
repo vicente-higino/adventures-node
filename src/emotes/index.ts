@@ -20,7 +20,7 @@ export class EmoteManager {
     public static getRandomEmote(category: EmoteCategory, channel?: string): Emote | null {
         const emotes = this.getEmotesForCategory(category);
         const emote = pickRandom(emotes);
-        if (!channel) return emote;
+        if (!channel || emote.provider == 'native') return emote;
         return emoteTracker?.channelHasEmote(channel, emote.name) ? emote : null;
     }
 

@@ -91,7 +91,7 @@ export async function fishForUser({
         }
 
         const unitSystem = balance.user.unitSystem ?? "metric";
-        const fish = getFish({ unitSystem });
+        const fish = getFish({ unitSystem, channel: channelLogin });
         let bonus = 0;
         let treasureBonus = 0;
         let treasureMessage = "";
