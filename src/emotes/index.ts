@@ -2,15 +2,12 @@ import { emoteTracker } from "@/bot";
 import { CATEGORY_EMOTES, CATEGORY_EMOTES_RECORD, Emote, EmoteCategory, EmoteName, EmoteProvider } from "./emotes-data";
 import { pickRandom } from "@/utils/misc";
 
-
-
 export class EmoteManager {
     private static readonly emoteCategoriesCache = new Map<EmoteCategory, Emote[]>();
 
     private static getEmotesForCategory(category: EmoteCategory): Emote[] {
         if (!this.emoteCategoriesCache.has(category)) {
             return CATEGORY_EMOTES[category] || [];
-
         }
         return this.emoteCategoriesCache.get(category)!;
     }
@@ -20,7 +17,7 @@ export class EmoteManager {
     public static getRandomEmote(category: EmoteCategory, channel?: string): Emote | null {
         const emotes = this.getEmotesForCategory(category);
         const emote = pickRandom(emotes);
-        if (!channel || emote.provider == 'native') return emote;
+        if (!channel || emote.provider == "native") return emote;
         return emoteTracker?.channelHasEmote(channel, emote.name) ? emote : null;
     }
 

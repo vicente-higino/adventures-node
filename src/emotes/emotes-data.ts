@@ -26,8 +26,6 @@ export enum EmoteCategory {
 
 export type EmoteProvider = "native" | "bttv" | "ffz" | "7tv";
 
-
-
 // Define all unique emotes with their providers (single source of truth)
 export const EMOTE_DEFINITIONS = {
     PauseChamp: "7tv",
@@ -166,21 +164,13 @@ export function Emote(name: EmoteName) {
         throw new Error(`Emote not found in definitions: ${name}`);
     }
     return { name, provider };
-};
+}
 
-type CategoryEmotesArray = {
-    [key in EmoteCategory]: Emote[];
-};
-
+type CategoryEmotesArray = { [key in EmoteCategory]: Emote[] };
 
 export const CATEGORY_EMOTES_RECORD = {
-    [EmoteCategory.ADVENTURE_END_EMOTES]: {
-        dinkDonk: Emote("dinkDonk"),
-        Alert: Emote("Alert"),
-    },
-    [EmoteCategory.ADVENTURE_START_EMOTES]: {
-        GAMBA: Emote("GAMBA"),
-    },
+    [EmoteCategory.ADVENTURE_END_EMOTES]: { dinkDonk: Emote("dinkDonk"), Alert: Emote("Alert") },
+    [EmoteCategory.ADVENTURE_START_EMOTES]: { GAMBA: Emote("GAMBA") },
     [EmoteCategory.DUEL_CREATE]: {
         GAMBA: Emote("GAMBA"),
         PauseChamp: Emote("PauseChamp"),
@@ -190,12 +180,7 @@ export const CATEGORY_EMOTES_RECORD = {
         DRAMA: Emote("DRAMA"),
         NAILS: Emote("NAILS"),
     },
-    [EmoteCategory.PAUSE]: {
-        PauseChamp: Emote("PauseChamp"),
-        PAUSE: Emote("PAUSE"),
-        PauseCat: Emote("PauseCat"),
-        PausersHype: Emote("PausersHype"),
-    },
+    [EmoteCategory.PAUSE]: { PauseChamp: Emote("PauseChamp"), PAUSE: Emote("PAUSE"), PauseCat: Emote("PauseCat"), PausersHype: Emote("PausersHype") },
     [EmoteCategory.DUEL_DENY]: {
         Scared: Emote("Scared"),
         monkaS: Emote("monkaS"),
@@ -359,12 +344,7 @@ export const CATEGORY_EMOTES_RECORD = {
         waaa: Emote("waaa"),
         WAJAJA: Emote("WAJAJA"),
     },
-    [EmoteCategory.MUSHY]: {
-        mushyJam: Emote("mushyJam"),
-        mushyOk: Emote("mushyOk"),
-        mushySit: Emote("mushySit"),
-        mushyWheel: Emote("mushyWheel"),
-    },
+    [EmoteCategory.MUSHY]: { mushyJam: Emote("mushyJam"), mushyOk: Emote("mushyOk"), mushySit: Emote("mushySit"), mushyWheel: Emote("mushyWheel") },
     [EmoteCategory.SOCKO]: {
         shocko: Emote("shocko"),
         wideSock: Emote("wideSock"),
@@ -374,11 +354,7 @@ export const CATEGORY_EMOTES_RECORD = {
         sockSludge: Emote("sockSludge"),
         fusSock: Emote("fusSock"),
     },
-    [EmoteCategory.APRIL_FOOZE]: {
-        fusApril: Emote("fusApril"),
-        fusMoney: Emote("fusMoney"),
-        fusVlog: Emote("fusVlog"),
-    },
+    [EmoteCategory.APRIL_FOOZE]: { fusApril: Emote("fusApril"), fusMoney: Emote("fusMoney"), fusVlog: Emote("fusVlog") },
     [EmoteCategory.FUSLIE]: {
         fus7: Emote("fus7"),
         fusW: Emote("fusW"),
@@ -388,17 +364,9 @@ export const CATEGORY_EMOTES_RECORD = {
         WOWMOM: Emote("WOWMOM"),
         fusJR: Emote("fusJR"),
     },
-    [EmoteCategory.FROG]: {
-        FROG: Emote("FROG"),
-        Pog: Emote("Pog"),
-        frogJam: Emote("frogJam"),
-    },
-    [EmoteCategory.BLOBFISH]: {
-        FishMoley: Emote("FishMoley"),
-    },
-    [EmoteCategory.SURGEONFISH]: {
-        fusDory: Emote("fusDory"),
-    },
+    [EmoteCategory.FROG]: { FROG: Emote("FROG"), Pog: Emote("Pog"), frogJam: Emote("frogJam") },
+    [EmoteCategory.BLOBFISH]: { FishMoley: Emote("FishMoley") },
+    [EmoteCategory.SURGEONFISH]: { fusDory: Emote("fusDory") },
     [EmoteCategory.VALUE]: {
         WAJAJA: Emote("WAJAJA"),
         pogg: Emote("pogg"),
@@ -425,12 +393,6 @@ export const CATEGORY_EMOTES_RECORD = {
 
 // Derive array version from record to avoid duplication
 export const CATEGORY_EMOTES: CategoryEmotesArray = Object.entries(CATEGORY_EMOTES_RECORD).reduce(
-    (acc, [category, emotes]) => ({
-        ...acc,
-        [category]: Object.values(emotes || {}),
-    }),
+    (acc, [category, emotes]) => ({ ...acc, [category]: Object.values(emotes || {}) }),
     {} as CategoryEmotesArray,
 );
-
-
-

@@ -1,7 +1,5 @@
-import { GetBot } from "@/bot";
 import { createWhisperCommand } from "@/bot/whispers";
 import logger from "@/logger";
-import { sendWhisper } from "@/twitch/api";
 
 export const echoWhisper = createWhisperCommand(
     "echo",
@@ -13,7 +11,6 @@ export const echoWhisper = createWhisperCommand(
         }
         logger.debug({ senderUserName, messageText, echoMessage }, "Echoing whisper");
         reply(`${echoMessage}`);
-
     },
     { keywords: ["echo2"], aliases: ["ec", "ec1"], ignoreCase: false },
 );

@@ -100,7 +100,10 @@ export async function fishForUser({
             treasureBonus += chestBonus;
             treasureMessage = `💰 While sifting through the trash, you discovered a hidden treasure chest containing ${chestBonus} silver! ${getValueEmote(chestBonus)}`;
             setTimeout(async () => {
-                sendActionToChannel(channelLogin, `@${userDisplayName} Hold on... something's glimmering in the trash! ${PAUSE_EMOTES(channelLogin)}`);
+                sendActionToChannel(
+                    channelLogin,
+                    `@${userDisplayName} Hold on... something's glimmering in the trash! ${PAUSE_EMOTES(channelLogin)}`,
+                );
                 await delay(2000);
                 sendActionToChannel(channelLogin, `@${userDisplayName} ${treasureMessage}`);
             }, 2000);

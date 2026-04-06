@@ -70,13 +70,13 @@ export const flexFishCommand = createBotCommand(
         const [first] = params;
 
         let fish;
-        let flexLabel = `${userDisplayName} most valuable fish`;;
+        let flexLabel = `${userDisplayName} most valuable fish`;
 
         if (first) {
             // Check if it's a fish ID (starts with #)
             const idSchema = z.string().regex(/^#\d+$/, { message: "Must start with # followed by a number" });
             const idParsed = idSchema.safeParse(first);
-            
+
             if (idParsed.success) {
                 // It's a specific fish ID - look up from current user
                 const fishId = first.replace("#", "");

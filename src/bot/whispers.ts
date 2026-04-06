@@ -4,9 +4,7 @@ import { EventSubUserWhisperMessageEvent } from "@twurple/eventsub-base";
 import { GetBot } from ".";
 import { sendWhisper } from "@/twitch/api";
 
-type WhisperContext = EventSubUserWhisperMessageEvent & {
-    reply: (message: string) => Promise<void>;
-};
+type WhisperContext = EventSubUserWhisperMessageEvent & { reply: (message: string) => Promise<void> };
 
 interface WhisperCommand {
     name: string;
@@ -66,7 +64,6 @@ class Whispers {
         const [command, ...params] = line.split(" ");
         const transformedLine = [command.toLowerCase(), ...params].join(" ");
         return this._match(transformedLine, prefix);
-
     }
     matchesKeyword(input: string, ignoreCase = false): boolean {
         const inputWords = input.split(" ");
@@ -97,7 +94,7 @@ class Whispers {
 export function createWhisperCommand(
     whisperName: string,
     handler: (params: string[], context: WhisperContext) => void | Promise<void>,
-    options: { aliases?: string[], keywords?: string[]; ignoreCase?: boolean } = {},
+    options: { aliases?: string[]; keywords?: string[]; ignoreCase?: boolean } = {},
 ): Whispers {
     return new Whispers({
         name: whisperName,

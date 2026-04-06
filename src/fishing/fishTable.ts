@@ -11,17 +11,10 @@ export const fishTable: CatchDetails[] = [
     { sellValue: RARITY_POINTS.Legendary, name: "Helicoprion", rarity: "Legendary", size: 800, weight: 500 },
     { sellValue: RARITY_POINTS.Legendary, name: "Leedsichthys", rarity: "Legendary", size: 1200, weight: 15000 },
 
-    { sellValue: RARITY_POINTS.Legendary * 5, name: "Mushy", emote: (c) => MUSHY_EMOTES(c), rarity: "Legendary", size: 40, weight: 4 },
-    { sellValue: RARITY_POINTS.Legendary * 5, name: "Socko", emote: (c) => SOCKO_EMOTES(c), rarity: "Legendary", size: 30, weight: 4 },
-    {
-        sellValue: RARITY_POINTS.Legendary * 10,
-        name: "April Fooze",
-        emote: (c) => APRIL_FOOZE_EMOTES(c),
-        rarity: "Legendary",
-        size: 170,
-        weight: 60,
-    },
-    { sellValue: RARITY_POINTS.Legendary * 15, name: "Fuslie", emote: (c) => FUSLIE_EMOTES(c), rarity: "Legendary", size: 170, weight: 60 },
+    { sellValue: RARITY_POINTS.Legendary * 5, name: "Mushy", emote: c => MUSHY_EMOTES(c), rarity: "Legendary", size: 40, weight: 4 },
+    { sellValue: RARITY_POINTS.Legendary * 5, name: "Socko", emote: c => SOCKO_EMOTES(c), rarity: "Legendary", size: 30, weight: 4 },
+    { sellValue: RARITY_POINTS.Legendary * 10, name: "April Fooze", emote: c => APRIL_FOOZE_EMOTES(c), rarity: "Legendary", size: 170, weight: 60 },
+    { sellValue: RARITY_POINTS.Legendary * 15, name: "Fuslie", emote: c => FUSLIE_EMOTES(c), rarity: "Legendary", size: 170, weight: 60 },
     { sellValue: RARITY_POINTS.Legendary * 15, name: "Fukura", rarity: "Legendary", size: 180, weight: 70 },
 
     // Epic fish - very large sizes
@@ -81,7 +74,7 @@ export const fishTable: CatchDetails[] = [
     { sellValue: RARITY_POINTS.Fine, name: "Shad", rarity: "Fine", size: 60, weight: 4 },
     { sellValue: RARITY_POINTS.Fine, name: "Butterfly Fish", rarity: "Fine", size: 20, weight: 0.5 },
     { sellValue: RARITY_POINTS.Fine, name: "Dab", rarity: "Fine", size: 30, weight: 1 },
-    { sellValue: RARITY_POINTS.Fine, name: "Frog", rarity: "Fine", size: 10, weight: 0.2, emote: (c) => FROG_EMOTES(c) },
+    { sellValue: RARITY_POINTS.Fine, name: "Frog", rarity: "Fine", size: 10, weight: 0.2, emote: c => FROG_EMOTES(c) },
     { sellValue: RARITY_POINTS.Fine, name: "Sea Urchin", rarity: "Fine", size: 15, weight: 0.3 },
     { sellValue: RARITY_POINTS.Fine, name: "Dolphin", rarity: "Fine", size: 250, weight: 200 },
     { sellValue: RARITY_POINTS.Fine, name: "Triggerfish", rarity: "Fine", size: 50, weight: 3 },
@@ -103,11 +96,11 @@ export const fishTable: CatchDetails[] = [
     { sellValue: RARITY_POINTS.Uncommon, name: "Perch", rarity: "Uncommon", size: 20, weight: 0.5 },
     { sellValue: RARITY_POINTS.Uncommon, name: "Drum", rarity: "Uncommon", size: 60, weight: 6 },
     { sellValue: RARITY_POINTS.Uncommon, name: "Muskellunge", rarity: "Uncommon", size: 115, weight: 13 },
-    { sellValue: RARITY_POINTS.Uncommon, name: "Blobfish", rarity: "Uncommon", size: 40, weight: 2, emote: (c) => BLOBFISH_EMOTES(c) },
+    { sellValue: RARITY_POINTS.Uncommon, name: "Blobfish", rarity: "Uncommon", size: 40, weight: 2, emote: c => BLOBFISH_EMOTES(c) },
     { sellValue: RARITY_POINTS.Uncommon, name: "Red Mullet", rarity: "Uncommon", size: 30, weight: 0.7 },
     { sellValue: RARITY_POINTS.Uncommon, name: "Tilapia", rarity: "Uncommon", size: 60, weight: 3 },
     { sellValue: RARITY_POINTS.Uncommon, name: "Piranha", rarity: "Uncommon", size: 25, weight: 0.5 },
-    { sellValue: RARITY_POINTS.Uncommon, name: "Surgeonfish", rarity: "Uncommon", size: 35, weight: 6, emote: (c) => SURGEONFISH_EMOTES(c) },
+    { sellValue: RARITY_POINTS.Uncommon, name: "Surgeonfish", rarity: "Uncommon", size: 35, weight: 6, emote: c => SURGEONFISH_EMOTES(c) },
     { sellValue: RARITY_POINTS.Uncommon, name: "Char", rarity: "Uncommon", size: 40, weight: 4 },
 
     // Common fish - small sizes

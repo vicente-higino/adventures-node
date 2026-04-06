@@ -1,6 +1,6 @@
 import boss from "@/db/boss";
 import logger from "@/logger";
-import * as chrono from 'chrono-node';
+import * as chrono from "chrono-node";
 import dayjs from "dayjs";
 import { format, ms } from "ms";
 import { uuidv7 } from "uuidv7";
