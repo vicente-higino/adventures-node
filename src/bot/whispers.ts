@@ -4,7 +4,7 @@ import { EventSubUserWhisperMessageEvent } from "@twurple/eventsub-base";
 import { GetBot } from ".";
 import { sendWhisper } from "@/twitch/api";
 
-type WhisperContext = EventSubUserWhisperMessageEvent & { reply: (message: string) => Promise<void> };
+type WhisperContext = { context: EventSubUserWhisperMessageEvent; reply: (message: string) => Promise<void> };
 
 interface WhisperCommand {
     name: string;
@@ -77,12 +77,12 @@ class Whispers {
         const reply = async (message: string) => {
             await sendWhisper(GetBot()?.api!, context.userId, context.senderUserId, message);
         };
-        return { ...context, reply } as WhisperContext;
+        return { context, reply } as WhisperContext;
     }
 
     async execute(params: string[], context: EventSubUserWhisperMessageEvent): Promise<void> {
         const { senderUserId, senderUserName, messageText } = context;
-        logger.debug({ senderUserId, senderUserName, messageText }, `Executing whisper command: ${this.name}`);
+        logger.debug({ senderUserId, senderUserName, messageText, params }, `Executing whisper command: ${this.name}`);
         try {
             await this._action(params, this.createContextWithReply(context));
         } catch (error) {

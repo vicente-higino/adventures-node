@@ -3,8 +3,8 @@ import logger from "@/logger";
 
 export const echoWhisper = createWhisperCommand(
     "echo",
-    async (params, ctx) => {
-        const { senderUserName, messageText, reply } = ctx;
+    async (params, { context: ctx, reply }) => {
+        const { senderUserName, messageText } = ctx;
         const echoMessage = params.join(" ");
         if (!echoMessage) {
             return;
