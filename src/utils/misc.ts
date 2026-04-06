@@ -1,7 +1,7 @@
 import { GetBot, getBotConfig, isChannelLive } from "@/bot";
 import logger from "@/logger";
 import { prisma } from "@/prisma";
-import { getUserByUsername, sendChatMessageToChannel } from "@/twitch/api";
+import { getUserById, getUserByUsername, getUsersByUsername, sendChatMessageToChannel } from "@/twitch/api";
 import Qty from "js-quantities";
 
 export function pickRandom<T>(arr: T[]): T {
@@ -284,6 +284,19 @@ export function sendMessageToChannel(channel: string, message: string) {
         ?.say(channel, message)
         .catch(err => {
             logger.error(err, `Error sending message to ${channel}:`);
+        });
+}
+export async function sendMessageToChannelId(channelId: string, message: string) {
+    const broadcaster = await getUserById(prisma, channelId);
+    if (!broadcaster) {
+        logger.error(`User not found: ${channelId}`);
+        return;
+    }
+    logger.info(`Sending message to ${broadcaster.login}: ${message}`);
+    GetBot()
+        ?.say(broadcaster.login, message)
+        .catch(err => {
+            logger.error(err, `Error sending message to ${broadcaster.login}:`);
         });
 }
 export async function sendMessageToChannelWithAPI(channel: string, message: string, max_length = 500) {
