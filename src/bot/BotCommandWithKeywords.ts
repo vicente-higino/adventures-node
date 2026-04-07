@@ -101,7 +101,7 @@ export function createBotCommand(
         }
 
         canExecute(channelId: string, userId: string): boolean {
-            if (userId == getBotConfig().userId) return false;
+            // if (userId == getBotConfig().userId) return false;
             if (this.offlineOnly) {
                 // If the command is offline only, check if the channel is live
                 return !isChannelLive({ id: channelId });

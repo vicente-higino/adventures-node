@@ -172,6 +172,40 @@ export async function updateUseDuelsStats(
     return updatedUserStats;
 }
 
+export async function updateUserRpsStats(
+    db: dbClient,
+    channel: string,
+    channelProviderId: string,
+    userProviderId: string,
+    stats: { wagerAmount: number; winAmount: number; didWin: boolean },
+) {
+    const userStats = await findOrCreateUserStats(db, channel, channelProviderId, userProviderId);
+
+    // Compute new RPS streaks
+    let newRpsWinStreak = userStats.rpsWinStreak ?? 0;
+    let newRpsLoseStreak = userStats.rpsLoseStreak ?? 0;
+    if (stats.didWin) {
+        newRpsWinStreak += 1;
+        newRpsLoseStreak = 0;
+    } else {
+        newRpsLoseStreak += 1;
+        newRpsWinStreak = 0;
+    }
+
+    const updatedUserStats = await db.userStats.update({
+        where: { id: userStats.id },
+        data: {
+            rpsWagered: { increment: stats.wagerAmount },
+            rpsPlayed: { increment: 1 },
+            rpsWon: stats.didWin ? { increment: 1 } : undefined,
+            rpsWonAmount: stats.didWin ? { increment: stats.winAmount } : undefined,
+            rpsWinStreak: newRpsWinStreak,
+            rpsLoseStreak: newRpsLoseStreak,
+        },
+    });
+    return updatedUserStats;
+}
+
 export async function updateUserDetails(prisma: dbClient, userId: string, newLogin: string, newDisplayName: string): Promise<void> {
     await prisma.user.update({ where: { providerId: userId }, data: { login: newLogin, displayName: newDisplayName } });
 }

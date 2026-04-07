@@ -2,17 +2,15 @@ import boss from "@/db/boss";
 import logger from "@/logger";
 import { sendActionToChannel } from "@/utils/misc";
 import { ms } from "ms";
+import { cancelRPSMatch } from "./rps";
 
-export async function initializeReminderQueue() {
-    await boss
-        .start()
-        .then(async b => {
-            logger.info("PgBoss started successfully");
-        })
-        .catch(err => {
-            logger.error(err, "Failed to start PgBoss");
-        });
+export async function startPgBoss() {
+    await boss.start();
+    await initializeReminderQueue();
+    await initializeRPS_CancelQueue();
+}
 
+async function initializeReminderQueue() {
     await boss.createQueue("reminder", { retentionSeconds: 3600 * 24 * 365 * 10 }); // Retain jobs for 10 years
     const stats = await boss.getQueueStats("reminder");
     logger.debug(stats, `Reminder queue stats`);
@@ -23,5 +21,21 @@ export async function initializeReminderQueue() {
         const elapsedTime = ms(Date.now() - job.createdOn.getTime());
         const formattedMessage = `@${userDisplayName} (${elapsedTime} ago): ${message}`;
         sendActionToChannel(channelName, formattedMessage);
+    });
+}
+async function initializeRPS_CancelQueue() {
+    await boss.createQueue("rps-cancel"); // Retain jobs for 10 years
+    const stats = await boss.getQueueStats("rps-cancel");
+    logger.debug(stats, `rps-cancel queue stats`);
+    boss.work("rps-cancel", async ([job]) => {
+        logger.debug(job, "Processing rps-cancel job");
+        const { matchId } = job.data as any;
+        const res = await cancelRPSMatch(matchId);
+        if (res.status === "error") {
+            logger.error(`Failed to cancel RPS match ${matchId}: ${res.error}`);
+        } else {
+            logger.info(`Successfully canceled RPS match ${matchId}`);
+        }
+
     });
 }

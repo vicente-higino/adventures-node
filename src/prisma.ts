@@ -16,6 +16,8 @@ export const prisma = new PrismaClient({ adapter }).$extends({
             totalWagers: bigintToNumber<Prisma.UserStatsGetPayload<{}>, "totalWagers">("totalWagers"),
             duelsWagered: bigintToNumber<Prisma.UserStatsGetPayload<{}>, "duelsWagered">("duelsWagered"),
             duelsWonAmount: bigintToNumber<Prisma.UserStatsGetPayload<{}>, "duelsWonAmount">("duelsWonAmount"),
+            rpsWagered: bigintToNumber<Prisma.UserStatsGetPayload<{}>, "rpsWagered">("rpsWagered"),
+            rpsWonAmount: bigintToNumber<Prisma.UserStatsGetPayload<{}>, "rpsWonAmount">("rpsWonAmount"),
         },
     },
 });

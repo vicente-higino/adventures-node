@@ -32,7 +32,7 @@ import { emotesRank } from "@/endpoints/emotesRank";
 import { emotesChannel } from "@/endpoints/emotesChannel";
 import { cors } from "hono/cors";
 import logger from "@/logger";
-import { initializeReminderQueue } from "./bot/remider";
+import { startPgBoss } from "@/bot/queue";
 // Start a Hono app
 const hono = new Hono<HonoEnv>();
 const honoWithAuth = new Hono<HonoEnv>();
@@ -51,12 +51,12 @@ createBot()
         }
         logger.info("Bot started successfully");
         restartAdventureWarnings();
-        initializeReminderQueue()
+        startPgBoss()
             .then(() => {
-                logger.info("Reminder queue initialized");
+                logger.info("PgBoss initialized");
             })
             .catch(e => {
-                logger.error(e, "Failed to initialize reminder queue");
+                logger.error(e, "Failed to initialize PgBoss");
             });
     })
     .catch(e => logger.error(e, "Bot failed to start"));
