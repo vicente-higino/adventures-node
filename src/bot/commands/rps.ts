@@ -27,15 +27,8 @@ export const rpsCommand = createBotCommand(
         }
 
         const lastMatch = await prisma.match.findFirst({
-            where: {
-                channel: broadcasterId,
-                OR: [
-                    { playerA: userId },
-                    { playerB: userId },
-                ],
-                status: "COMPLETE"
-            },
-            orderBy: { completedAt: "desc" }
+            where: { channel: broadcasterId, OR: [{ playerA: userId }, { playerB: userId }], status: "COMPLETE" },
+            orderBy: { completedAt: "desc" },
         });
 
         if (lastMatch && lastMatch.completedAt) {
@@ -48,12 +41,7 @@ export const rpsCommand = createBotCommand(
             }
         }
 
-        const match = await prisma.match.findFirst({
-            where: {
-                status: "ACTIVE",
-                channel: broadcasterId,
-            }
-        });
+        const match = await prisma.match.findFirst({ where: { status: "ACTIVE", channel: broadcasterId } });
         if (match) {
             say(`@${userDisplayName}, only one match can be active at a time.`);
             return;
@@ -78,12 +66,7 @@ export const rpsCommand = createBotCommand(
             const result = await createMatch(broadcasterId, userId, user.id, wager);
             if (result) {
                 await decreaseBalance(prisma, balance.id, wager);
-                boss.sendAfter(
-                    "rps-cancel",
-                    { matchId: result.id.toString() },
-                    null,
-                    TIMEOUT_DURATION / 1000,
-                );
+                boss.sendAfter("rps-cancel", { matchId: result.id.toString() }, null, TIMEOUT_DURATION / 1000);
                 say(`@${userDisplayName} challenges ${user.displayName} to a Bo3 game of RPS for ${wager} silver! Whisper "[r|p|s]" to the bot.`);
             } else {
                 say(`Error creating match. Please try again later.`);
@@ -91,27 +74,18 @@ export const rpsCommand = createBotCommand(
         } catch (error) {
             logger.error(error, "Error creating match");
             say(`Error creating match. Please try again later.`);
-
         }
     },
     { aliases: [], ignoreCase: true },
 );
-
 
 export const cancelRPSCommand = createBotCommand(
     "cancelrps",
     async (params, ctx) => {
         const { broadcasterId, userDisplayName, say } = ctx;
         const match = await prisma.match.findFirst({
-            where: {
-                channel: broadcasterId,
-                status: "ACTIVE",
-                OR: [
-                    { playerA: ctx.userId },
-                    { playerB: ctx.userId },
-                ]
-            },
-            orderBy: { createdAt: "desc" }
+            where: { channel: broadcasterId, status: "ACTIVE", OR: [{ playerA: ctx.userId }, { playerB: ctx.userId }] },
+            orderBy: { createdAt: "desc" },
         });
         if (!match) {
             say(`@${userDisplayName}, you don't have an active match to cancel.`);

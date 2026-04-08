@@ -7,8 +7,7 @@ import { pickRandom, sendMessageToChannel, sendMessageToChannelId } from "@/util
 import { type RpsMove } from "@prisma/client";
 import { z } from "zod";
 
-const rpsParamsSchema = z.string()
-
+const rpsParamsSchema = z.string();
 
 function parseRpsMove(move: string): RpsMove | null {
     const normalized = move.toLowerCase().trim();
@@ -31,11 +30,7 @@ function parseRpsMove(move: string): RpsMove | null {
     return null;
 }
 
-const LOOKUP: Record<RpsMove, string> = {
-    ROCK: "🪨",
-    PAPER: "📄",
-    SCISSORS: "✂️",
-};
+const LOOKUP: Record<RpsMove, string> = { ROCK: "🪨", PAPER: "📄", SCISSORS: "✂️" };
 
 export const rpsWhisper = createWhisperCommand(
     "rps",
@@ -59,16 +54,13 @@ export const rpsWhisper = createWhisperCommand(
                 reply("Move submitted, waiting for opponent...");
                 break;
             case "resolved":
-                const streakPart = result.matchEnd && result.winStreak > 1 
-                    ? ` (${result.winStreak} wins in a row)` 
-                    : "";
+                const streakPart = result.matchEnd && result.winStreak > 1 ? ` (${result.winStreak} wins in a row)` : "";
                 const winnerPart = result.matchEnd ? `@${result.winner} (+${result.wager} silver)${streakPart}` : null;
                 const msg = `@${result.playerA} (${result.scoreA}) ${LOOKUP[result.moveA]} x ${LOOKUP[result.moveB]} (${result.scoreB}) @${result.playerB} 
                 | R${result.round} | ${winnerPart ? `${winnerPart} ${CONGRATULATIONS_EMOTES(result.channel)}` : "Next round starting..."}`;
                 sendMessageToChannel(result.channel, msg);
                 break;
         }
-
     },
     { keywords: ["rock", "paper", "scissors", "r", "p", "s"], ignoreCase: true },
 );

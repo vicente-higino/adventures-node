@@ -7,40 +7,32 @@ import { RpsMove } from "@prisma/client";
 
 type SubmitMoveResult =
     | { status: "error"; error: string }
-    | { status: "canceled"; msg: string, channel: string }
+    | { status: "canceled"; msg: string; channel: string }
     | { status: "pending" }
     | {
-        status: "resolved";
-        channelId: string;
-        channel: string;
-        round: number;
-        moveA: RpsMove;
-        moveB: RpsMove;
-        playerA: string;
-        playerB: string;
-        scoreA: number;
-        scoreB: number;
-        matchEnd: boolean;
-        winner: string | null;
-        wager: number;
-        winStreak: number;
-    };
+          status: "resolved";
+          channelId: string;
+          channel: string;
+          round: number;
+          moveA: RpsMove;
+          moveB: RpsMove;
+          playerA: string;
+          playerB: string;
+          scoreA: number;
+          scoreB: number;
+          matchEnd: boolean;
+          winner: string | null;
+          wager: number;
+          winStreak: number;
+      };
 
 function resolveMove(a: RpsMove, b: RpsMove) {
     if (a === b) return "DRAW";
-    if (
-        (a === "ROCK" && b === "SCISSORS") ||
-        (a === "SCISSORS" && b === "PAPER") ||
-        (a === "PAPER" && b === "ROCK")
-    ) return "PLAYER_A";
+    if ((a === "ROCK" && b === "SCISSORS") || (a === "SCISSORS" && b === "PAPER") || (a === "PAPER" && b === "ROCK")) return "PLAYER_A";
     return "PLAYER_B";
 }
 
-type CancelRPSMatchResult =
-    | { status: "success"; msg: string }
-    | { status: "error"; error: string };
-
-
+type CancelRPSMatchResult = { status: "success"; msg: string } | { status: "error"; error: string };
 
 export async function cancelRPS_Job(matchId: bigint) {
     const job = await boss.findJobs("rps-cancel", { data: { matchId: matchId.toString() }, queued: true });
@@ -55,12 +47,7 @@ export async function cancelRPSMatch(matchId: bigint): Promise<CancelRPSMatchRes
 
     const match = await prisma.match.findUnique({
         where: { id: matchId },
-        include: {
-            rounds: {
-                where: { roundNum: 1 },
-                include: { moves: true }
-            }
-        }
+        include: { rounds: { where: { roundNum: 1 }, include: { moves: true } } },
     });
 
     if (!match) {
@@ -103,10 +90,7 @@ export async function cancelRPSMatch(matchId: bigint): Promise<CancelRPSMatchRes
     }
 
     // Cancel the match
-    await prisma.match.update({
-        where: { id: matchId },
-        data: { status: "CANCELLED" }
-    });
+    await prisma.match.update({ where: { id: matchId }, data: { status: "CANCELLED" } });
     cancelRPS_Job(matchId);
     logger.info({ matchId }, "Match cancelled successfully");
     return { status: "success", msg: "Match cancelled and wagers refunded" };
@@ -121,15 +105,7 @@ export async function createMatch(channelId: string, playerA_id: string, playerB
     }
 
     const match = await prisma.match.create({
-        data: {
-            channel: channelId,
-            playerA: playerA_id,
-            playerB: playerB_id,
-            wager,
-            rounds: {
-                create: { roundNum: 1 }
-            }
-        }
+        data: { channel: channelId, playerA: playerA_id, playerB: playerB_id, wager, rounds: { create: { roundNum: 1 } } },
     });
 
     logger.info({ matchId: match.id, channelId, playerA_id, playerB_id, wager }, "Match created successfully");
@@ -140,25 +116,13 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
     logger.debug({ userId, move }, "submitMove called");
 
     const match = await prisma.match.findFirst({
-        where: {
-            status: "ACTIVE",
-            OR: [
-                { playerA: userId },
-                { playerB: userId }
-            ]
-        },
-        include: {
-            rounds: {
-                orderBy: { roundNum: "desc" },
-                take: 1,
-                include: { moves: true }
-            }
-        }
+        where: { status: "ACTIVE", OR: [{ playerA: userId }, { playerB: userId }] },
+        include: { rounds: { orderBy: { roundNum: "desc" }, take: 1, include: { moves: true } } },
     });
 
     if (!match) {
         logger.debug({ userId }, "No active match found");
-        return { status: 'error', error: "No active match" };
+        return { status: "error", error: "No active match" };
     }
 
     logger.debug({ matchId: match.id, userId }, "Active match found");
@@ -170,24 +134,18 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
     ]);
     if (!userA || !userB || !channel) {
         logger.error({ matchId: match.id, userA: !!userA, userB: !!userB, channel: !!channel }, "Failed to fetch users");
-        return { status: 'error', error: "Error fetching users" };
+        return { status: "error", error: "Error fetching users" };
     }
 
     logger.debug({ playerA: userA.login, playerB: userB.login, channel: channel.login }, "Users fetched successfully");
     const round = match.rounds[0];
 
     try {
-        await prisma.move.create({
-            data: {
-                roundId: round.id,
-                player: userId,
-                move
-            }
-        });
+        await prisma.move.create({ data: { roundId: round.id, player: userId, move } });
         logger.debug({ roundId: round.id, userId, move }, "Move created successfully");
     } catch (e) {
         logger.warn({ roundId: round.id, userId, move, error: e }, "Move creation failed - already submitted");
-        return { status: 'error', error: "Move already submitted" };
+        return { status: "error", error: "Move already submitted" };
     }
 
     if (userB.id == userId && round.roundNum === 1) {
@@ -196,16 +154,19 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
         logger.debug({ playerBBalance: playerB_balance.value, wager: match.wager }, "PlayerB balance retrieved");
 
         if (playerB_balance.value < match.wager) {
-            logger.warn({ playerBId: userB.id, balance: playerB_balance.value, wager: match.wager, matchId: match.id }, "PlayerB insufficient balance, canceling match");
+            logger.warn(
+                { playerBId: userB.id, balance: playerB_balance.value, wager: match.wager, matchId: match.id },
+                "PlayerB insufficient balance, canceling match",
+            );
             const cancelResult = await cancelRPSMatch(match.id);
             if (cancelResult.status === "error") {
                 logger.error({ matchId: match.id, error: cancelResult.error }, "Match cancellation failed");
                 return { status: "error", error: `Match cancellation failed: ${cancelResult.error}` };
             }
             return {
-                status: 'canceled',
+                status: "canceled",
                 msg: `@${userA.displayName}, match canceled: @${userB.displayName} don't have enough silver (${playerB_balance.value}) to play.`,
-                channel: channel.login
+                channel: channel.login,
             };
         }
         logger.debug({ playerBId: userB.id, amount: match.wager }, "Deducting wager from playerB");
@@ -213,9 +174,7 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
     }
 
     // check if both moves are in
-    const moves = await prisma.move.findMany({
-        where: { roundId: round.id }
-    });
+    const moves = await prisma.move.findMany({ where: { roundId: round.id } });
     logger.debug({ roundId: round.id, movesCount: moves.length }, "Moves for round");
 
     if (moves.length < 2) {
@@ -229,17 +188,13 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
     const result = resolveMove(moveA, moveB);
     logger.debug({ roundNum: round.roundNum, moveA, moveB, result }, "Round resolved");
 
-    await prisma.round.update({
-        where: { id: round.id },
-        data: { winner: result }
-    });
+    await prisma.round.update({ where: { id: round.id }, data: { winner: result } });
 
     // compute score
-    const rounds = await prisma.round.findMany({
-        where: { matchId: match.id }
-    });
+    const rounds = await prisma.round.findMany({ where: { matchId: match.id } });
 
-    let scoreA = 0, scoreB = 0;
+    let scoreA = 0,
+        scoreB = 0;
 
     for (const r of rounds) {
         if (r.winner === "PLAYER_A") scoreA++;
@@ -261,40 +216,24 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
 
         cancelRPS_Job(match.id);
 
-        await prisma.match.update({
-            where: { id: match.id },
-            data: {
-                status: "COMPLETE",
-                winner,
-                completedAt: new Date()
-            }
-        });
+        await prisma.match.update({ where: { id: match.id }, data: { status: "COMPLETE", winner, completedAt: new Date() } });
 
         // Update stats for winner
         statsWinner = await updateUserRpsStats(prisma, channel.login, channel.id, winner, {
             wagerAmount: match.wager,
             winAmount: match.wager * 2,
-            didWin: true
+            didWin: true,
         });
         logger.debug({ userId: winner, didWin: true, statsA: statsWinner }, "Winner stats updated");
 
         // Update stats for loser
         const loser = winner === match.playerA ? match.playerB : match.playerA;
-        statsLoser = await updateUserRpsStats(prisma, channel.login, channel.id, loser, {
-            wagerAmount: match.wager,
-            winAmount: 0,
-            didWin: false
-        });
+        statsLoser = await updateUserRpsStats(prisma, channel.login, channel.id, loser, { wagerAmount: match.wager, winAmount: 0, didWin: false });
         logger.debug({ userId: loser, didWin: false, statsB: statsLoser }, "Loser stats updated");
     } else {
         // next round
         logger.debug({ matchId: match.id, nextRound: round.roundNum + 1 }, "Creating next round");
-        await prisma.round.create({
-            data: {
-                matchId: match.id,
-                roundNum: round.roundNum + 1
-            }
-        });
+        await prisma.round.create({ data: { matchId: match.id, roundNum: round.roundNum + 1 } });
     }
     const res = {
         status: "resolved",
@@ -310,7 +249,7 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
         matchEnd,
         winner: winner ? (winner === match.playerA ? userA.displayName : userB.displayName) : null,
         wager: match.wager,
-        winStreak: statsWinner?.rpsWinStreak ?? 0
+        winStreak: statsWinner?.rpsWinStreak ?? 0,
     } as const;
     logger.debug(res, "Match result prepared");
     return res;

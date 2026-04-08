@@ -197,7 +197,7 @@ export const CATEGORY_EMOTES_RECORD = {
         NoNo: Emote("NoNo"),
     },
     [EmoteCategory.CONGRATULATIONS]: {
-        "EZ": Emote("EZ Clap"),
+        EZ: Emote("EZ Clap"),
         peepoClap: Emote("peepoClap"),
         clappi: Emote("clappi"),
         catClap: Emote("catClap"),

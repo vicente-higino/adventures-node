@@ -36,6 +36,5 @@ async function initializeRPS_CancelQueue() {
         } else {
             logger.info(`Successfully canceled RPS match ${matchId}`);
         }
-
     });
 }
