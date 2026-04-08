@@ -40,6 +40,16 @@ type CancelRPSMatchResult =
     | { status: "success"; msg: string }
     | { status: "error"; error: string };
 
+
+
+export async function cancelRPS_Job(matchId: bigint) {
+    const job = await boss.findJobs("rps-cancel", { data: { matchId: matchId.toString() }, queued: true });
+    if (job.length > 0) {
+        logger.debug({ jobId: job[0].id }, "Canceling scheduled RPS timeout job");
+        await boss.cancel("rps-cancel", job[0].id);
+    }
+}
+
 export async function cancelRPSMatch(matchId: bigint): Promise<CancelRPSMatchResult> {
     logger.debug({ matchId }, "cancelRPSMatch called");
 
@@ -97,7 +107,7 @@ export async function cancelRPSMatch(matchId: bigint): Promise<CancelRPSMatchRes
         where: { id: matchId },
         data: { status: "CANCELLED" }
     });
-
+    cancelRPS_Job(matchId);
     logger.info({ matchId }, "Match cancelled successfully");
     return { status: "success", msg: "Match cancelled and wagers refunded" };
 }
@@ -249,11 +259,7 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
         await increaseBalanceWithChannelID(prisma, channel.id, winner, match.wager * 2);
         logger.debug({ winnerId: winner, amount: match.wager * 2 }, "Winner balance increased");
 
-        const job = await boss.findJobs("rps-cancel", { data: { matchId: match.id.toString() }, queued: true });
-        if (job.length > 0) {
-            logger.debug({ jobId: job[0].id }, "Canceling scheduled timeout job");
-            await boss.cancel("rps-cancel", job[0].id);
-        }
+        cancelRPS_Job(match.id);
 
         await prisma.match.update({
             where: { id: match.id },

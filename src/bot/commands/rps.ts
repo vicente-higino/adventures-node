@@ -2,7 +2,7 @@ import { createBotCommand } from "../BotCommandWithKeywords";
 import { getBotConfig } from "@/bot";
 import { getUserByUsername } from "@/twitch/api";
 import { prisma } from "@/prisma";
-import { createMatch } from "@/bot/rps";
+import { cancelRPSMatch, createMatch } from "@/bot/rps";
 import { calculateAmount } from "@/utils/misc";
 import { decreaseBalance, findOrCreateBalance } from "@/db";
 import logger from "@/logger";
@@ -95,4 +95,37 @@ export const rpsCommand = createBotCommand(
         }
     },
     { aliases: [], ignoreCase: true },
+);
+
+
+export const cancelRPSCommand = createBotCommand(
+    "cancelrps",
+    async (params, ctx) => {
+        const { broadcasterId, userDisplayName, say } = ctx;
+        const match = await prisma.match.findFirst({
+            where: {
+                channel: broadcasterId,
+                status: "ACTIVE",
+                OR: [
+                    { playerA: ctx.userId },
+                    { playerB: ctx.userId },
+                ]
+            },
+            orderBy: { createdAt: "desc" }
+        });
+        if (!match) {
+            say(`@${userDisplayName}, you don't have an active match to cancel.`);
+            return;
+        }
+        const res = await cancelRPSMatch(match.id);
+        if (res.status === "error") {
+            logger.error({ matchId: match.id, error: res.error }, "Error canceling match");
+            say(`@${userDisplayName}, error canceling match: ${res.error}`);
+            return;
+        }
+        if (res.status === "success") {
+            say(`@${userDisplayName}, your match has been canceled.`);
+        }
+    },
+    { aliases: ["crps"], ignoreCase: true },
 );
