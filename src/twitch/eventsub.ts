@@ -13,4 +13,7 @@ export const listener = new EventSubHttpListener({
     }),
     secret: env.TWTICH_EVENTSUB_SECRET,
 });
-listener.start();
+//check if is testing environment before starting listener
+if (process.env.NODE_ENV !== "test") {
+    listener.start();
+}
