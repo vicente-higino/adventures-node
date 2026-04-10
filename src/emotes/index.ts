@@ -5,7 +5,7 @@ import { pickRandom } from "@/utils/misc";
 export class EmoteManager {
     private static readonly emoteCategoriesCache = new Map<EmoteCategory, Emote[]>();
 
-    private static getEmotesForCategory(category: EmoteCategory): Emote[] {
+    private static getEmotesForCategory(category: EmoteCategory): (Emote | Emote[])[] {
         if (!this.emoteCategoriesCache.has(category)) {
             return CATEGORY_EMOTES[category] || [];
         }
@@ -14,9 +14,13 @@ export class EmoteManager {
     /**
      * Get a random emote from a specific category
      */
-    public static getRandomEmote(category: EmoteCategory, channel?: string): Emote | null {
+    public static getRandomEmote(category: EmoteCategory, channel?: string): (Emote | Emote[]) | null {
         const emotes = this.getEmotesForCategory(category);
         const emote = pickRandom(emotes);
+        if (emote instanceof Array) {
+            if (!channel) return emote;
+            return emote.filter(e => emoteTracker?.channelHasEmote(channel, e.name) || e.provider == 'native')
+        }
         if (!channel || emote.provider == "native") return emote;
         return emoteTracker?.channelHasEmote(channel, emote.name) ? emote : null;
     }
@@ -25,61 +29,23 @@ export class EmoteManager {
      * Get a random emote name from a specific category (for backward compatibility)
      */
     public static getRandomEmoteName(category: EmoteCategory): (channel?: string) => string {
-        return (channel?: string) => this.getRandomEmote(category, channel)?.name ?? "";
+        return (channel?: string) => {
+            const emote = this.getRandomEmote(category, channel);
+            if (emote instanceof Array) {
+                return emote.map(e => e.name).join(" ");
+            }
+            return emote?.name ?? "";
+        };
     }
 
     public static getEmote(name: EmoteName): Emote {
         return Emote(name);
     }
 
-    /**
-     * Get all emotes from a specific category
-     */
-    public static getEmotes(category: EmoteCategory): Emote[] {
-        return [...this.getEmotesForCategory(category)]; // Return a copy to prevent mutations
-    }
-
-    /**
-     * Get all emote names from a specific category (for backward compatibility)
-     */
-    public static getEmoteNames(category: EmoteCategory): string[] {
-        return this.getEmotesForCategory(category).map(e => e.name);
-    }
-
-    /**
-     * Filter emotes by provider
-     */
-    public static getEmotesByProvider(category: EmoteCategory, provider: EmoteProvider): Emote[] {
-        return this.getEmotesForCategory(category).filter(e => e.provider === provider);
-    }
-
-    /**
-     * Get a random emote from a specific category and provider
-     */
-    public static getRandomEmoteByProvider(category: EmoteCategory, provider: EmoteProvider): Emote {
-        const emotes = this.getEmotesByProvider(category, provider);
-        if (emotes.length === 0) {
-            throw new Error(`No emotes found for category: ${category} and provider: ${provider}`);
-        }
-        return emotes[Math.floor(Math.random() * emotes.length)];
-    }
-
-    public static getCategoryRecord(category: EmoteCategory): Record<EmoteName, Emote> {
-        const emotes = this.getEmotesForCategory(category);
-        const record: Record<EmoteName, Emote> = {} as Record<EmoteName, Emote>;
-        for (const emote of emotes) {
-            record[emote.name] = emote;
-        }
-        return record;
-    }
-
     public static getAllEmotes(): Emote[] {
-        const allEmotes: Emote[] = [];
-        for (const category of Object.values(EmoteCategory)) {
-            allEmotes.push(...this.getEmotesForCategory(category));
-        }
-        return allEmotes;
+        return Object.values(CATEGORY_EMOTES).flat(2);
     }
+
 }
 
 // Legacy exports for backward compatibility
@@ -103,8 +69,7 @@ export const FROG_EMOTES = EmoteManager.getRandomEmoteName(EmoteCategory.FROG);
 export const BLOBFISH_EMOTES = EmoteManager.getRandomEmoteName(EmoteCategory.BLOBFISH);
 export const SURGEONFISH_EMOTES = EmoteManager.getRandomEmoteName(EmoteCategory.SURGEONFISH);
 export const EVENT_STARTED_EMOTES = EmoteManager.getRandomEmoteName(EmoteCategory.EVENT_STARTED);
-export const VALUE_EMOTES_LIST = CATEGORY_EMOTES_RECORD[EmoteCategory.VALUE];
-
 export const ADVENTURE_GAMBA_EMOTE = EmoteManager.getRandomEmoteName(EmoteCategory.ADVENTURE_START_EMOTES);
 
+export const VALUE_EMOTES_LIST = CATEGORY_EMOTES_RECORD[EmoteCategory.VALUE];
 export const ADVENTURE_ENDING_EMOTE = CATEGORY_EMOTES_RECORD[EmoteCategory.ADVENTURE_END_EMOTES];
