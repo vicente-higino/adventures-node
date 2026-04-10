@@ -18,11 +18,11 @@ const DEFAULT_WARNINGS: AdventureWarning[] = [
     },
     {
         delay: 40 * 60 * 1000,
-        message: `${ADVENTURE_ENDING_EMOTE.Alert.name} Ending the adventure in 5 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
+        message: `${ADVENTURE_ENDING_EMOTE.Alarm.name} Ending the adventure in 5 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
     },
     {
         delay: 43 * 60 * 1000,
-        message: `${ADVENTURE_ENDING_EMOTE.Alert.name} Ending the adventure in 2 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
+        message: `${ADVENTURE_ENDING_EMOTE.Alarm.name} Ending the adventure in 2 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
     },
     { delay: 45 * 60 * 1000, message: `!adventureend` },
 ];
@@ -33,11 +33,11 @@ export const RESTART_WARNINGS: AdventureWarning[] = [
     },
     {
         delay: 10 * 60 * 1000,
-        message: `${ADVENTURE_ENDING_EMOTE.Alert.name} Ending the adventure in 5 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
+        message: `${ADVENTURE_ENDING_EMOTE.Alarm.name} Ending the adventure in 5 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
     },
     {
         delay: 13 * 60 * 1000,
-        message: `${ADVENTURE_ENDING_EMOTE.Alert.name} Ending the adventure in 2 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
+        message: `${ADVENTURE_ENDING_EMOTE.Alarm.name} Ending the adventure in 2 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
     },
     { delay: 15 * 60 * 1000, message: `!adventureend` },
 ];
@@ -102,9 +102,9 @@ export async function restartAdventureWarnings(channelProviderId?: string) {
             elapsedTime >= totalDuration
                 ? RESTART_WARNINGS // Use default delays if the adventure has passed the end time
                 : RESTART_WARNINGS.map(warning => ({
-                      ...warning,
-                      delay: warning.delay + Math.max(0, totalDuration - elapsedTime), // Add the delayOffset
-                  }));
+                    ...warning,
+                    delay: warning.delay + Math.max(0, totalDuration - elapsedTime), // Add the delayOffset
+                }));
 
         scheduleAdventureWarnings(prisma, adv.id, adjustedWarnings);
     }

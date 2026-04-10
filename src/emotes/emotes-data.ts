@@ -147,7 +147,7 @@ export const EMOTE_DEFINITIONS = {
     FishMoley: { name: "FishMoley", provider: "7tv" },
     fusJR: { name: "fusJR", provider: "7tv" },
     WOWMOM: { name: "WOWMOM", provider: "7tv" },
-    Alert: { name: "Alert", provider: "7tv" },
+    Alarm: { name: "Alarm", provider: "7tv" },
     dinkDonk: { name: "dinkDonk", provider: "7tv" },
 } as const;
 
@@ -174,7 +174,7 @@ export function Emotes<const T extends readonly EmoteName[]>(...names: T): { [K 
 }
 
 export const CATEGORY_EMOTES_RECORD = {
-    [EmoteCategory.ADVENTURE_END_EMOTES]: Emotes("dinkDonk", "Alert"),
+    [EmoteCategory.ADVENTURE_END_EMOTES]: Emotes("dinkDonk", "Alarm"),
     [EmoteCategory.ADVENTURE_START_EMOTES]: Emotes("GAMBA"),
     [EmoteCategory.DUEL_CREATE]: Emotes("GAMBA", "PauseChamp", "PAUSE", "PauseCat", "PausersHype", "DRAMA", "NAILS"),
     [EmoteCategory.PAUSE]: Emotes("PauseChamp", "PAUSE", "PauseCat", "PausersHype"),
