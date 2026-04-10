@@ -1,5 +1,5 @@
 import { CatchDetails, RARITY_POINTS } from "./constants"; // Import from constants
-import { MUSHY_EMOTES, SOCKO_EMOTES, APRIL_FOOZE_EMOTES, FUSLIE_EMOTES, FROG_EMOTES, BLOBFISH_EMOTES, SURGEONFISH_EMOTES } from "@/emotes";
+import { MUSHY_EMOTES, SOCKO_EMOTES, APRIL_FOOZE_EMOTES, FUSLIE_EMOTES, FROG_EMOTES, BLOBFISH_EMOTES, SURGEONFISH_EMOTES, FUKURA_EMOTES } from "@/emotes";
 
 export const fishTable: CatchDetails[] = [
     // Legendary fish - massive sizes
@@ -15,7 +15,7 @@ export const fishTable: CatchDetails[] = [
     { sellValue: RARITY_POINTS.Legendary * 5, name: "Socko", emote: c => SOCKO_EMOTES(c), rarity: "Legendary", size: 30, weight: 4 },
     { sellValue: RARITY_POINTS.Legendary * 10, name: "April Fooze", emote: c => APRIL_FOOZE_EMOTES(c), rarity: "Legendary", size: 170, weight: 60 },
     { sellValue: RARITY_POINTS.Legendary * 15, name: "Fuslie", emote: c => FUSLIE_EMOTES(c), rarity: "Legendary", size: 170, weight: 60 },
-    { sellValue: RARITY_POINTS.Legendary * 15, name: "Fukura", rarity: "Legendary", size: 180, weight: 70 },
+    { sellValue: RARITY_POINTS.Legendary * 15, name: "Fukura", emote: c => FUKURA_EMOTES(c), rarity: "Legendary", size: 180, weight: 70 },
 
     // Epic fish - very large sizes
     { sellValue: RARITY_POINTS.Epic, name: "Giant Tuna", rarity: "Epic", size: 300, weight: 500 },

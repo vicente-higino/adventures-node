@@ -15,6 +15,7 @@ export const enum EmoteCategory {
     SOCKO = "SOCKO",
     APRIL_FOOZE = "APRIL_FOOZE",
     FUSLIE = "FUSLIE",
+    FUKURA = "FUKURA",
     FROG = "FROG",
     BLOBFISH = "BLOBFISH",
     SURGEONFISH = "SURGEONFISH",
@@ -149,6 +150,9 @@ export const EMOTE_DEFINITIONS = {
     WOWMOM: { name: "WOWMOM", provider: "7tv" },
     Alarm: { name: "Alarm", provider: "7tv" },
     dinkDonk: { name: "dinkDonk", provider: "7tv" },
+    kuraPeek: { name: "kuraPeek", provider: "7tv" },
+    NatePOG: { name: "NatePOG", provider: "7tv" },
+    CLIPSS: { name: "CLIPSS", provider: "7tv" },
 } as const;
 
 export type EmoteName = keyof typeof EMOTE_DEFINITIONS;
@@ -292,6 +296,7 @@ export const CATEGORY_EMOTES_RECORD = {
     [EmoteCategory.SURGEONFISH]: Emotes("fusDory"),
     [EmoteCategory.VALUE]: Emotes("WAJAJA", "pogg", "poggSpin", "YIPPIE", "POGGIES", "POGGERS", "Pog", "HOLY", "Cereal", "MUGA", "OOOO"),
     [EmoteCategory.EVENT_STARTED]: Emotes("pogg", "YIPPIE", "POGGIES", "POGGERS", "Pog", "Cereal", "OOOO"),
+    [EmoteCategory.FUKURA]: Emotes("NatePOG", "kuraPeek", "CLIPSS"),
 } as const;
 
 type CategoryEmotesArray = { [key in keyof typeof CATEGORY_EMOTES_RECORD]: (Emote | Emote[])[] };

@@ -65,6 +65,7 @@ export const MUSHY_EMOTES = EmoteManager.getRandomEmoteName(EmoteCategory.MUSHY)
 export const SOCKO_EMOTES = EmoteManager.getRandomEmoteName(EmoteCategory.SOCKO);
 export const APRIL_FOOZE_EMOTES = EmoteManager.getRandomEmoteName(EmoteCategory.APRIL_FOOZE);
 export const FUSLIE_EMOTES = EmoteManager.getRandomEmoteName(EmoteCategory.FUSLIE);
+export const FUKURA_EMOTES = EmoteManager.getRandomEmoteName(EmoteCategory.FUKURA);
 export const FROG_EMOTES = EmoteManager.getRandomEmoteName(EmoteCategory.FROG);
 export const BLOBFISH_EMOTES = EmoteManager.getRandomEmoteName(EmoteCategory.BLOBFISH);
 export const SURGEONFISH_EMOTES = EmoteManager.getRandomEmoteName(EmoteCategory.SURGEONFISH);
