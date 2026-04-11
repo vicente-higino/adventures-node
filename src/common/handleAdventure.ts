@@ -19,7 +19,7 @@ import { formatTimeToWithSeconds } from "@/utils/time";
 import { Mutex } from "async-mutex";
 import dayjs from "dayjs";
 import z from "zod";
-import { scheduleAdventureWarnings } from "./helpers/schedule";
+import { cancelScheduleAdventureWarnings, scheduleAdventureWarnings } from "./helpers/schedule";
 import Decimal from "decimal.js";
 
 // Replace single mutex with a map of mutexes per channel
@@ -115,6 +115,7 @@ export async function handleAdventureEnd(params: {
             // Filter winners and losers using the combined data
             const winners = combinedResults.filter(p => p.result?.outcome === "win");
             const losers = combinedResults.filter(p => p.result?.outcome === "lose");
+            cancelScheduleAdventureWarnings(adv.id);
 
             if (winners.length > 0) {
                 let promises = [];
@@ -187,6 +188,7 @@ export async function handleAdventureEnd(params: {
                 );
 
                 await Promise.all(promises);
+                cancelScheduleAdventureWarnings(adv.id);
                 // Compose the message and limit advResults.message
                 const base = ` The adventure ended with a ${formattedPayoutRate}x payout rate! Survivors are: ${joinedResults}.`;
                 const advMsg = limitAdvMessage(base, advResults.message);
@@ -338,7 +340,7 @@ export async function handleAdventureJoin(params: {
                 }),
             ]);
 
-            scheduleAdventureWarnings(prisma, adventure.id);
+            scheduleAdventureWarnings(adventure.id);
 
             return `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "${prefix ?? "!"}adventure | ${prefix ?? "!"}adv [silver(K/M/B)|%|all|to:silver|k:silver]" to join in!
                     This adventure offers a ${formattedPayoutRate}x payout rate! ${ADVENTURE_GAMBA_EMOTE(channelLogin)}

@@ -3,11 +3,13 @@ import logger from "@/logger";
 import { sendActionToChannel } from "@/utils/misc";
 import { ms } from "ms";
 import { cancelRPSMatch } from "./rps";
+import { processWarning } from "@/common/helpers/schedule";
 
 export async function startPgBoss() {
     await boss.start();
     await initializeReminderQueue();
     await initializeRPS_CancelQueue();
+    await initializeAdventureScheduleQueue();
 }
 
 async function initializeReminderQueue() {
@@ -24,7 +26,7 @@ async function initializeReminderQueue() {
     });
 }
 async function initializeRPS_CancelQueue() {
-    await boss.createQueue("rps-cancel"); // Retain jobs for 10 years
+    await boss.createQueue("rps-cancel");
     const stats = await boss.getQueueStats("rps-cancel");
     logger.debug(stats, `rps-cancel queue stats`);
     boss.work("rps-cancel", async ([job]) => {
@@ -36,5 +38,15 @@ async function initializeRPS_CancelQueue() {
         } else {
             logger.info(`Successfully canceled RPS match ${matchId}`);
         }
+    });
+}
+async function initializeAdventureScheduleQueue() {
+    await boss.createQueue("adv-schedule", { retentionSeconds: 3600 }); // Retain jobs for 1 hour
+    const stats = await boss.getQueueStats("adv-schedule");
+    logger.debug(stats, `adv-schedule queue stats`);
+    boss.work<{ advId: number; message: string }>("adv-schedule", async ([job]) => {
+        logger.debug(job, "Processing adv-schedule job");
+        const { advId, message } = job.data;
+        processWarning(advId, message);
     });
 }
