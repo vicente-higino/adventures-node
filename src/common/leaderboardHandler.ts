@@ -3,14 +3,18 @@ import logger from "@/logger";
 import { dbClient } from "@/prisma";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { handleRPS } from "./leaderboards/rpsLeaderboard";
+
+const paramsRegex = /^(?:(adv|duel|rps)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top|treasure))?|silver)(-(?:asc|bottom))?$/i
+
+export const leaderboardCommandSyntax = (prefix: string = "!") =>
+    `Usage: ${prefix}leaderboard [duel-|rps-][wins|played|wagered|profit|streak] | fish[-silver|-avg|-fines|-rarity|-top|-treasure] | silver [-asc|-bottom] [amount] (default: silver, 5)`;
 
 export const leaderboardSchema = z.object({
     amount: z.number().min(1).max(25).default(5),
     sortBy: z
         .string()
-        .regex(
-            /^(?:(adv|duel)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top|treasure))?|silver)(-(?:asc|bottom))?$/i,
-        )
+        .regex(paramsRegex)
         .default("silver"),
 });
 
@@ -23,9 +27,7 @@ export async function getLeaderboard(
 
     const sortParts = sortBy
         .toLowerCase()
-        .match(
-            /^(?:(adv|duel)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top|treasure))?|silver)(-(?:asc|bottom))?$/i,
-        );
+        .match(paramsRegex);
 
     if (!sortParts) {
         return "Invalid sort parameter format.";
@@ -41,7 +43,17 @@ export async function getLeaderboard(
 
     if (["wins", "played", "wagered", "profit", "streak"].includes(metricOrType)) {
         internalMetric = metricOrType;
-        leaderboardType = prefix === "duel" ? "Duel" : "Adventure";
+        switch (prefix) {
+            case 'duel':
+                leaderboardType = "Duel"
+                break;
+            case 'rps':
+                leaderboardType = "RPS"
+                break;
+            default:
+                leaderboardType = "Adventure"
+                break;
+        }
     } else if (metricOrType.startsWith("fish-")) {
         leaderboardType = "Fish";
         internalMetric = metricOrType.substring(5);
@@ -72,6 +84,13 @@ export async function getLeaderboard(
                 return "Invalid metric for Duel leaderboard.";
             }
             result = await handleDuel(prisma, channelProviderId, parsedDuelMetric.data, order, amount);
+        } else if (leaderboardType === "RPS") {
+            const duelMetricSchema = z.enum(["wins", "played", "wagered", "profit", "streak"]);
+            const parsedDuelMetric = duelMetricSchema.safeParse(internalMetric);
+            if (!parsedDuelMetric.success) {
+                return "Invalid metric for RPS leaderboard.";
+            }
+            result = await handleRPS(prisma, channelProviderId, parsedDuelMetric.data, order, amount);
         } else if (leaderboardType === "Fish") {
             const fishMetricSchema = z.enum([
                 "count",

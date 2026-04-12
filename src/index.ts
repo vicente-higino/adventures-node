@@ -27,7 +27,6 @@ import { bearerAuth } from "hono/bearer-auth";
 import { startCron } from "@/cron";
 import { authMiddleware } from "@/middleware/authMiddleware";
 import { ignoreMiddleware } from "@/middleware/ignoreUsers";
-import { restartAdventureWarnings } from "@/common/helpers/schedule";
 import { emotesRank } from "@/endpoints/emotesRank";
 import { emotesChannel } from "@/endpoints/emotesChannel";
 import { cors } from "hono/cors";
@@ -50,7 +49,6 @@ createBot()
             return;
         }
         logger.info("Bot started successfully");
-        restartAdventureWarnings();
         startPgBoss()
             .then(() => {
                 logger.info("PgBoss initialized");

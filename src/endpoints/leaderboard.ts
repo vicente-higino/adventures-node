@@ -1,14 +1,13 @@
 import { OpenAPIRoute } from "chanfana";
 import { type HonoEnv, FossaHeaders } from "@/types";
-import { getLeaderboard, leaderboardSchema } from "@/common/leaderboardHandler";
+import { getLeaderboard, leaderboardCommandSyntax, leaderboardSchema } from "@/common/leaderboardHandler";
 import type { Context } from "hono";
 
 export class ConsolidatedLeaderboard extends OpenAPIRoute {
     schema = { request: { headers: FossaHeaders, params: leaderboardSchema }, responses: {} };
     handleValidationError(): Response {
         // Concise usage message
-        const msg =
-            "Usage: !leaderboard [duel-][wins|played|wagered|profit|streak] | fish[-silver|-avg|-fines|-rarity|-top|-treasure] | silver [-asc|-bottom] [amount] (default: silver, 5)";
+        const msg = leaderboardCommandSyntax("!");
         return new Response(msg, { status: 400 });
     }
     async handle(c: Context<HonoEnv>) {

@@ -1,6 +1,6 @@
 import { createBotCommand } from "../BotCommandWithKeywords";
 import { prisma } from "@/prisma";
-import { getLeaderboard, leaderboardSchema } from "@/common/leaderboardHandler";
+import { getLeaderboard, leaderboardCommandSyntax, leaderboardSchema } from "@/common/leaderboardHandler";
 import { getBotConfig } from "..";
 
 export const leaderboardCommand = createBotCommand(
@@ -12,9 +12,7 @@ export const leaderboardCommand = createBotCommand(
 
         const validation = leaderboardSchema.safeParse({ sortBy, amount });
         if (!validation.success) {
-            say(
-                `${getBotConfig().prefix}leaderboard [duel-][wins|played|wagered|profit|streak] | fish[-silver|-avg|-fines|-rarity|-top|-treasure] | silver [-asc|-bottom] [amount] (default: silver, 5)`,
-            );
+            say(leaderboardCommandSyntax(getBotConfig().prefix));
             return;
         }
 
