@@ -20,5 +20,5 @@ export async function getUserSilverString({
     userDisplayName,
 }: GetUserSilverStringParams): Promise<string> {
     const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);
-    return `@${userDisplayName} has ${formatSilver(balance.value)} silver.`;
+    return `@${userDisplayName} has ${formatSilver(balance.value, false)} silver.`;
 }

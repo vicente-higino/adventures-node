@@ -77,17 +77,12 @@ export function roundToDecimalPlaces(value: number, decimalPlaces = 2): number {
     return Math.round(value * factor) / factor;
 }
 
-export function formatSilver(silver: number): string {
-    // let amount = Math.abs(silver);
-    // if (amount >= 1_000_000_000) {
-    //     return `${roundToDecimalPlaces(silver / 1_000_000_000, 3)}B`;
-    // }
-    // if (amount >= 1_000_000) {
-    //     return `${roundToDecimalPlaces(silver / 1_000_000, 3)}M`;
-    // }
-    // if (amount >= 1000) {
-    //     return `${roundToDecimalPlaces(silver / 1000)}K`;
-    // }
+export function formatSilver(silver: number, compact: boolean = true): string {
+    const format = new Intl.NumberFormat('en', {
+        notation: 'compact',
+        maximumFractionDigits: 2
+    });
+    if (compact) return format.format(silver);
     return silver.toString();
 }
 
