@@ -24,7 +24,10 @@ export const statsCommand = createBotCommand(
             userLogin: userName,
             userDisplayName,
         });
-        say(result);
+        const msgs = result.split("$(newline)");
+        for (const msg of msgs) {
+            await say(msg);
+        }
     },
     { aliases: ["adventurestats", "duelstats"] },
 );
