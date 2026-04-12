@@ -27,7 +27,7 @@ export const rpsCommand = createBotCommand(
         }
 
         const lastMatch = await prisma.match.findFirst({
-            where: { channel: broadcasterId, OR: [{ playerA: userId }, { playerB: userId }], status: "COMPLETE" },
+            where: { channel: broadcasterId, playerA: userId, status: "COMPLETE" },
             orderBy: { completedAt: "desc" },
         });
 
