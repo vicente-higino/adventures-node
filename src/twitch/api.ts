@@ -14,7 +14,7 @@ export function buildUrl(baseUrl: string, params: Record<string, string>): strin
 }
 
 // Define a consistent user type for return values
-interface DbUser {
+export interface DbUser {
     id: string; // Corresponds to providerId
     login: string;
     displayName: string;

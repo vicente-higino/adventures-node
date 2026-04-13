@@ -82,7 +82,7 @@ export const rpsCommand = createBotCommand(
 export const cancelRPSCommand = createBotCommand(
     "cancelrps",
     async (params, ctx) => {
-        const { broadcasterId, userDisplayName, say } = ctx;
+        const { broadcasterId, userId, userDisplayName, say } = ctx;
         const match = await prisma.match.findFirst({
             where: { channel: broadcasterId, status: "ACTIVE", OR: [{ playerA: ctx.userId }, { playerB: ctx.userId }] },
             orderBy: { createdAt: "desc" },
@@ -91,11 +91,15 @@ export const cancelRPSCommand = createBotCommand(
             say(`@${userDisplayName}, you don't have an active match to cancel.`);
             return;
         }
-        const res = await cancelRPSMatch(match.id);
+        const res = await cancelRPSMatch(match.id, "player", userId);
         if (res.status === "error") {
             logger.error({ matchId: match.id, error: res.error }, "Error canceling match");
             say(`@${userDisplayName}, error canceling match: ${res.error}`);
             return;
+        }
+        if (res.status === "forfeit") {
+            logger.info({ match, res }, "Match forfeited");
+            say(`@${res.loser} forfeits the RPS match against @${res.winner} (+${match.wager * 2} silver)`);
         }
         if (res.status === "success") {
             say(`@${userDisplayName}, your match has been canceled.`);

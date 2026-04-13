@@ -2,8 +2,8 @@ import { decreaseBalance, findOrCreateBalance, increaseBalance, increaseBalanceW
 import boss from "@/db/boss";
 import logger from "@/logger";
 import { prisma } from "@/prisma";
-import { getUserById } from "@/twitch/api";
-import { RpsMove } from "@prisma/client";
+import { DbUser, getUserById } from "@/twitch/api";
+import { Match, RpsMove } from "@prisma/client";
 
 type SubmitMoveResult =
     | { status: "error"; error: string }
@@ -32,7 +32,10 @@ function resolveMove(a: RpsMove, b: RpsMove) {
     return "PLAYER_B";
 }
 
-type CancelRPSMatchResult = { status: "success"; msg: string } | { status: "error"; error: string };
+type CancelRPSMatchResult =
+    | { status: "success"; msg: string }
+    | { status: "error"; error: string }
+    | { status: "forfeit"; winner: string; loser: string; wager: number; channel: string };
 
 export async function cancelRPS_Job(matchId: bigint) {
     const job = await boss.findJobs("rps-cancel", { data: { matchId: matchId.toString() }, queued: true });
@@ -41,14 +44,11 @@ export async function cancelRPS_Job(matchId: bigint) {
         await boss.cancel("rps-cancel", job[0].id);
     }
 }
+type Reason = "player" | "timeout" | "no_balance";
+export async function cancelRPSMatch(matchId: bigint, reason: Reason, cancelPlayerId?: string): Promise<CancelRPSMatchResult> {
+    logger.debug({ matchId, reason, cancelPlayerId }, "cancelRPSMatch called");
 
-export async function cancelRPSMatch(matchId: bigint): Promise<CancelRPSMatchResult> {
-    logger.debug({ matchId }, "cancelRPSMatch called");
-
-    const match = await prisma.match.findUnique({
-        where: { id: matchId },
-        include: { rounds: { where: { roundNum: 1 }, include: { moves: true } } },
-    });
+    const match = await prisma.match.findUnique({ where: { id: matchId }, include: { rounds: { include: { moves: true } } } });
 
     if (!match) {
         logger.warn({ matchId }, "Match not found for cancellation");
@@ -60,7 +60,7 @@ export async function cancelRPSMatch(matchId: bigint): Promise<CancelRPSMatchRes
         return { status: "error", error: `Cannot cancel match with status: ${match.status}` };
     }
 
-    logger.debug({ matchId, playerA: match.playerA, playerB: match.playerB, wager: match.wager }, "Match found, fetching users");
+    logger.debug({ match }, "Match found, fetching users");
 
     // Fetch user information for both players and channel
     const [userA, userB, channel] = await Promise.all([
@@ -73,11 +73,37 @@ export async function cancelRPSMatch(matchId: bigint): Promise<CancelRPSMatchRes
         logger.error({ matchId, userA: !!userA, userB: !!userB, channel: !!channel }, "Failed to fetch users for cancellation");
         return { status: "error", error: "Failed to fetch user information for match cancellation" };
     }
+    const lastMove = await prisma.move.findFirst({ where: { round: { matchId } }, orderBy: { createdAt: "desc" } });
 
     // Check if playerB submitted in round 1 (their balance was deducted at that point)
     const firstRound = match.rounds[0];
-    const playerBSubmittedRound1 = firstRound?.moves.some(m => m.player === match.playerB) ?? false;
-    logger.debug({ matchId, playerBSubmittedRound1 }, "PlayerB submission status checked");
+    const lastRound = match.rounds.at(-1)!;
+    const playerASubmittedRound1 = firstRound.moves.some(m => m.player === match.playerA) ?? false;
+    const playerBSubmittedRound1 = firstRound.moves.some(m => m.player === match.playerB) ?? false;
+    const playerASubmittedLastRound = lastRound.moves.some(m => m.player === match.playerA) ?? false;
+    const playerBSubmittedLastRound = lastRound.moves.some(m => m.player === match.playerB) ?? false;
+    const movesCount = match.rounds.reduce((p, m) => p + m.moves.length, 0);
+    logger.debug(
+        { matchId, playerASubmittedRound1, playerASubmittedLastRound, playerBSubmittedRound1, playerBSubmittedLastRound, movesCount, lastMove },
+        "Player submission status checked",
+    );
+    if (movesCount >= 1 && playerBSubmittedRound1) {
+        if (reason == "player" && cancelPlayerId) {
+            const cancelPlayer = cancelPlayerId == userA.id ? userA : userB;
+            const winner = cancelPlayer.id == userA.id ? userB : userA;
+            const loser = winner.id == userA.id ? userB : userA;
+            endMatch(match, winner.id, loser.id, channel);
+            return { status: "forfeit", winner: winner.displayName, loser: loser.displayName, wager: match.wager, channel: channel.login };
+        }
+        if (reason == "timeout" && lastMove) {
+            const lastPlayer = lastMove.player == userA.id ? userA : userB;
+            const cancelPlayer = lastPlayer.id == userA.id ? userB : userA;
+            const winner = cancelPlayer.id == userA.id ? userB : userA;
+            const loser = winner.id == userA.id ? userB : userA;
+            endMatch(match, winner.id, loser.id, channel);
+            return { status: "forfeit", winner: winner.displayName, loser: loser.displayName, wager: match.wager, channel: channel.login };
+        }
+    }
 
     // Refund playerA's wager
     await increaseBalanceWithChannelID(prisma, channel.id, match.playerA, match.wager);
@@ -158,7 +184,7 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
                 { playerBId: userB.id, balance: playerB_balance.value, wager: match.wager, matchId: match.id },
                 "PlayerB insufficient balance, canceling match",
             );
-            const cancelResult = await cancelRPSMatch(match.id);
+            const cancelResult = await cancelRPSMatch(match.id, "no_balance");
             if (cancelResult.status === "error") {
                 logger.error({ matchId: match.id, error: cancelResult.error }, "Match cancellation failed");
                 return { status: "error", error: `Match cancellation failed: ${cancelResult.error}` };
@@ -209,27 +235,9 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
     if (scoreA === 2 || scoreB === 2) {
         matchEnd = true;
         winner = scoreA === 2 ? match.playerA : match.playerB;
-        logger.info({ matchId: match.id, winner, scoreA, scoreB }, "Match completed");
-
-        await increaseBalanceWithChannelID(prisma, channel.id, winner, match.wager * 2);
-        logger.debug({ winnerId: winner, amount: match.wager * 2 }, "Winner balance increased");
-
-        cancelRPS_Job(match.id);
-
-        await prisma.match.update({ where: { id: match.id }, data: { status: "COMPLETE", winner, completedAt: new Date() } });
-
-        // Update stats for winner
-        statsWinner = await updateUserRpsStats(prisma, channel.login, channel.id, winner, {
-            wagerAmount: match.wager,
-            winAmount: match.wager * 2,
-            didWin: true,
-        });
-        logger.debug({ userId: winner, didWin: true, statsA: statsWinner }, "Winner stats updated");
-
-        // Update stats for loser
         const loser = winner === match.playerA ? match.playerB : match.playerA;
-        statsLoser = await updateUserRpsStats(prisma, channel.login, channel.id, loser, { wagerAmount: match.wager, winAmount: 0, didWin: false });
-        logger.debug({ userId: loser, didWin: false, statsB: statsLoser }, "Loser stats updated");
+        logger.info({ matchId: match.id, winner, scoreA, scoreB }, "Match completed");
+        statsWinner = await endMatch(match, winner, loser, channel);
     } else {
         // next round
         logger.debug({ matchId: match.id, nextRound: round.roundNum + 1 }, "Creating next round");
@@ -253,4 +261,30 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
     } as const;
     logger.debug(res, "Match result prepared");
     return res;
+}
+
+async function endMatch(match: Match, winnerId: string, loserId: string, channel: DbUser) {
+    await increaseBalanceWithChannelID(prisma, channel.id, winnerId, match.wager * 2);
+    logger.debug({ winnerId: winnerId, amount: match.wager * 2 }, "Winner balance increased");
+
+    cancelRPS_Job(match.id);
+
+    await prisma.match.update({ where: { id: match.id }, data: { status: "COMPLETE", winner: winnerId, completedAt: new Date() } });
+
+    // Update stats for winner
+    const statsWinner = await updateUserRpsStats(prisma, channel.login, channel.id, winnerId, {
+        wagerAmount: match.wager,
+        winAmount: match.wager * 2,
+        didWin: true,
+    });
+    logger.debug({ userId: winnerId, didWin: true, statsA: statsWinner }, "Winner stats updated");
+
+    // Update stats for loser
+    const statsLoser = await updateUserRpsStats(prisma, channel.login, channel.id, loserId, {
+        wagerAmount: match.wager,
+        winAmount: 0,
+        didWin: false,
+    });
+    logger.debug({ userId: loserId, didWin: false, statsB: statsLoser }, "Loser stats updated");
+    return statsWinner;
 }

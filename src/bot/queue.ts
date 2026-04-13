@@ -1,9 +1,10 @@
 import boss from "@/db/boss";
 import logger from "@/logger";
-import { sendActionToChannel } from "@/utils/misc";
+import { sendActionToChannel, sendMessageToChannel, sendMessageToChannelId } from "@/utils/misc";
 import { ms } from "ms";
 import { cancelRPSMatch } from "./rps";
 import { processWarning } from "@/common/helpers/schedule";
+import { isChannelLive } from "./liveChannels";
 
 export async function startPgBoss() {
     await boss.start();
@@ -32,9 +33,14 @@ async function initializeRPS_CancelQueue() {
     boss.work("rps-cancel", async ([job]) => {
         logger.debug(job, "Processing rps-cancel job");
         const { matchId } = job.data as any;
-        const res = await cancelRPSMatch(matchId);
+        const res = await cancelRPSMatch(matchId, "timeout");
         if (res.status === "error") {
             logger.error(`Failed to cancel RPS match ${matchId}: ${res.error}`);
+        } else if (res.status === "forfeit") {
+            logger.info({ res }, "Match forfeited");
+            if (!isChannelLive({ username: res.channel })) {
+                sendMessageToChannel(res.channel, `@${res.loser} forfeits (timeout) the RPS match against @${res.winner} (+${res.wager * 2} silver)`);
+            }
         } else {
             logger.info(`Successfully canceled RPS match ${matchId}`);
         }
