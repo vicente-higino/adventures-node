@@ -19,7 +19,7 @@ export class EmoteManager {
         const emote = pickRandom(emotes);
         if (emote instanceof Array) {
             if (!channel) return emote;
-            return emote.filter(e => emoteTracker?.channelHasEmote(channel, e.name) || e.provider == 'native')
+            return emote.filter(e => emoteTracker?.channelHasEmote(channel, e.name) || e.provider == "native");
         }
         if (!channel || emote.provider == "native") return emote;
         return emoteTracker?.channelHasEmote(channel, emote.name) ? emote : null;
@@ -45,7 +45,6 @@ export class EmoteManager {
     public static getAllEmotes(): Emote[] {
         return Object.values(CATEGORY_EMOTES).flat(2);
     }
-
 }
 
 // Legacy exports for backward compatibility

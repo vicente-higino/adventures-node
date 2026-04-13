@@ -20,15 +20,15 @@ function createWarnings(offsetInMs: number): AdventureWarning[] {
             message: `Ending the adventure in 15 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_GAMBA_EMOTE()}`,
         },
         {
-            delay: (10 * 60 * 1000) + offsetInMs,
+            delay: 10 * 60 * 1000 + offsetInMs,
             message: `${ADVENTURE_ENDING_EMOTE.Alarm.name} Ending the adventure in 5 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
         },
         {
-            delay: (13 * 60 * 1000) + offsetInMs,
+            delay: 13 * 60 * 1000 + offsetInMs,
             message: `${ADVENTURE_ENDING_EMOTE.Alarm.name} Ending the adventure in 2 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
         },
-        { delay: (15 * 60 * 1000) + offsetInMs, message: `!adventureend` }
-    ]
+        { delay: 15 * 60 * 1000 + offsetInMs, message: `!adventureend` },
+    ];
 }
 
 export async function cancelScheduleAdventureWarnings(adventureId: number) {

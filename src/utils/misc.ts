@@ -78,10 +78,7 @@ export function roundToDecimalPlaces(value: number, decimalPlaces = 2): number {
 }
 
 export function formatSilver(silver: number, compact: boolean = true): string {
-    const format = new Intl.NumberFormat('en', {
-        notation: 'compact',
-        maximumFractionDigits: 2
-    });
+    const format = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 });
     if (compact) return format.format(silver);
     return silver.toString();
 }

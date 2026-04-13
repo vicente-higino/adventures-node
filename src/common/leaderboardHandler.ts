@@ -5,18 +5,13 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { handleRPS } from "./leaderboards/rpsLeaderboard";
 
-const paramsRegex = /^(?:(adv|duel|rps)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top|treasure))?|silver)(-(?:asc|bottom))?$/i
+const paramsRegex =
+    /^(?:(adv|duel|rps)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top|treasure))?|silver)(-(?:asc|bottom))?$/i;
 
 export const leaderboardCommandSyntax = (prefix: string = "!") =>
     `Usage: ${prefix}leaderboard [duel-|rps-][wins|played|wagered|profit|streak] | fish[-silver|-avg|-fines|-rarity|-top|-treasure] | silver [-asc|-bottom] [amount] (default: silver, 5)`;
 
-export const leaderboardSchema = z.object({
-    amount: z.number().min(1).max(25).default(5),
-    sortBy: z
-        .string()
-        .regex(paramsRegex)
-        .default("silver"),
-});
+export const leaderboardSchema = z.object({ amount: z.number().min(1).max(25).default(5), sortBy: z.string().regex(paramsRegex).default("silver") });
 
 export async function getLeaderboard(
     prisma: dbClient,
@@ -25,9 +20,7 @@ export async function getLeaderboard(
 ): Promise<(LeaderboardResult & { order: "asc" | "desc" }) | string> {
     const { amount, sortBy } = params;
 
-    const sortParts = sortBy
-        .toLowerCase()
-        .match(paramsRegex);
+    const sortParts = sortBy.toLowerCase().match(paramsRegex);
 
     if (!sortParts) {
         return "Invalid sort parameter format.";
@@ -44,14 +37,14 @@ export async function getLeaderboard(
     if (["wins", "played", "wagered", "profit", "streak"].includes(metricOrType)) {
         internalMetric = metricOrType;
         switch (prefix) {
-            case 'duel':
-                leaderboardType = "Duel"
+            case "duel":
+                leaderboardType = "Duel";
                 break;
-            case 'rps':
-                leaderboardType = "RPS"
+            case "rps":
+                leaderboardType = "RPS";
                 break;
             default:
-                leaderboardType = "Adventure"
+                leaderboardType = "Adventure";
                 break;
         }
     } else if (metricOrType.startsWith("fish-")) {

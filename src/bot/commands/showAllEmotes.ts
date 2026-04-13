@@ -16,13 +16,13 @@ export const showAllEmotesCommand = createBotCommand(
             return;
         }
         const arg = parseOption.safeParse(params.shift());
-        let option: Option = 'all';
+        let option: Option = "all";
         if (arg.success) {
             option = arg.data;
         }
         let emotes = EmoteManager.getAllEmotes();
-        if (option == 'missing') {
-            emotes = emotes.filter(e => !emoteTracker?.channelHasEmote(broadcasterName, e.name) && e.provider !== 'native')
+        if (option == "missing") {
+            emotes = emotes.filter(e => !emoteTracker?.channelHasEmote(broadcasterName, e.name) && e.provider !== "native");
         }
         const allEmotes = emotes.map(e => e.name);
         // Remove duplicates and sort

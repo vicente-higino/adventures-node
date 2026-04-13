@@ -1,5 +1,14 @@
 import { CatchDetails, RARITY_POINTS } from "./constants"; // Import from constants
-import { MUSHY_EMOTES, SOCKO_EMOTES, APRIL_FOOZE_EMOTES, FUSLIE_EMOTES, FROG_EMOTES, BLOBFISH_EMOTES, SURGEONFISH_EMOTES, FUKURA_EMOTES } from "@/emotes";
+import {
+    MUSHY_EMOTES,
+    SOCKO_EMOTES,
+    APRIL_FOOZE_EMOTES,
+    FUSLIE_EMOTES,
+    FROG_EMOTES,
+    BLOBFISH_EMOTES,
+    SURGEONFISH_EMOTES,
+    FUKURA_EMOTES,
+} from "@/emotes";
 
 export const fishTable: CatchDetails[] = [
     // Legendary fish - massive sizes

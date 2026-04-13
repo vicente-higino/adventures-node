@@ -9,10 +9,7 @@ export async function handleRPS(
     order: "asc" | "desc",
     amount: number,
 ): Promise<LeaderboardResult> {
-    const stats = await prisma.userStats.findMany({
-        where: { channelProviderId: channelProviderId, rpsPlayed: { gt: 0 } },
-        include: { user: true },
-    });
+    const stats = await prisma.userStats.findMany({ where: { channelProviderId: channelProviderId, rpsPlayed: { gt: 0 } }, include: { user: true } });
     const totalEntries = stats.length;
 
     const formattedLeaderboard = stats
