@@ -1,6 +1,6 @@
+import logger from "@/logger";
 import { EmoteProvider } from "@prisma/client";
 import { z } from "zod";
-import logger from "@/logger";
 const SEVENTV_URL = (userId: string) => `https://7tv.io/v3/users/twitch/${userId}`;
 const FFZ_URL = (userId: string) => `https://api.frankerfacez.com/v1/room/id/${userId}`;
 const BBTV_URL = (userId: string) => `https://api.betterttv.net/3/cached/users/twitch/${userId}`;
@@ -55,7 +55,8 @@ class EmoteFetcher {
     private ffzGlobalCache: Emote[] = [];
     private bttvGlobalCache: Emote[] = [];
 
-    async fetch7TV(userId: string): Promise<Emote[]> {
+    async fetch7TV(userId: string, shouldFetch: boolean = true): Promise<Emote[]> {
+        if (!shouldFetch) return this.seventvCache.get(userId) ?? [];
         try {
             logger.debug(`[EmoteFetcher] Fetching 7TV emotes for userId: ${userId}`);
             const res = await fetch(SEVENTV_URL(userId));
@@ -88,7 +89,8 @@ class EmoteFetcher {
         }
     }
 
-    async fetchFFZ(userId: string): Promise<Emote[]> {
+    async fetchFFZ(userId: string, shouldFetch: boolean = true): Promise<Emote[]> {
+        if (!shouldFetch) return this.ffzCache.get(userId) ?? [];
         try {
             logger.debug(`[EmoteFetcher] Fetching FFZ emotes for userId: ${userId}`);
             const res = await fetch(FFZ_URL(userId));
@@ -125,7 +127,8 @@ class EmoteFetcher {
         }
     }
 
-    async fetchBTTV(userId: string): Promise<Emote[]> {
+    async fetchBTTV(userId: string, shouldFetch: boolean = true): Promise<Emote[]> {
+        if (!shouldFetch) return this.bttvCache.get(userId) ?? [];
         try {
             logger.debug(`[EmoteFetcher] Fetching BTTV emotes for userId: ${userId}`);
             const res = await fetch(BBTV_URL(userId));
@@ -238,9 +241,12 @@ class EmoteFetcher {
             return this.bttvGlobalCache;
         }
     }
-
-    async fetchAll(userId: string): Promise<Map<string, Emote>> {
-        const [seventv, ffz, bttv] = await Promise.all([this.fetch7TV(userId), this.fetchFFZ(userId), this.fetchBTTV(userId)]);
+    async fetchAll(userId: string, only?: FetchOnly): Promise<Map<string, Emote>> {
+        const [seventv, ffz, bttv] = await Promise.all([
+            this.fetch7TV(userId, only?.seventv),
+            this.fetchFFZ(userId, only?.ffz),
+            this.fetchBTTV(userId, only?.bttv),
+        ]);
         return this.mergeEmotes([seventv, ffz, bttv], userId);
     }
 
@@ -266,4 +272,6 @@ class EmoteFetcher {
     }
 }
 
-export { EmoteFetcher };
+type FetchOnly = Partial<Record<"seventv" | "ffz" | "bttv", boolean>>;
+
+export { EmoteFetcher, FetchOnly };

@@ -1,12 +1,13 @@
-import { getBotConfig } from "./index";
-import { getUserByUsername } from "@/twitch/api";
-import { EmoteFetcher, Emote } from "@/common/emotes";
-import { Bot, MessageEvent } from "@twurple/easy-bot";
-import { prisma } from "@/prisma";
-import cron from "node-cron";
-import { EmoteProvider, Prisma } from "@prisma/client";
+import { startSevenTVEventApi } from "@/7tv/event-api";
+import { Emote, EmoteFetcher, FetchOnly } from "@/common/emotes";
 import clickhouse from "@/db/clickhouse";
 import logger from "@/logger";
+import { prisma } from "@/prisma";
+import { getUserByUsername } from "@/twitch/api";
+import { EmoteProvider, Prisma } from "@prisma/client";
+import { Bot, MessageEvent } from "@twurple/easy-bot";
+import cron from "node-cron";
+import { getBotConfig } from "./index";
 // Tracks emote usage per channel
 export class EmoteTracker {
     private emoteFetcher = new EmoteFetcher();
@@ -35,6 +36,7 @@ export class EmoteTracker {
         });
         this.listenToChat();
         this.startRefreshAllEmotesCronjobTask();
+        startSevenTVEventApi();
     }
 
     private extractNativeTwitchEmotes(ctx: MessageEvent): Map<string, Emote> {
@@ -123,10 +125,10 @@ export class EmoteTracker {
         return this.globalEmotes;
     }
 
-    async refreshEmotes(channel: string) {
+    async refreshEmotes(channel: string, only?: FetchOnly) {
         const user = await getUserByUsername(prisma, channel);
         if (!user) return 0;
-        const emotes = await this.emoteFetcher.fetchAll(user.id);
+        const emotes = await this.emoteFetcher.fetchAll(user.id, only);
         this.channelEmotes.set(channel, emotes);
         return emotes.size;
     }
@@ -143,7 +145,7 @@ export class EmoteTracker {
     }
     startRefreshAllEmotesCronjobTask() {
         cron.schedule(
-            "0 0,12 * * *",
+            "0 0 * * *",
             c => {
                 logger.info(`Running Refresh Emotes Task`);
                 this.refreshAllEmotes();
