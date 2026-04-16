@@ -4,7 +4,7 @@ import * as chrono from "chrono-node";
 import dayjs from "dayjs";
 import { format, ms } from "ms";
 import { uuidv7 } from "uuidv7";
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 
 export const remindMeCommand = createBotCommand(
     "remindme",

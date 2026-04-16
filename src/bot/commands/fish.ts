@@ -1,4 +1,4 @@
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 import { fishForUser } from "@/common/fishForUser";
 import { prisma } from "@/prisma";
 import env from "@/env";

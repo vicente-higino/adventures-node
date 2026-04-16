@@ -1,5 +1,5 @@
 import boss from "@/db/boss";
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 import logger from "@/logger";
 
 export const cancelRemindMeCommand = createBotCommand(

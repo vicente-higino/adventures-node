@@ -1,4 +1,4 @@
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 import { emoteTracker, getBotConfig } from "@/bot";
 import { EmoteManager } from "@/emotes";
 import { z } from "zod";

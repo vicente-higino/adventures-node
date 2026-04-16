@@ -1,4 +1,4 @@
-import { createAdminBotCommand } from "../BotCommandWithKeywords";
+import { createAdminBotCommand } from "../botCommandWithKeywords";
 import { listLegendaryEvents } from "@/fishing";
 import dayjs from "dayjs";
 

@@ -1,4 +1,4 @@
-import { createAdminBotCommand } from "../BotCommandWithKeywords";
+import { createAdminBotCommand } from "../botCommandWithKeywords";
 import { getChanceByRarity, modifyRarityWeights } from "@/fishing/rarities";
 import { z } from "zod";
 import { Rarity } from "@prisma/client";

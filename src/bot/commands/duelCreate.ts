@@ -1,4 +1,4 @@
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 import { handleDuelCreate } from "@/common/handleDuels";
 import { getBotConfig } from "..";
 import { getUserByUsername } from "@/twitch/api";

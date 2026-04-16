@@ -1,4 +1,4 @@
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 import { formatRarityWeightDisplay } from "@/fishing/rarities";
 
 export const fishOddsCommand = createBotCommand(

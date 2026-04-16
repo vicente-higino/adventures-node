@@ -1,6 +1,6 @@
 import { prisma } from "@/prisma";
 import { getUserByUsername } from "@/twitch/api";
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 import { handleDuelAccept } from "@/common/handleDuels";
 
 export const duelAcceptCommand = createBotCommand(

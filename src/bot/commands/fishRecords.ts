@@ -2,7 +2,7 @@ import { getBotConfig } from "@/bot";
 import { getFishRecordStats } from "@/common/fishRecordStats";
 import { prisma } from "@/prisma";
 import { getUserByUsername } from "@/twitch/api";
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 
 export const fishRecordsCommand = createBotCommand(
     "fishrecords",

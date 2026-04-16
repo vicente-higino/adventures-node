@@ -1,4 +1,4 @@
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 import { prisma } from "@/prisma";
 import { formatSize, formatWeight } from "@/utils/misc";
 import { z } from "zod";

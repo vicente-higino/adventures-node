@@ -1,4 +1,4 @@
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 import { getUserStatsString } from "@/common/userStats";
 import { getUserByUsername } from "@/twitch/api";
 import { prisma } from "@/prisma";

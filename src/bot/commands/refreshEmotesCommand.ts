@@ -1,6 +1,6 @@
 import z from "zod";
 import { emoteTracker } from "@/bot";
-import { createAdminBotCommand, createBotCommand } from "../BotCommandWithKeywords";
+import { createAdminBotCommand, createBotCommand } from "../botCommandWithKeywords";
 
 const nameSchema = z.string().min(3);
 export const refreshEmotesCommand = createBotCommand(

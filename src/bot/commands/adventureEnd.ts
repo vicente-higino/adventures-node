@@ -1,4 +1,4 @@
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 import { handleAdventureEnd } from "@/common/handleAdventure";
 
 export const adventureEndCommand = createBotCommand(

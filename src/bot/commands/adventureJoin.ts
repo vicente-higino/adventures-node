@@ -1,5 +1,5 @@
 import { getBotConfig } from "..";
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 import { handleAdventureJoin } from "@/common/handleAdventure";
 
 export const adventureJoinCommand = createBotCommand(

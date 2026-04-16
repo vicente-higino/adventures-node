@@ -1,5 +1,5 @@
 import { parseProviders } from "@/utils/params";
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 import { getBotConfig, emoteTracker } from "@/bot";
 
 export const showGlobalEmotesCommand = createBotCommand(

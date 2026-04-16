@@ -1,4 +1,4 @@
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 import { getUserSilverString } from "@/common/userSilver";
 import { getUserByUsername } from "@/twitch/api";
 import { prisma } from "@/prisma";

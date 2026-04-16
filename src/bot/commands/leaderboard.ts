@@ -1,4 +1,4 @@
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 import { prisma } from "@/prisma";
 import { getLeaderboard, leaderboardCommandSyntax, leaderboardSchema } from "@/common/leaderboardHandler";
 import { getBotConfig } from "..";

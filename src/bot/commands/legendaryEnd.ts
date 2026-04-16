@@ -1,4 +1,4 @@
-import { createAdminBotCommand } from "../BotCommandWithKeywords";
+import { createAdminBotCommand } from "../botCommandWithKeywords";
 import { endLegendaryEventById } from "@/fishing";
 import { z } from "zod";
 import { getBotConfig } from "..";

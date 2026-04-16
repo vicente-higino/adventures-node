@@ -1,6 +1,6 @@
 import { ms } from "ms";
 import { getBotConfig } from "..";
-import { createAdminBotCommand } from "../BotCommandWithKeywords";
+import { createAdminBotCommand } from "../botCommandWithKeywords";
 import { manualLegendaryEventTask } from "@/fishing";
 
 export const startEventCommand = createAdminBotCommand(

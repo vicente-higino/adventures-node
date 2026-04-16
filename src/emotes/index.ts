@@ -1,5 +1,5 @@
 import { emoteTracker } from "@/bot";
-import { CATEGORY_EMOTES, CATEGORY_EMOTES_RECORD, Emote, EmoteCategory, EmoteName, EmoteProvider } from "./emotes-data";
+import { CATEGORY_EMOTES, CATEGORY_EMOTES_RECORD, Emote, EmoteCategory, EmoteName, EmoteProvider } from "./emotesData";
 import { pickRandom } from "@/utils/misc";
 
 export class EmoteManager {

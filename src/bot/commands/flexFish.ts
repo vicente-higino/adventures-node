@@ -7,7 +7,7 @@ import calendar from "dayjs/plugin/calendar";
 import relativeTime from "dayjs/plugin/relativeTime";
 import utc from "dayjs/plugin/utc";
 import z from "zod";
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 dayjs.extend(relativeTime);
 dayjs.extend(utc);
 dayjs.extend(calendar);

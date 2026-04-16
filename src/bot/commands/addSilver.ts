@@ -1,5 +1,5 @@
 import { getBotConfig } from "@/bot";
-import { createBotCommand } from "../BotCommandWithKeywords";
+import { createBotCommand } from "../botCommandWithKeywords";
 import { handleAddSilver } from "@/common/handleAddSilver";
 import { getUserById, getUserByUsername } from "@/twitch/api";
 import { prisma } from "@/prisma";

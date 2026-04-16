@@ -1,5 +1,5 @@
 import { createBot, getBotConfig } from "@/bot";
-import { createAdminBotCommand } from "../BotCommandWithKeywords";
+import { createAdminBotCommand } from "../botCommandWithKeywords";
 
 export const reloadCommand = createAdminBotCommand(
     "reload",

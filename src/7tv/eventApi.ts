@@ -31,6 +31,8 @@ class SevenTVEventApi {
     private bySevenTvId = new Map<string, UserInfo>();
     private byEmoteSetId = new Map<string, UserInfo>();
     private eventSource: EventSource | null = null;
+    private subscription_limit: number = 0;
+    private session_id: string | null = null;
     constructor(private usersId: string[]) {
         this.start();
     }
@@ -51,7 +53,7 @@ class SevenTVEventApi {
         }
     }
 
-    async fetchUsers(usersId: string[]) {
+    private async fetchUsers(usersId: string[]) {
         const users = await fetchUsers(usersId);
         for (const { userRes } of users) {
             if (userRes) {
@@ -78,7 +80,7 @@ class SevenTVEventApi {
         }
         return null;
     }
-    getParams(): string | null {
+    private getParams(): string | null {
         const sevenTvUsers = this.byTwitchId.values().toArray();
         const emotes = sevenTvUsers.map(u => u.emote_set_id);
         const users = sevenTvUsers.map(u => u.id);
@@ -90,9 +92,9 @@ class SevenTVEventApi {
     }
 
     private handleEvent = async (e: MessageEvent) => {
-        if (e.type == "dispatch") {
-            const event = parseEvent<"dispatch">(e);
-            const data = event.data;
+        const event = parseEvent(e);
+        if (event.type == "dispatch") {
+            const { data } = event;
             logger.debug({ type: "dispatch", data: data.type }, "SevenTV Event Message");
             if (data.type == "user.update") {
                 // Emote set changed
@@ -119,15 +121,16 @@ class SevenTVEventApi {
                 emoteTracker?.refreshEmotes(userInfo.username, { seventv: true, ffz: false, bttv: false });
             }
         }
-        if (e.type == "hello") {
-            const event = parseEvent<"hello">(e);
-            const data = event.data;
+        if (event.type == "hello") {
+            const { data } = event;
             logger.debug({ type: "hello", data }, "SevenTV Event Message");
+            this.session_id = data.session_id;
+            this.subscription_limit = data.subscription_limit;
         }
-        if (e.type == "ack") {
-            const event = parseEvent<"ack">(e);
-            const data = event.data;
+        if (event.type == "ack") {
+            const { data } = event;
             logger.debug({ type: "ack", data }, "SevenTV Event Message");
+            this.subscription_limit--;
         }
     };
 }
@@ -143,15 +146,6 @@ const updatedSchema = z.array(
         ]),
     }),
 );
-export enum Op {
-    DISPATCH = 0,
-    HELLO = 1,
-    HEARTBEAT = 2,
-    RECONNECT = 4,
-    ACK = 5,
-    ERROR = 6,
-    END_OF_STREAM = 7,
-}
 
 export type EventName = "dispatch" | "hello" | "heartbeat" | "reconnect" | "ack" | "error" | "end_of_stream";
 
@@ -238,11 +232,9 @@ export type EventPayloadMap = {
     reconnect: {};
     dispatch: DispatchPayload;
 };
+export type TypedSSEEvent = { [K in keyof EventPayloadMap]: { type: K; data: EventPayloadMap[K] } }[keyof EventPayloadMap];
 
-export type TypedSSEEvent<K extends keyof EventPayloadMap = keyof EventPayloadMap> = { event: K; data: EventPayloadMap[K] };
-
-export function parseEvent<K extends keyof EventPayloadMap>(event: MessageEvent): TypedSSEEvent<K> {
+export function parseEvent(event: MessageEvent): TypedSSEEvent {
     const data = JSON.parse(event.data);
-
-    return { event: event.type as K, data };
+    return { type: event.type as keyof EventPayloadMap, data } as TypedSSEEvent;
 }

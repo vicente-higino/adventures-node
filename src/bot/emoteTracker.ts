@@ -1,4 +1,4 @@
-import { startSevenTVEventApi } from "@/7tv/event-api";
+import { startSevenTVEventApi } from "@/7tv/eventApi";
 import { Emote, EmoteFetcher, FetchOnly } from "@/common/emotes";
 import clickhouse from "@/db/clickhouse";
 import logger from "@/logger";

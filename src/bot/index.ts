@@ -8,7 +8,7 @@ import { promises as fs, readFileSync } from "fs";
 import { z } from "zod";
 import { commands } from "./commands";
 import { whispers } from "./commands/whispers";
-import { EmoteTracker } from "./emote-tracker";
+import { EmoteTracker } from "./emoteTracker";
 import { createEventsubListeners, createWhisperListener } from "./eventsubListeners";
 import { checkIfChannelIsForcedSend, fetchLiveChannels, isChannelLive } from "./liveChannels";
 export { checkIfChannelIsForcedSend, isChannelLive };
