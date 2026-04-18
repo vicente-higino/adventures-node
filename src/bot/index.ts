@@ -11,6 +11,7 @@ import { whispers } from "./commands/whispers";
 import { EmoteTracker } from "./emoteTracker";
 import { createEventsubListeners, createWhisperListener } from "./eventsubListeners";
 import { checkIfChannelIsForcedSend, fetchLiveChannels, isChannelLive } from "./liveChannels";
+import { ChatMail } from "./mail";
 export { checkIfChannelIsForcedSend, isChannelLive };
 
 const clientId = env.TWITCH_CLIENT_ID;
@@ -42,7 +43,8 @@ refreshingAuthProvider.onRefresh(
 
 let bot: Bot | null = null;
 let currentBotUserId: string | null = null; // Track the userId for the singleton
-export let emoteTracker: EmoteTracker | null = null; // Placeholder for emote tracker
+export let emoteTracker: EmoteTracker | null = null;
+export let chatMail: ChatMail | null = null;
 export const GetBot = () => bot;
 
 export const createBot = async (forceRecreate?: boolean): Promise<boolean> => {
@@ -113,6 +115,7 @@ export const createBot = async (forceRecreate?: boolean): Promise<boolean> => {
         });
         createWhisperListener(botConfig.userId, whispers);
         emoteTracker = new EmoteTracker(bot);
+        chatMail = new ChatMail(bot);
         currentBotUserId = userId; // Update the current userId
         return authenticated;
     } catch (err) {

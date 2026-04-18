@@ -34,6 +34,7 @@ import { rankCommand } from "./rank";
 import { remindMeCommand } from "./remindme";
 import { cancelRemindMeCommand } from "./cancelRemindme";
 import { cancelRPSCommand, rpsCommand } from "./rps";
+import { mailCommand, cancelMailCommand } from "./mail";
 
 export const commands: BotCommand[] = [
     fishCommand,
@@ -78,4 +79,6 @@ export const commands: BotCommand[] = [
     cancelRemindMeCommand,
     rpsCommand,
     cancelRPSCommand,
+    mailCommand,
+    cancelMailCommand,
 ];
