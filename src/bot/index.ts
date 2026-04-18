@@ -66,7 +66,7 @@ export const createBot = async (forceRecreate?: boolean): Promise<boolean> => {
             channels: botConfig.channels,
             prefix: botConfig.prefix,
             debug: botConfig.debug,
-            emitCommandMessageEvents: true,
+            emitCommandMessageEvents: false,
             chatClientOptions: { isAlwaysMod: botConfig.isAlwaysMod },
             commands,
         });
