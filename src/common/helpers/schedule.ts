@@ -13,7 +13,7 @@ export interface AdventureWarning {
 }
 
 function createWarnings(offsetInMs: number): AdventureWarning[] {
-    offsetInMs = Math.min(offsetInMs, 15 * 60 * 1000);
+    offsetInMs = Math.max(0, offsetInMs); // Ensure offset is not negative
     return [
         {
             delay: 0 + offsetInMs,
