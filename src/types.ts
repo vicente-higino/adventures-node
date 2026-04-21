@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
 import { DateTime, Str } from "chanfana";
 import { z } from "zod";
 import { Env } from "./env";
+import { dbClient } from "./prisma";
 
 export const ParseAiResponse = z.object({
     response: Str(),
@@ -20,7 +20,9 @@ export const FossaHeaders = z.object({
     "x-fossabot-channelprovider": z.enum(["twitch", "discord", "youtube"]),
     "x-fossabot-channelproviderid": z.string(),
     "x-fossabot-message-userlogin": z.string(),
-    "x-fossabot-message-userdisplayname": z.string().transform(name => decodeURIComponent(name)),
+    "x-fossabot-message-userdisplayname": z.string().transform(name => {
+        return Buffer.from(name, "latin1").toString("utf8");
+    }),
     "x-fossabot-message-userproviderid": z.string(),
     "x-fossabot-customapitoken": z.string(),
 });
@@ -46,7 +48,7 @@ export interface Bindings {
 
 export interface HonoEnv {
     Bindings: Env;
-    Variables: { prisma: PrismaClient };
+    Variables: { prisma: dbClient };
 }
 
 export const fossaContextSchema = z.object({
