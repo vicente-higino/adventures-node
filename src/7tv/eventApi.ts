@@ -98,21 +98,21 @@ class SevenTVEventApi {
             logger.debug({ type: "dispatch", data: data.type }, "SevenTV Event Message");
             if (data.type == "user.update") {
                 // Emote set changed
-                const { id } = data.body;
+                const { id, updated } = data.body;
                 const userInfo = this.bySevenTvId.get(id)!;
                 emoteTracker?.refreshEmotes(userInfo.username, { seventv: true, ffz: false, bttv: false });
-                this.restart(); // restart is needed bc theres no way to update the subscriptions
-                // if (updated) {
-                //     const parsed = updatedSchema.safeParse(updated);
-                //     if (parsed.success) {
-                //         const { old_value, value } = parsed.data[0].value[1];
-                //         const userInfo = this.byEmoteSetId.get(old_value)!;
-                //         const newUserInfo: UserInfo = { ...userInfo, emote_set_id: value };
-                //         this.bySevenTvId.set(newUserInfo.id, newUserInfo);
-                //         this.byTwitchId.set(newUserInfo.providerId, newUserInfo);
-                //         this.byEmoteSetId.set(newUserInfo.emote_set_id, newUserInfo);
-                //     }
-                // }
+                if (updated) {
+                    const parsed = updatedSchema.safeParse(updated);
+                    if (parsed.success) {
+                        this.restart(); // restart is needed bc theres no way to update the subscriptions
+                        // const { old_value, value } = parsed.data[0].value[1];
+                        // const userInfo = this.byEmoteSetId.get(old_value)!;
+                        // const newUserInfo: UserInfo = { ...userInfo, emote_set_id: value };
+                        // this.bySevenTvId.set(newUserInfo.id, newUserInfo);
+                        // this.byTwitchId.set(newUserInfo.providerId, newUserInfo);
+                        // this.byEmoteSetId.set(newUserInfo.emote_set_id, newUserInfo);
+                    }
+                }
             }
             if (data.type == "emote_set.update") {
                 // Emote added or removed from set
