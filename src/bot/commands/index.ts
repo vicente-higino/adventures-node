@@ -35,6 +35,7 @@ import { remindMeCommand } from "./remindme";
 import { cancelRemindMeCommand } from "./cancelRemindme";
 import { cancelRPSCommand, rpsCommand } from "./rps";
 import { mailCommand, cancelMailCommand } from "./mail";
+import { rodCommand } from "./rod";
 
 export const commands: BotCommand[] = [
     fishCommand,
@@ -81,4 +82,5 @@ export const commands: BotCommand[] = [
     cancelRPSCommand,
     mailCommand,
     cancelMailCommand,
+    rodCommand,
 ];

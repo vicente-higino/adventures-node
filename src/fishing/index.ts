@@ -69,7 +69,7 @@ export const getFish: GetFishFunc = (args = {}) => {
         weight: actualWeight,
         formatedWeight: formatWeight(actualWeight, unitSystem),
         sellMultiplier: sellMultiplier,
-        sellValue: actualSellValue * qualityMultiplier,
+        sellValue: roundToDecimalPlaces(actualSellValue * qualityMultiplier, 0),
         emote: emote ? emote(channel) : "",
     };
 };
