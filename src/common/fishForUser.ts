@@ -1,16 +1,11 @@
-import { Prisma, PrismaClient, Rarity } from "@prisma/client";
-import dayjs from "dayjs";
 import {
-    findOrCreateBalance,
-    findOrCreateFishStats,
-    increaseBalance,
-    findOrCreateFishDexEntry,
     createFishDexCompletion,
+    findOrCreateBalance,
+    findOrCreateFishDexEntry,
+    findOrCreateFishStats,
     hasFishDexCompletion,
+    increaseBalance,
 } from "@/db";
-import { getFish, getValueEmote } from "@/fishing";
-import { formatTimeToWithSeconds } from "@/utils/time";
-import { boxMullerTransform, delay, pickRandom, sendActionToAllChannel, sendActionToChannel, sendMessageToChannel } from "@/utils/misc";
 import {
     CONGRATULATIONS_EMOTES,
     CONGRATULATIONS_TRASH_FISH_DEX_EMOTES,
@@ -20,12 +15,17 @@ import {
     PAUSE_EMOTES,
     QUOTES_EMOTES,
 } from "@/emotes";
-import relativeTime from "dayjs/plugin/relativeTime";
-import { fishTable } from "@/fishing/fishTable";
+import { getFish, getQualityRecordBonus, getRod, getValueEmote } from "@/fishing";
 import { fishingFacts } from "@/fishing/facts";
-import { friendlyCooldownMessages, fishingFriendlyQuestions, wrongPlaces, motivationalQuotes } from "./phrases";
+import { fishTable } from "@/fishing/fishTable";
 import logger from "@/logger";
 import { dbClient } from "@/prisma";
+import { boxMullerTransform, delay, pickRandom, sendActionToChannel } from "@/utils/misc";
+import { formatTimeToWithSeconds } from "@/utils/time";
+import { Prisma, Rarity } from "@prisma/client";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { friendlyCooldownMessages, motivationalQuotes, wrongPlaces } from "./phrases";
 dayjs.extend(relativeTime);
 
 interface FishForUserParams {
@@ -91,7 +91,7 @@ export async function fishForUser({
         }
 
         const unitSystem = balance.user.unitSystem ?? "metric";
-        const fish = getFish({ unitSystem, channel: channelLogin });
+        const fish = getFish({ unitSystem, channel: channelLogin, rodLevel: fishStats.fishingRodLevel });
         let bonus = 0;
         let treasureBonus = 0;
         let treasureMessage = "";
@@ -132,7 +132,7 @@ export async function fishForUser({
             return [createdFish, channelFishCount];
         });
         const existingRecord = await prisma.fishRecord.findUnique({
-            where: { channelProviderId_fishName: { channelProviderId, fishName: fish.name } },
+            where: { channelProviderId_fishName_quality: { channelProviderId, fishName: fish.name, quality: fish.quality } },
             include: { largestFish: true, smallestFish: true, heaviestFish: true, lightestFish: true },
         });
 
@@ -147,6 +147,7 @@ export async function fishForUser({
                     channelProviderId,
                     channel: channelLogin,
                     fishName: fish.name,
+                    quality: fish.quality,
                     largestFishId: createdFish.id,
                     smallestFishId: createdFish.id,
                     heaviestFishId: createdFish.id,
@@ -155,7 +156,7 @@ export async function fishForUser({
             });
             promises.push(newRecord);
             recordMessage = "This is the first of its kind!";
-            bonus = fish.rarity !== "Trash" ? 100 : 0;
+            bonus = fish.rarity !== "Trash" ? getQualityRecordBonus(fish.quality) : 0;
         } else {
             const record: string[] = [];
             const updates: { largestFishId?: number; smallestFishId?: number; heaviestFishId?: number; lightestFishId?: number } = {};
@@ -174,25 +175,25 @@ export async function fishForUser({
                 updates.largestFishId = createdFish.id;
                 const { multiplier, humanizedDuration } = calculateMultiplierAndDuration(existingRecord.largestFish.createdAt);
                 record.push(`size (held for ${humanizedDuration}, ${multiplier}x bonus)`);
-                bonus += 100 * multiplier;
+                bonus += getQualityRecordBonus(fish.quality) * multiplier;
             }
             if (size < parseFloat(existingRecord.smallestFish.size)) {
                 updates.smallestFishId = createdFish.id;
                 const { multiplier, humanizedDuration } = calculateMultiplierAndDuration(existingRecord.smallestFish.createdAt);
                 record.push(`smallest (held for ${humanizedDuration}, ${multiplier}x bonus)`);
-                bonus += 100 * multiplier;
+                bonus += getQualityRecordBonus(fish.quality) * multiplier;
             }
             if (weight > parseFloat(existingRecord.heaviestFish.weight)) {
                 updates.heaviestFishId = createdFish.id;
                 const { multiplier, humanizedDuration } = calculateMultiplierAndDuration(existingRecord.heaviestFish.createdAt);
                 record.push(`weight (held for ${humanizedDuration}, ${multiplier}x bonus)`);
-                bonus += 100 * multiplier;
+                bonus += getQualityRecordBonus(fish.quality) * multiplier;
             }
             if (weight < parseFloat(existingRecord.lightestFish.weight)) {
                 updates.lightestFishId = createdFish.id;
                 const { multiplier, humanizedDuration } = calculateMultiplierAndDuration(existingRecord.lightestFish.createdAt);
                 record.push(`lightest (held for ${humanizedDuration}, ${multiplier}x bonus)`);
-                bonus += 100 * multiplier;
+                bonus += getQualityRecordBonus(fish.quality) * multiplier;
             }
             if (Object.keys(updates).length > 0) {
                 promises.push(prisma.fishRecord.update({ where: { id: existingRecord.id }, data: updates }));
@@ -210,6 +211,7 @@ export async function fishForUser({
             totalSilverWorth: { increment: fish.sellValue + bonus + treasureBonus },
             treasureSilver: { increment: treasureBonus },
             treasureCount: { increment: treasureBonus > 0 ? 1 : 0 },
+            xp: { increment: fish.xp },
         };
         switch (fish.rarity) {
             case Rarity.Trash:
@@ -240,7 +242,7 @@ export async function fishForUser({
 
         // Add to FishDex and check if it's a new entry
         let fishDexMessage = "";
-        const { fishDexEntry, created } = await findOrCreateFishDexEntry(prisma, channelProviderId, userProviderId, fish.name, fish.rarity);
+        const { created } = await findOrCreateFishDexEntry(prisma, channelProviderId, userProviderId, fish.name, fish.rarity);
         if (created) {
             // This is a new entry (just created)
             fishDexMessage = `New entry in your FishDex!`;
@@ -279,12 +281,13 @@ export async function fishForUser({
         const totalValueMessage = bonus > 0 ? `${fish.sellValue} + ${bonus} (Bonus) = ${fish.sellValue + bonus}` : `${fish.sellValue}`;
         const valueEmote = bonus > 0 ? getValueEmote(fish.sellValue + bonus) : fish.rarityEmote;
         const useAction = fish.rarity == Rarity.Legendary ? "/me " : "";
-        const resText = `${useAction}@${userDisplayName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} #${channelFishCount.total} ${fish.formatedSize} ${fish.formatedWeight}!
+        const rod = getRod(fishStats.fishingRodLevel);
+        const resText = `${useAction}@${userDisplayName} [${rod.name}] Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} ${fish.formatedQuality} #${channelFishCount.total} ${fish.formatedSize} ${fish.formatedWeight}!
                     It sold for ${totalValueMessage} silver! ${recordMessage} ${fishDexMessage} ${valueEmote}`;
         return resText;
     } catch (error) {
         logger.error(error, "Fish error");
-        return "oopsie Something went wrong.";
+        return "Something went wrong.";
     }
 }
 

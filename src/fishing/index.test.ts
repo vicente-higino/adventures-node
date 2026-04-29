@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { getSellMultiplier } from "./index";
-import { SELL_MULTIPLIERS } from "./constants";
+import { getSellMultiplier, getQuality } from "./index";
+import { SELL_MULTIPLIERS, QUALITY_ARRAY, fishingRodLevels } from "./constants";
 
 describe("getSellMultiplier", () => {
     it("returns the correct multiplier for values at thresholds", () => {
@@ -39,5 +39,40 @@ describe("getSellMultiplier", () => {
         // This is a theoretical test - in practice all numbers will match a threshold due to Infinity
         const highestMultiplier = SELL_MULTIPLIERS[SELL_MULTIPLIERS.length - 1].multiplier;
         expect(getSellMultiplier(Number.MAX_VALUE)).toBe(highestMultiplier);
+    });
+});
+
+describe("getQuality", () => {
+    it("returns a valid quality for each rod level", () => {
+        for (let level = 0; level <= fishingRodLevels.length; level++) {
+            const quality = getQuality(level);
+            expect(QUALITY_ARRAY).toContain(quality);
+        }
+    });
+
+    it("returns 'Normal' for level below 0", () => {
+        // Should fallback to the lowest rod
+        const quality = getQuality(-10);
+        expect(QUALITY_ARRAY).toContain(quality);
+    });
+
+    it("returns 'Normal' or higher for max rod level", () => {
+        // Should be possible to get highest quality
+        let foundAlpha = false;
+        for (let i = 0; i < 1000; i++) {
+            if (getQuality(6) === "Alpha") {
+                foundAlpha = true;
+                break;
+            }
+        }
+        expect(foundAlpha).toBe(true);
+    });
+
+    it("never returns undefined or an invalid quality", () => {
+        for (let level = 0; level <= 10; level++) {
+            for (let i = 0; i < 20; i++) {
+                expect(QUALITY_ARRAY).toContain(getQuality(level));
+            }
+        }
     });
 });

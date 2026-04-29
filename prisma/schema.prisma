@@ -80,6 +80,15 @@ enum Rarity {
     Legendary
 }
 
+enum FishQuality {
+    Normal
+    Shining
+    Glistening
+    Opulent
+    Radiant
+    Alpha
+}
+
 model Fish {
     id                Int          @id @default(autoincrement())
     channelProviderId String
@@ -92,6 +101,7 @@ model Fish {
     size              String
     weight            String
     rarity            Rarity
+    quality           FishQuality  @default(Normal)
     value             Int
     prefix            String
     fishId            String
@@ -158,6 +168,8 @@ model FishStats {
     userId             String
     channelProviderId  String
     channel            String
+    xp                 BigInt   @default(0)
+    fishingRodLevel    Int      @default(0)
     trashFishCount     Int      @default(0)
     commonFishCount    Int      @default(0)
     uncommonFishCount  Int      @default(0)
@@ -178,22 +190,23 @@ model FishStats {
 }
 
 model FishRecord {
-    id                Int      @id @default(autoincrement())
+    id                Int         @id @default(autoincrement())
     channelProviderId String
     channel           String
     fishName          String
-    largestFish       Fish     @relation("LargestFish", fields: [largestFishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    smallestFish      Fish     @relation("SmallestFish", fields: [smallestFishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    heaviestFish      Fish     @relation("HeaviestFish", fields: [heaviestFishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    lightestFish      Fish     @relation("LightestFish", fields: [lightestFishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    quality           FishQuality @default(Normal)
+    largestFish       Fish        @relation("LargestFish", fields: [largestFishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    smallestFish      Fish        @relation("SmallestFish", fields: [smallestFishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    heaviestFish      Fish        @relation("HeaviestFish", fields: [heaviestFishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    lightestFish      Fish        @relation("LightestFish", fields: [lightestFishId], references: [id], onDelete: Cascade, onUpdate: Cascade)
     largestFishId     Int
     smallestFishId    Int
     heaviestFishId    Int
     lightestFishId    Int
-    updatedAt         DateTime @updatedAt
-    createdAt         DateTime @default(now())
+    updatedAt         DateTime    @updatedAt
+    createdAt         DateTime    @default(now())
 
-    @@unique([channelProviderId, fishName])
+    @@unique([channelProviderId, fishName, quality])
     @@index([channelProviderId])
 }
 

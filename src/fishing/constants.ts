@@ -5,6 +5,19 @@ export type Rarity = "Legendary" | "Epic" | "Rare" | "Fine" | "Uncommon" | "Comm
 // Define points per rarity tier
 export const RARITY_POINTS: Record<Rarity, number> = { Legendary: 1000, Epic: 250, Rare: 100, Fine: 75, Uncommon: 50, Common: 25, Trash: 1 } as const;
 
+export type Quality = "Normal" | "Shining" | "Glistening" | "Opulent" | "Radiant" | "Alpha";
+
+export const QUALITY_MULTIPLIERS: Record<Quality, number> = {
+    Normal: 1.0,
+    Shining: 1.8,
+    Glistening: 4,
+    Opulent: 6,
+    Radiant: 10,
+    Alpha: 15,
+} as const;
+
+export const QUALITY_ARRAY: Quality[] = ["Normal", "Shining", "Glistening", "Opulent", "Radiant", "Alpha"];
+
 export interface CatchDetails {
     sellValue: number;
     name: string;
@@ -62,3 +75,16 @@ export const SELL_MULTIPLIERS: { threshold: number; multiplier: number }[] = [
     { threshold: 3.0, multiplier: 2.5 }, // 2.0 - 3.0
     { threshold: Infinity, multiplier: 4.25 }, // > 3.0
 ];
+
+
+export const fishingRodLevels = [
+    { level: 0, name: "Wooden Rod", qualityChance: [1.0] },
+    { level: 1, name: "Reinforced Rod", qualityChance: [1.0, 0.05] },
+    { level: 2, name: "Fiberglass Rod", qualityChance: [1.0, 0.15, 0.05] },
+    { level: 3, name: "Carbon Fiber Rod", qualityChance: [1.0, 0.5, 0.25, 0.05] },
+    { level: 4, name: "Titanium Rod", qualityChance: [1.0, 0.8, 0.45, 0.15, 0.05] },
+    { level: 5, name: "Mythril Rod", qualityChance: [1.0, 0.98, 0.75, 0.55, 0.25, 0.05] },
+    { level: 6, name: "Legendary Rod", qualityChance: [1.0, 0.99, 0.85, 0.75, 0.55, 0.12] }
+] as const;
+
+export type FishingRodLevel = typeof fishingRodLevels[number];
