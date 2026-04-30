@@ -9,9 +9,9 @@ export type Quality = "Normal" | "Shining" | "Glistening" | "Opulent" | "Radiant
 
 export const QUALITY_MULTIPLIERS: Record<Quality, number> = {
     Normal: 1.0,
-    Shining: 1.8,
-    Glistening: 4,
-    Opulent: 6,
+    Shining: 2.5,
+    Glistening: 5,
+    Opulent: 7.5,
     Radiant: 10,
     Alpha: 15,
 } as const;
