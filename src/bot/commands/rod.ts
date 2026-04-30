@@ -6,6 +6,7 @@ import { fishingRodLevels } from "@/fishing/constants";
 import logger from "@/logger";
 import { formatSilver } from "@/utils/misc";
 import { sub } from "date-fns";
+import { getRod } from "@/fishing";
 
 // Rod upgrade costs (silver needed to upgrade to next level)
 const ROD_UPGRADE_COSTS: Record<number, number> = {
@@ -90,7 +91,10 @@ async function handleBuyOrUpgrade(
         increaseBalance(prisma, balance.id, -cost),
         prisma.fishStats.update({
             where: { id: fishStats.id },
-            data: { fishingRodLevel: { increment: 1 } },
+            data: {
+                fishingRodLevel: { increment: 1 },
+                activeRodLevel: currentLevel + 1
+            },
         }),
     ]);
 
@@ -103,19 +107,26 @@ async function handleSelect(
     userDisplayName: string,
 ): Promise<string> {
     if (!rodLevelStr) {
-        return `@${userDisplayName} Usage: ${getBotConfig().prefix}rod select <0-${fishingRodLevels.length - 1}|rod_name>`;
+        return `@${userDisplayName} Usage: ${getBotConfig().prefix}rod select <0-${fishingRodLevels.length - 1}|rod_name|max>`;
     }
 
-    let selectedLevel = parseInt(rodLevelStr, 10);
+    let selectedLevel: number;
 
-    // If it's not a number, try to find by name
-    if (isNaN(selectedLevel)) {
-        selectedLevel = fishingRodLevels.findIndex(rod => rod.name.toLowerCase().includes(rodLevelStr));
-        if (selectedLevel === -1) {
-            return `@${userDisplayName} Rod not found. Available rods: ${fishingRodLevels.map(r => r.name).join(", ")}`;
+    // Check for 'max' keyword
+    if (rodLevelStr === "max") {
+        selectedLevel = fishStats.fishingRodLevel;
+    } else {
+        selectedLevel = parseInt(rodLevelStr, 10);
+
+        // If it's not a number, try to find by name
+        if (isNaN(selectedLevel)) {
+            selectedLevel = fishingRodLevels.findIndex(rod => rod.name.toLowerCase().includes(rodLevelStr));
+            if (selectedLevel === -1) {
+                return `@${userDisplayName} Rod not found. Available rods: ${fishingRodLevels.map(r => r.name).join(", ")}`;
+            }
+        } else {
+            selectedLevel = getRod(selectedLevel).level;
         }
-    } else if (selectedLevel < 0 || selectedLevel > fishingRodLevels.length - 1) {
-        return `@${userDisplayName} Invalid rod number. Available rods are 0-${fishingRodLevels.length - 1}.`;
     }
 
     if (selectedLevel > fishStats.fishingRodLevel) {
@@ -152,11 +163,11 @@ export const rodCommand = createBotCommand(
                 message = handleShowCurrent(fishStats, userDisplayName);
             } else if (subcommand === "buy" || subcommand === "upgrade") {
                 message = await handleBuyOrUpgrade(fishStats, balance, userDisplayName);
-            } else if (subcommand === "select") {
+            } else if (subcommand === "sel" || subcommand === "select") {
                 const rodLevelStr = params[1]?.toLowerCase();
                 message = await handleSelect(fishStats, rodLevelStr || "", userDisplayName);
             } else {
-                message = `@${userDisplayName} Usage: ${getBotConfig().prefix}rod [list|select <0-${fishingRodLevels.length - 1}|rod_name>|buy]`;
+                message = `@${userDisplayName} Usage: ${getBotConfig().prefix}rod [list|sel <0-${fishingRodLevels.length - 1}|rod_name>|buy]`;
             }
             if (message) {
                 say(message);
