@@ -170,6 +170,7 @@ model FishStats {
     channel            String
     xp                 BigInt   @default(0)
     fishingRodLevel    Int      @default(0)
+    activeRodLevel     Int      @default(0)
     trashFishCount     Int      @default(0)
     commonFishCount    Int      @default(0)
     uncommonFishCount  Int      @default(0)

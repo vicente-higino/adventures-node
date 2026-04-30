@@ -91,7 +91,7 @@ export async function fishForUser({
         }
 
         const unitSystem = balance.user.unitSystem ?? "metric";
-        const fish = getFish({ unitSystem, channel: channelLogin, rodLevel: fishStats.fishingRodLevel });
+        const fish = getFish({ unitSystem, channel: channelLogin, rodLevel: fishStats.activeRodLevel });
         let bonus = 0;
         let treasureBonus = 0;
         let treasureMessage = "";
@@ -281,7 +281,7 @@ export async function fishForUser({
         const totalValueMessage = bonus > 0 ? `${fish.sellValue} + ${bonus} (Bonus) = ${fish.sellValue + bonus}` : `${fish.sellValue}`;
         const valueEmote = bonus > 0 ? getValueEmote(fish.sellValue + bonus) : fish.rarityEmote;
         const useAction = fish.rarity == Rarity.Legendary ? "/me " : "";
-        const rod = getRod(fishStats.fishingRodLevel);
+        const rod = getRod(fishStats.activeRodLevel);
         const resText = `${useAction}@${userDisplayName} [${rod.name}] Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} ${fish.formatedQuality} #${channelFishCount.total} ${fish.formatedSize} ${fish.formatedWeight}!
                     It sold for ${totalValueMessage} silver! ${recordMessage} ${fishDexMessage} ${valueEmote}`;
         return resText;
