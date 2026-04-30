@@ -4,14 +4,15 @@ import { prisma } from "@/prisma";
 import { findOrCreateBalance, findOrCreateFishStats, increaseBalance } from "@/db";
 import { fishingRodLevels } from "@/fishing/constants";
 import logger from "@/logger";
+import { formatSilver } from "@/utils/misc";
 
 // Rod upgrade costs (silver needed to upgrade to next level)
 const ROD_UPGRADE_COSTS: Record<number, number> = {
     0: 500,      // Wooden to Reinforced
-    1: 2500,     // Reinforced to Fiberglass
-    2: 10000,     // Fiberglass to Carbon Fiber
-    3: 50000,     // Carbon Fiber to Titanium
-    4: 100000,    // Titanium to Mythril
+    1: 5000,     // Reinforced to Fiberglass
+    2: 25000,     // Fiberglass to Carbon Fiber
+    3: 100000,     // Carbon Fiber to Titanium
+    4: 250000,    // Titanium to Mythril
     5: 500000,    // Mythril to Legendary
 };
 
@@ -25,7 +26,24 @@ export const rodCommand = createBotCommand(
 
             const subcommand = params[0]?.toLowerCase();
 
-            if (subcommand === "list" || !subcommand) {
+            if (subcommand === "list") {
+                // Show all available upgrades with cumulative costs
+                const currentLevel = fishStats.fishingRodLevel;
+                let listMessage = `@${userDisplayName} Available Rods: `;
+                const rods: string[] = [];
+
+                for (let i = 0; i < fishingRodLevels.length; i++) {
+                    const rod = fishingRodLevels[i];
+                    const cumulativeCost = Object.entries(ROD_UPGRADE_COSTS)
+                        .filter(([idx]) => parseInt(idx) < i)
+                        .reduce((sum, [, val]) => sum + val, 0);
+                    const individualCost = i > 0 ? ROD_UPGRADE_COSTS[i - 1] : 0;
+                    const status = i === currentLevel ? "[CURRENT]" : i < currentLevel ? "[OWNED]" : "";
+                    rods.push(`${status} ${rod.name}${i > 0 ? ` (${formatSilver(individualCost)} silver, ${formatSilver(cumulativeCost)} total)` : ""}`);
+                }
+
+                say(listMessage + rods.join(" | "));
+            } else if (!subcommand) {
                 const currentLevel = fishStats.fishingRodLevel;
                 const currentRod = fishingRodLevels[currentLevel];
                 let listMessage = `@${userDisplayName} [CURRENT] ${currentRod.name}`;
@@ -36,7 +54,7 @@ export const rodCommand = createBotCommand(
                     const cumulativeCost = Object.entries(ROD_UPGRADE_COSTS)
                         .filter(([i]) => parseInt(i) <= currentLevel)
                         .reduce((sum, [, val]) => sum + val, 0);
-                    listMessage += ` | Next: ${nextRod.name} (${cost} silver) | Total needed: ${cumulativeCost} silver`;
+                    listMessage += ` | Next: ${nextRod.name} (${formatSilver(cost)} silver) | Total needed: ${formatSilver(cumulativeCost)} silver`;
                 } else {
                     listMessage += ` | [MAX LEVEL]`;
                 }
@@ -58,14 +76,14 @@ export const rodCommand = createBotCommand(
                 if (fishStats.totalSilverWorth < cumulativeCost) {
                     const needed = cumulativeCost - fishStats.totalSilverWorth;
                     say(
-                        `@${userDisplayName} You need to earn ${needed} more silver from fishing to upgrade to ${nextRod.name}.`,
+                        `@${userDisplayName} You need to earn ${formatSilver(needed)} more silver from fishing to upgrade to ${nextRod.name}.`,
                     );
                     return;
                 }
 
                 if (balance.value < cost) {
                     const needed = cost - Number(balance.value);
-                    say(`@${userDisplayName} You need ${needed} more silver to upgrade to ${nextRod.name}. You have ${balance.value} silver.`);
+                    say(`@${userDisplayName} You need ${formatSilver(needed)} more silver to upgrade to ${nextRod.name}. You have ${formatSilver(balance.value)} silver.`);
                     return;
                 }
 
@@ -78,10 +96,10 @@ export const rodCommand = createBotCommand(
                 ]);
 
                 say(
-                    `@${userDisplayName} Upgraded to ${nextRod.name}! You spent ${cost} silver and have ${balance.value - cost} silver left.`,
+                    `@${userDisplayName} Upgraded to ${nextRod.name}! You spent ${formatSilver(cost)} silver and have ${formatSilver(balance.value - cost)} silver left.`,
                 );
             } else {
-                say(`@${userDisplayName} Usage: ${getBotConfig().prefix}rod or ${getBotConfig().prefix}rod buy`);
+                say(`@${userDisplayName} Usage: ${getBotConfig().prefix}rod | ${getBotConfig().prefix}rod list | ${getBotConfig().prefix}rod buy`);
             }
         } catch (err) {
             logger.error(err, "Shop command error");
