@@ -127,6 +127,7 @@ export async function fishForUser({
                     channelProviderId: channelProviderId,
                     userId: userProviderId,
                     fishId: channelFishCount.total.toString(),
+                    emote: fish.emote.length > 0 ? fish.emote : undefined,
                 },
             });
             return [createdFish, channelFishCount];

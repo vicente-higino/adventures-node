@@ -62,7 +62,7 @@ function formatFishDisplay(fish: FishWithRecords) {
     });
     const quality = getQualityStars(fish.quality);
     const records = getRecords(fish);
-    return `[${fish.rarity}] ${fish.prefix} ${fish.name} ${quality} #${fish.fishId} ${sizeStr} ${weightStr}, ${records} worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
+    return `[${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} ${quality} #${fish.fishId} ${sizeStr} ${weightStr}, ${records} worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
 }
 
 export const flexFishCommand = createBotCommand(

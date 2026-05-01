@@ -107,6 +107,7 @@ model Fish {
     value             Int
     prefix            String
     fishId            String
+    emote             String?
     LargestRecord     FishRecord[] @relation("LargestFish")
     SmallestRecord    FishRecord[] @relation("SmallestFish")
     HeaviestRecord    FishRecord[] @relation("HeaviestFish")
