@@ -8,6 +8,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import utc from "dayjs/plugin/utc";
 import z from "zod";
 import { createBotCommand } from "../botCommandWithKeywords";
+import { getQualityStars } from "@/fishing";
 dayjs.extend(relativeTime);
 dayjs.extend(utc);
 dayjs.extend(calendar);
@@ -59,8 +60,9 @@ function formatFishDisplay(fish: FishWithRecords) {
         lastWeek: "[Last] dddd [at] hh:mm UTC", // Last week ( Last Monday at 2:30 AM )
         sameElse: "DD/MM/YYYY", // Everything else ( 17/10/2011 )
     });
+    const quality = getQualityStars(fish.quality);
     const records = getRecords(fish);
-    return `[${fish.rarity}] ${fish.prefix} ${fish.name} #${fish.fishId} ${sizeStr} ${weightStr}, ${records} worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
+    return `[${fish.rarity}] ${fish.prefix} ${fish.name} ${quality} #${fish.fishId} ${sizeStr} ${weightStr}, ${records} worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
 }
 
 export const flexFishCommand = createBotCommand(
