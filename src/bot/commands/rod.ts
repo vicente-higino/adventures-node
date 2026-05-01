@@ -10,18 +10,15 @@ import { getRod } from "@/fishing";
 
 // Rod upgrade costs (silver needed to upgrade to next level)
 const ROD_UPGRADE_COSTS: Record<number, number> = {
-    0: 500,      // Wooden to Reinforced
-    1: 5000,     // Reinforced to Fiberglass
-    2: 25000,     // Fiberglass to Carbon Fiber
-    3: 100000,     // Carbon Fiber to Titanium
-    4: 250000,    // Titanium to Mythril
-    5: 500000,    // Mythril to Legendary
+    0: 500, // Wooden to Reinforced
+    1: 5000, // Reinforced to Fiberglass
+    2: 25000, // Fiberglass to Carbon Fiber
+    3: 100000, // Carbon Fiber to Titanium
+    4: 250000, // Titanium to Mythril
+    5: 500000, // Mythril to Legendary
 };
 
-function handleList(
-    fishStats: { fishingRodLevel: number },
-    userDisplayName: string,
-): string {
+function handleList(fishStats: { fishingRodLevel: number }, userDisplayName: string): string {
     const currentLevel = fishStats.fishingRodLevel;
     let listMessage = `@${userDisplayName} Available Rods: `;
     const rods: string[] = [];
@@ -39,10 +36,7 @@ function handleList(
     return listMessage + rods.join(" | ");
 }
 
-function handleShowCurrent(
-    fishStats: { fishingRodLevel: number },
-    userDisplayName: string,
-): string {
+function handleShowCurrent(fishStats: { fishingRodLevel: number }, userDisplayName: string): string {
     const currentLevel = fishStats.fishingRodLevel;
     const currentRod = fishingRodLevels[currentLevel];
     let listMessage = `@${userDisplayName} [ACTIVE] ${currentRod.name}`;
@@ -89,13 +83,7 @@ async function handleBuyOrUpgrade(
 
     await Promise.all([
         increaseBalance(prisma, balance.id, -cost),
-        prisma.fishStats.update({
-            where: { id: fishStats.id },
-            data: {
-                fishingRodLevel: { increment: 1 },
-                activeRodLevel: currentLevel + 1
-            },
-        }),
+        prisma.fishStats.update({ where: { id: fishStats.id }, data: { fishingRodLevel: { increment: 1 }, activeRodLevel: currentLevel + 1 } }),
     ]);
 
     return `@${userDisplayName} Upgraded to ${nextRod.name}! You spent ${formatSilver(cost)} silver and have ${formatSilver(balance.value - cost)} silver left.`;
@@ -138,10 +126,7 @@ async function handleSelect(
         return `@${userDisplayName} You already have the ${fishingRodLevels[selectedLevel].name} selected.`;
     }
 
-    await prisma.fishStats.update({
-        where: { id: fishStats.id },
-        data: { activeRodLevel: selectedLevel },
-    });
+    await prisma.fishStats.update({ where: { id: fishStats.id }, data: { activeRodLevel: selectedLevel } });
 
     return `@${userDisplayName} Selected ${fishingRodLevels[selectedLevel].name}!`;
 }

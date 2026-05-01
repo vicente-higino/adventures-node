@@ -1,11 +1,20 @@
 import { VALUE_EMOTES_LIST } from "@/emotes";
+import type { Rarity, FishQuality as Quality } from "@prisma/client";
 
-export type Rarity = "Legendary" | "Epic" | "Rare" | "Fine" | "Uncommon" | "Common" | "Trash";
+export { Rarity, Quality };
 
 // Define points per rarity tier
-export const RARITY_POINTS: Record<Rarity, number> = { Legendary: 1000, Epic: 250, Rare: 100, Fine: 75, Uncommon: 50, Common: 25, Trash: 1 } as const;
-
-export type Quality = "Normal" | "Shining" | "Glistening" | "Opulent" | "Radiant" | "Alpha";
+export const RARITY_POINTS: Record<Rarity, number> = {
+    Legendary: 5000,
+    Mythic: 1000,
+    Exotic: 500,
+    Epic: 250,
+    Rare: 100,
+    Fine: 75,
+    Uncommon: 50,
+    Common: 25,
+    Trash: 1,
+} as const;
 
 export const QUALITY_MULTIPLIERS: Record<Quality, number> = {
     Normal: 1.0,
@@ -43,6 +52,8 @@ export const VALUE_EMOTES: { threshold: number; emote: string }[] = [
 // Define rarity weights
 export const RARITY_WEIGHTS_DEFAULT: Record<Rarity, number> = {
     Legendary: 1, // 0.1% chance each
+    Mythic: 0, //need upgraded rods to get these, so 0% chance with default rod
+    Exotic: 0,
     Trash: 15, // 1.5%
     Epic: 35, // 3.5% chance
     Rare: 55, // 5.5% chance
@@ -50,6 +61,8 @@ export const RARITY_WEIGHTS_DEFAULT: Record<Rarity, number> = {
     Uncommon: 150, // 15% chance
     Common: 649, // 65% chance
 };
+
+export type RarityWeights = Record<Rarity, number>;
 
 // Size prefix ranges and their thresholds (maximum values)
 export const SIZE_PREFIXES: { name: string; threshold: number }[] = [
@@ -76,15 +89,85 @@ export const SELL_MULTIPLIERS: { threshold: number; multiplier: number }[] = [
     { threshold: Infinity, multiplier: 4.25 }, // > 3.0
 ];
 
+export type FishingRodLevel = {
+    level: number;
+    name: string;
+    qualityChance: number[]; // Cumulative chances for each quality tier, starting from Normal. Length determines number of quality tiers available.
+    weightModifier: Partial<Record<Rarity, (current: number) => number>>; // Modifiers to rarity weights when using this rod
+};
 
-export const fishingRodLevels = [
-    { level: 0, name: "Wooden Rod", qualityChance: [1.0] },
-    { level: 1, name: "Reinforced Rod", qualityChance: [1.0, 0.05] },
-    { level: 2, name: "Fiberglass Rod", qualityChance: [1.0, 0.15, 0.05] },
-    { level: 3, name: "Carbon Fiber Rod", qualityChance: [1.0, 0.5, 0.25, 0.05] },
-    { level: 4, name: "Titanium Rod", qualityChance: [1.0, 0.8, 0.45, 0.15, 0.05] },
-    { level: 5, name: "Mythril Rod", qualityChance: [1.0, 0.98, 0.75, 0.55, 0.25, 0.05] },
-    { level: 6, name: "Legendary Rod", qualityChance: [1.0, 0.99, 0.85, 0.75, 0.55, 0.12] }
+export const fishingRodLevels: FishingRodLevel[] = [
+    { level: 0, name: "Wooden Rod", qualityChance: [1.0], weightModifier: {} },
+    {
+        level: 1,
+        name: "Reinforced Rod",
+        qualityChance: [1.0, 0.05],
+        weightModifier: { Exotic: w => w + 10, Uncommon: w => w + 15, Common: w => w - 25 },
+    },
+    {
+        level: 2,
+        name: "Fiberglass Rod",
+        qualityChance: [1.0, 0.15, 0.05],
+        weightModifier: { Mythic: w => w + 10, Exotic: w => w + 25, Fine: w => w + 15, Uncommon: w => w + 35, Common: w => w - 85 },
+    },
+    {
+        level: 3,
+        name: "Carbon Fiber Rod",
+        qualityChance: [1.0, 0.5, 0.25, 0.05],
+        weightModifier: {
+            Legendary: w => w + 1,
+            Mythic: w => w + 15,
+            Exotic: w => w + 35,
+            Epic: w => w + 5,
+            Rare: w => w + 5,
+            Fine: w => w + 15,
+            Uncommon: w => w + 24,
+            Common: w => w - 100,
+        },
+    },
+    {
+        level: 4,
+        name: "Titanium Rod",
+        qualityChance: [1.0, 0.8, 0.45, 0.15, 0.05],
+        weightModifier: {
+            Legendary: w => w + 3,
+            Mythic: w => w + 20,
+            Exotic: w => w + 40,
+            Epic: w => w + 15,
+            Rare: w => w + 15,
+            Fine: w => w + 15,
+            Uncommon: w => w + 22,
+            Common: w => w - 130,
+        },
+    },
+    {
+        level: 5,
+        name: "Mythril Rod",
+        qualityChance: [1.0, 0.98, 0.75, 0.55, 0.25, 0.05],
+        weightModifier: {
+            Legendary: w => w + 5,
+            Mythic: w => w + 40,
+            Exotic: w => w + 55,
+            Epic: w => w + 30,
+            Rare: w => w + 30,
+            Fine: w => w - 10,
+            Uncommon: w => w - 20,
+            Common: w => w - 130,
+        },
+    },
+    {
+        level: 6,
+        name: "Legendary Rod",
+        qualityChance: [1.0, 0.99, 0.85, 0.75, 0.55, 0.12],
+        weightModifier: {
+            Legendary: w => w + 9,
+            Mythic: w => w + 60,
+            Exotic: w => w + 75,
+            Epic: w => w + 35,
+            Rare: w => w + 10,
+            Fine: w => w - 20,
+            Uncommon: w => w - 20,
+            Common: w => w - 149,
+        },
+    },
 ] as const;
-
-export type FishingRodLevel = typeof fishingRodLevels[number];

@@ -1,12 +1,16 @@
 import logger from "@/logger";
-import { RARITY_WEIGHTS_DEFAULT, Rarity } from "./constants";
+import { RARITY_WEIGHTS_DEFAULT, Rarity, RarityWeights } from "./constants";
 import { roundToDecimalPlaces } from "@/utils/misc";
+import { getRod } from "@/fishing";
 
 let rarityWeights: Record<Rarity, number> = { ...RARITY_WEIGHTS_DEFAULT };
 
-export function getRarityWeights(): Record<Rarity, number> {
+export function getRarityWeights(rodLevel: number = 0): Record<Rarity, number> {
     // return a shallow copy to avoid external mutation
-    return { ...rarityWeights };
+    const rod = getRod(rodLevel);
+    const weights = createRarityWeights(rod.weightModifier, rarityWeights);
+    logger.debug(`Rarity weights for rod level ${rodLevel} (${rod.name}): ${formatRarityWeightDisplay(weights)}`);
+    return weights;
 }
 
 export function setRarityWeights(weights: Record<Rarity, number>) {
@@ -27,6 +31,20 @@ export function modifyRarityWeights(
     }
     logger.debug(formatRarityWeightDisplay(newWeights));
     setRarityWeights(newWeights);
+}
+export function createRarityWeights(
+    changes: Partial<Record<Rarity, number | ((current: number) => number)>>,
+    baseWeights: Record<Rarity, number> = RARITY_WEIGHTS_DEFAULT,
+): RarityWeights {
+    const newWeights: Record<Rarity, number> = { ...baseWeights };
+    for (const key in changes) {
+        if (changes[key as Rarity] !== undefined) {
+            const current = baseWeights[key as Rarity];
+            const change = changes[key as Rarity];
+            newWeights[key as Rarity] = typeof change === "function" ? (change as any)(current) : (change as number);
+        }
+    }
+    return newWeights;
 }
 
 export function resetRarityWeights() {

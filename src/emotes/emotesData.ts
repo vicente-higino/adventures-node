@@ -20,6 +20,7 @@ export const enum EmoteCategory {
     BLOBFISH = "BLOBFISH",
     SURGEONFISH = "SURGEONFISH",
     VALUE = "VALUE",
+    ALIEN = "ALIEN",
     EVENT_STARTED = "EVENT_STARTED",
     ADVENTURE_START_EMOTES = "ADVENTURE_START_EMOTES",
     ADVENTURE_END_EMOTES = "ADVENTURE_END_EMOTES",
@@ -58,6 +59,7 @@ export const EMOTE_DEFINITIONS = {
     SAVED: { name: "SAVED", provider: "7tv" },
     NOPERS: { name: "NOPERS", provider: "7tv" },
     oopsie: { name: "oopsie", provider: "7tv" },
+    glorp: { name: "glorp", provider: "7tv" },
     Ermm: { name: "Ermm", provider: "7tv" },
     Erm: { name: "Erm", provider: "7tv" },
     NoNo: { name: "NoNo", provider: "7tv" },
@@ -178,6 +180,7 @@ export function Emotes<const T extends readonly EmoteName[]>(...names: T): { [K 
 }
 
 export const CATEGORY_EMOTES_RECORD = {
+    [EmoteCategory.ALIEN]: Emotes("glorp"),
     [EmoteCategory.ADVENTURE_END_EMOTES]: Emotes("dinkDonk", "Alarm"),
     [EmoteCategory.ADVENTURE_START_EMOTES]: Emotes("GAMBA"),
     [EmoteCategory.DUEL_CREATE]: Emotes("GAMBA", "PauseChamp", "PAUSE", "PauseCat", "PausersHype", "DRAMA", "NAILS"),

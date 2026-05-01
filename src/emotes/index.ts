@@ -70,6 +70,7 @@ export const BLOBFISH_EMOTES = EmoteManager.getRandomEmoteName(EmoteCategory.BLO
 export const SURGEONFISH_EMOTES = EmoteManager.getRandomEmoteName(EmoteCategory.SURGEONFISH);
 export const EVENT_STARTED_EMOTES = EmoteManager.getRandomEmoteName(EmoteCategory.EVENT_STARTED);
 export const ADVENTURE_GAMBA_EMOTE = EmoteManager.getRandomEmoteName(EmoteCategory.ADVENTURE_START_EMOTES);
+export const ALIEN_FISH_EMOTE = EmoteManager.getRandomEmoteName(EmoteCategory.ALIEN);
 
 export const VALUE_EMOTES_LIST = CATEGORY_EMOTES_RECORD[EmoteCategory.VALUE];
 export const ADVENTURE_ENDING_EMOTE = CATEGORY_EMOTES_RECORD[EmoteCategory.ADVENTURE_END_EMOTES];

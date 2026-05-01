@@ -1,5 +1,17 @@
 import { boxMullerTransform, formatSize, formatWeight, pickRandom, roundToDecimalPlaces, UnitSystem } from "@/utils/misc";
-import { CatchDetails, FishingRodLevel, fishingRodLevels, Quality, QUALITY_ARRAY, QUALITY_MULTIPLIERS, Rarity, RARITY_POINTS, SELL_MULTIPLIERS, SIZE_PREFIXES, VALUE_EMOTES } from "./constants";
+import {
+    CatchDetails,
+    FishingRodLevel,
+    fishingRodLevels,
+    Quality,
+    QUALITY_ARRAY,
+    QUALITY_MULTIPLIERS,
+    Rarity,
+    RARITY_POINTS,
+    SELL_MULTIPLIERS,
+    SIZE_PREFIXES,
+    VALUE_EMOTES,
+} from "./constants";
 import { fishTable } from "./fishTable";
 import { getRarityWeights } from "./rarities";
 
@@ -12,7 +24,7 @@ export {
 } from "./legendaryEvents";
 
 // Example usage in getSize function:
-type GetFishFunc = (args?: { rndFish?: () => CatchDetails; unitSystem?: UnitSystem; channel?: string, rodLevel?: number }) => {
+type GetFishFunc = (args?: { getRandomFish?: () => CatchDetails; unitSystem?: UnitSystem; channel?: string; rodLevel?: number }) => {
     name: string;
     rarity: Rarity;
     rarityEmote: string;
@@ -31,9 +43,9 @@ type GetFishFunc = (args?: { rndFish?: () => CatchDetails; unitSystem?: UnitSyst
 };
 
 export const getFish: GetFishFunc = (args = {}) => {
-    const { rndFish = randomFish, unitSystem = "metric", channel, rodLevel = 0 } = args;
+    const { getRandomFish = randomFish, unitSystem = "metric", channel, rodLevel = 0 } = args;
 
-    const fish = rndFish();
+    const fish = getRandomFish(rodLevel);
     const { rarity, size, weight, sellValue, emote } = fish;
 
     // Size calculation
@@ -74,9 +86,9 @@ export const getFish: GetFishFunc = (args = {}) => {
     };
 };
 
-export function randomFish(): CatchDetails {
+export function randomFish(rodLevel?: number): CatchDetails {
     // Use centralized rarity weights
-    const weights = getRarityWeights(); // <-- changed: replaced direct rarityWeights usage
+    const weights = getRarityWeights(rodLevel);
     // Calculate total weight
     const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
     let random = Math.random() * totalWeight;

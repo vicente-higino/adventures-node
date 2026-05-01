@@ -77,6 +77,8 @@ enum Rarity {
     Fine
     Rare
     Epic
+    Mythic
+    Exotic
     Legendary
 }
 

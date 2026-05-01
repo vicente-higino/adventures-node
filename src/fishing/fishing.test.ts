@@ -188,7 +188,7 @@ describe("Fishing Module", () => {
             const randomFishMock = vi.spyOn(fishingModule, "randomFish").mockImplementation(() => mockFish) as any;
 
             // Get fish with imperial units
-            const result = getFish({ rndFish: randomFishMock, unitSystem: "imperial" });
+            const result = getFish({ getRandomFish: randomFishMock, unitSystem: "imperial" });
 
             // Check that formatted values use imperial units
             expect(result.formatedSize).toMatch(/ft$|in$/);
@@ -214,7 +214,7 @@ describe("Fishing Module", () => {
             const randomFishMock = vi.spyOn(fishingModule, "randomFish").mockImplementation(() => mockFish) as any;
 
             // Call getFish which should use our mocked randomFish
-            const result = getFish({ rndFish: randomFishMock });
+            const result = getFish({ getRandomFish: randomFishMock });
 
             // Verify the mock was called
 
@@ -238,7 +238,7 @@ describe("Fishing Module", () => {
             const randomFishMock = vi.spyOn(fishingModule, "randomFish").mockImplementation(() => mockFish) as any;
 
             // Call getFish which should use our mocked randomFish
-            const result = getFish({ rndFish: randomFishMock });
+            const result = getFish({ getRandomFish: randomFishMock });
             expect(result.name).toBe("Mushy");
             expect(result.emote).toBe("mushyJam");
 

@@ -4,8 +4,9 @@ import { fishTable } from "@/fishing/fishTable";
 import { z } from "zod";
 import { getUserByUsername } from "@/twitch/api";
 import { findOrCreateFishStats } from "@/db";
+import type { Rarity } from "@prisma/client";
 
-const RARITY_ORDER = ["Legendary", "Epic", "Rare", "Fine", "Uncommon", "Common", "Trash"];
+const RARITY_ORDER: Rarity[] = ["Legendary", "Mythic", "Exotic", "Epic", "Rare", "Fine", "Uncommon", "Common", "Trash"];
 
 // Returns a mapping: rarity -> Set of all fish names in the game for that rarity (from fishTable)
 function getAllFishNamesByRarityFromTable() {

@@ -8,6 +8,7 @@ import {
     BLOBFISH_EMOTES,
     SURGEONFISH_EMOTES,
     FUKURA_EMOTES,
+    ALIEN_FISH_EMOTE,
 } from "@/emotes";
 
 export const fishTable: CatchDetails[] = [
@@ -20,11 +21,41 @@ export const fishTable: CatchDetails[] = [
     { sellValue: RARITY_POINTS.Legendary, name: "Helicoprion", rarity: "Legendary", size: 800, weight: 500 },
     { sellValue: RARITY_POINTS.Legendary, name: "Leedsichthys", rarity: "Legendary", size: 1200, weight: 15000 },
 
-    { sellValue: RARITY_POINTS.Legendary * 5, name: "Mushy", emote: c => MUSHY_EMOTES(c), rarity: "Legendary", size: 40, weight: 4 },
-    { sellValue: RARITY_POINTS.Legendary * 5, name: "Socko", emote: c => SOCKO_EMOTES(c), rarity: "Legendary", size: 30, weight: 4 },
-    { sellValue: RARITY_POINTS.Legendary * 10, name: "April Fooze", emote: c => APRIL_FOOZE_EMOTES(c), rarity: "Legendary", size: 170, weight: 60 },
-    { sellValue: RARITY_POINTS.Legendary * 15, name: "Fuslie", emote: c => FUSLIE_EMOTES(c), rarity: "Legendary", size: 170, weight: 60 },
-    { sellValue: RARITY_POINTS.Legendary * 15, name: "Fukura", emote: c => FUKURA_EMOTES(c), rarity: "Legendary", size: 180, weight: 70 },
+    { sellValue: RARITY_POINTS.Legendary * 1.5, name: "Mushy", emote: c => MUSHY_EMOTES(c), rarity: "Legendary", size: 40, weight: 4 },
+    { sellValue: RARITY_POINTS.Legendary * 1.5, name: "Socko", emote: c => SOCKO_EMOTES(c), rarity: "Legendary", size: 30, weight: 4 },
+    { sellValue: RARITY_POINTS.Legendary * 2, name: "April Fooze", emote: c => APRIL_FOOZE_EMOTES(c), rarity: "Legendary", size: 170, weight: 60 },
+    { sellValue: RARITY_POINTS.Legendary * 4, name: "Fuslie", emote: c => FUSLIE_EMOTES(c), rarity: "Legendary", size: 170, weight: 60 },
+    { sellValue: RARITY_POINTS.Legendary * 4, name: "Fukura", emote: c => FUKURA_EMOTES(c), rarity: "Legendary", size: 180, weight: 70 },
+
+    // Mythic fish
+    { sellValue: RARITY_POINTS.Mythic, name: "Siren", rarity: "Mythic", size: 160, weight: 50 },
+    { sellValue: RARITY_POINTS.Mythic, name: "Ipupiara", rarity: "Mythic", size: 180, weight: 70 },
+    { sellValue: RARITY_POINTS.Mythic, name: "Matsya", rarity: "Mythic", size: 250, weight: 90 },
+    { sellValue: RARITY_POINTS.Mythic, name: "Namazu", rarity: "Mythic", size: 70, weight: 40 },
+    { sellValue: RARITY_POINTS.Mythic, name: "Lyngbakr", rarity: "Mythic", size: 35, weight: 20 },
+    { sellValue: RARITY_POINTS.Mythic, name: "Uklit", rarity: "Mythic", size: 65, weight: 30 },
+    { sellValue: RARITY_POINTS.Mythic, name: "Taniwha", rarity: "Mythic", size: 90, weight: 45 },
+    { sellValue: RARITY_POINTS.Mythic, name: "Te Ika-a-Maui", rarity: "Mythic", size: 5000, weight: 500 },
+    { sellValue: RARITY_POINTS.Mythic, name: "Mermaid", rarity: "Mythic", size: 150, weight: 45 },
+    { sellValue: RARITY_POINTS.Mythic, name: "Shachihoko", rarity: "Mythic", size: 260, weight: 1000 },
+    { sellValue: RARITY_POINTS.Mythic, name: "Abaia", rarity: "Mythic", size: 1500, weight: 10000 },
+    { sellValue: RARITY_POINTS.Mythic, name: "Isonade", rarity: "Mythic", size: 1000, weight: 5000 },
+
+
+    // Exotic fish
+    { sellValue: RARITY_POINTS.Exotic, name: "Bignose fanskate", rarity: "Exotic", size: 150, weight: 30 },
+    { sellValue: RARITY_POINTS.Exotic, name: "Plownose chimaera", rarity: "Exotic", size: 90, weight: 25 },
+    { sellValue: RARITY_POINTS.Exotic, name: "Cinderella cichlid", rarity: "Exotic", size: 5, weight: 0.1 },
+    { sellValue: RARITY_POINTS.Exotic, name: "Porbeagle", rarity: "Exotic", size: 250, weight: 230 },
+    { sellValue: RARITY_POINTS.Exotic, name: "Discus ray", rarity: "Exotic", size: 80, weight: 15 },
+    { sellValue: RARITY_POINTS.Exotic, name: "Gurnard", rarity: "Exotic", size: 25, weight: 1.5 },
+    { sellValue: RARITY_POINTS.Exotic, name: "Itoyori", rarity: "Exotic", size: 40, weight: 5 },
+    { sellValue: RARITY_POINTS.Exotic, name: "Scorpion Fish", rarity: "Exotic", size: 20, weight: 3 },
+    { sellValue: RARITY_POINTS.Exotic, name: "Hairtail blenny", rarity: "Exotic", size: 53, weight: 15 },
+    { sellValue: RARITY_POINTS.Exotic, name: "Elegant firefish", rarity: "Exotic", size: 9, weight: 0.2 },
+    { sellValue: RARITY_POINTS.Exotic, name: "Leafy seadragon", rarity: "Exotic", size: 20, weight: 1.5 },
+    { sellValue: RARITY_POINTS.Exotic, name: "Quillfin blenny", rarity: "Exotic", size: 12, weight: 1 },
+    { sellValue: RARITY_POINTS.Exotic, name: "Alien Fish", rarity: "Exotic", size: 50, weight: 15, emote: c => ALIEN_FISH_EMOTE(c) },
 
     // Epic fish - very large sizes
     { sellValue: RARITY_POINTS.Epic, name: "Giant Tuna", rarity: "Epic", size: 300, weight: 500 },
