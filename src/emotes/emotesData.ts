@@ -31,6 +31,7 @@ export type EmoteProvider = "native" | "bttv" | "ffz" | "7tv";
 // Define all unique emotes with their providers (single source of truth)
 export const EMOTE_DEFINITIONS = {
     PauseChamp: { name: "PauseChamp", provider: "7tv" },
+    AlienDance: { name: "AlienDance", provider: "bttv" },
     PAUSE: { name: "PAUSE", provider: "7tv" },
     Scared: { name: "Scared", provider: "7tv" },
     NoThanks: { name: "NoThanks", provider: "7tv" },
@@ -180,7 +181,7 @@ export function Emotes<const T extends readonly EmoteName[]>(...names: T): { [K 
 }
 
 export const CATEGORY_EMOTES_RECORD = {
-    [EmoteCategory.ALIEN]: Emotes("glorp"),
+    [EmoteCategory.ALIEN]: Emotes("glorp", "AlienDance"),
     [EmoteCategory.ADVENTURE_END_EMOTES]: Emotes("dinkDonk", "Alarm"),
     [EmoteCategory.ADVENTURE_START_EMOTES]: Emotes("GAMBA"),
     [EmoteCategory.DUEL_CREATE]: Emotes("GAMBA", "PauseChamp", "PAUSE", "PauseCat", "PausersHype", "DRAMA", "NAILS"),
