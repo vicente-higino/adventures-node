@@ -38,14 +38,15 @@ export const mailCommand = createBotCommand(
                 return;
             }
 
-            say(`@${userDisplayName}, mail sent to @${recipient.displayName}! They'll receive it when they next type in chat. Mail ID: #${mail.mailCode}`);
+            say(
+                `@${userDisplayName}, mail sent to @${recipient.displayName}! They'll receive it when they next type in chat. Mail ID: #${mail.mailCode}`,
+            );
         } catch (error) {
             say(`@${userDisplayName}, failed to send mail. Please try again.`);
         }
     },
     { aliases: ["msg", "sendmail"] },
 );
-
 
 export const cancelMailCommand = createBotCommand(
     "cancelmail",
@@ -75,5 +76,5 @@ export const cancelMailCommand = createBotCommand(
             say(`@${userDisplayName}, failed to cancel mail. Please try again.`);
         }
     },
-    { aliases: ["cm", "deletemail"], offlineOnly: false });
-
+    { aliases: ["cm", "deletemail"], offlineOnly: false },
+);

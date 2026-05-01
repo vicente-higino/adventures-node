@@ -258,8 +258,7 @@ export const AdventureJoinParamsSchema = z.object({
 
 export const amountParamSchema = AdventureJoinParamsSchema.shape.amount;
 const adventureOptions = "[+/-silver(K/M/B) | % | all | to:silver(K/M/B) | k(eep):silver(K/M/B)]";
-export const adventureCommandSyntax = (prefix: string = "!") =>
-    `Usage: ${prefix}adventure | ${prefix}adv ${adventureOptions}`;
+export const adventureCommandSyntax = (prefix: string = "!") => `Usage: ${prefix}adventure | ${prefix}adv ${adventureOptions}`;
 
 export async function handleAdventureJoin(params: {
     channelLogin: string;

@@ -8,7 +8,6 @@ import { fetchUsers } from "./api";
 
 const url = "https://events.7tv.io/v3";
 
-
 export async function startSevenTVEventApi() {
     const users = await getUsersByUsername(getBotConfig().channels);
     if (!users) {

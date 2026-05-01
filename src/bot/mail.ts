@@ -22,7 +22,7 @@ export class ChatMail {
             this.loadMailsForChannel(channel);
         }
         this.listenToChat();
-        this.scheduleMailCleanupTask()
+        this.scheduleMailCleanupTask();
     }
 
     private async loadMailsForChannel(channel: string) {
@@ -31,12 +31,7 @@ export class ChatMail {
             logger.warn(`Could not find user ID for channel: ${channel}`);
             return;
         }
-        const mails = await prisma.chatMail.findMany({
-            where: {
-                channelId: user.id,
-                deliveredAt: null,
-            },
-        });
+        const mails = await prisma.chatMail.findMany({ where: { channelId: user.id, deliveredAt: null } });
         const recipientIds = new Set(mails.map(mail => mail.recipientId));
         this.channelMails.set(user.id, recipientIds);
         logger.info(`Loaded ${mails.length} pending mails for channel: ${channel}`);
@@ -51,22 +46,13 @@ export class ChatMail {
             const channelMails = this.channelMails.get(channelId);
             if (channelMails && channelMails.has(userId)) {
                 const mails = await prisma.chatMail.findMany({
-                    where: {
-                        channelId,
-                        recipientId: userId,
-                        deliveredAt: null,
-                    },
-                    include: {
-                        sender: true, recipient: true,
-                    },
+                    where: { channelId, recipientId: userId, deliveredAt: null },
+                    include: { sender: true, recipient: true },
                 });
                 channelMails.delete(userId);
                 if (mails.length > 0) {
                     for (const mail of mails) {
-                        await prisma.chatMail.update({
-                            where: { id: mail.id },
-                            data: { deliveredAt: new Date() },
-                        });
+                        await prisma.chatMail.update({ where: { id: mail.id }, data: { deliveredAt: new Date() } });
                         const senderName = mail.sender.displayName;
                         const recipientName = mail.recipient.displayName;
                         const content = mail.content;
@@ -81,13 +67,7 @@ export class ChatMail {
     private async mailCleanup() {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - 30);
-        const result = await prisma.chatMail.deleteMany({
-            where: {
-                deliveredAt: {
-                    lt: cutoffDate,
-                },
-            },
-        });
+        const result = await prisma.chatMail.deleteMany({ where: { deliveredAt: { lt: cutoffDate } } });
         logger.info(`Removed ${result.count} old chat mails`);
     }
 
@@ -107,39 +87,29 @@ export class ChatMail {
                 logger.warn(`Attempted to send mail from non-existent user ID: ${senderId}`);
                 return null;
             }
-            const mail = await prisma.chatMail.create({
-                data: {
-                    channelId,
-                    senderId,
-                    recipientId,
-                    content: msg,
-                },
-            });
+            const mail = await prisma.chatMail.create({ data: { channelId, senderId, recipientId, content: msg } });
             mails.add(recipientId);
             return mail;
         }
         return null;
     }
 
-    public async cancelMail(mailId: string | null, userId: string, channelId: string): Promise<
-        { status: "success" | "not_found" | "not_authorized" | "already_delivered" | "no_mail_to_cancel", mailId?: string }> {
+    public async cancelMail(
+        mailId: string | null,
+        userId: string,
+        channelId: string,
+    ): Promise<{ status: "success" | "not_found" | "not_authorized" | "already_delivered" | "no_mail_to_cancel"; mailId?: string }> {
         if (!mailId) {
             const mail = await prisma.chatMail.findFirst({
-                where: {
-                    senderId: userId,
-                    channelId,
-                    deliveredAt: null,
-                },
-                orderBy: { createdAt: 'desc' },
+                where: { senderId: userId, channelId, deliveredAt: null },
+                orderBy: { createdAt: "desc" },
             });
             if (!mail) {
                 return { status: "no_mail_to_cancel" };
             }
             mailId = mail.mailCode;
         }
-        const mail = await prisma.chatMail.findUnique({
-            where: { mailCode: mailId },
-        });
+        const mail = await prisma.chatMail.findUnique({ where: { mailCode: mailId } });
 
         if (!mail) {
             return { status: "not_found" };
@@ -155,19 +125,13 @@ export class ChatMail {
             return { status: "already_delivered" };
         }
 
-        await prisma.chatMail.delete({
-            where: { mailCode: mailId },
-        });
+        await prisma.chatMail.delete({ where: { mailCode: mailId } });
 
         // Remove from channelMails cache if recipient has no other pending mails
         const channelMails = this.channelMails.get(mail.channelId);
         if (channelMails) {
             const otherMails = await prisma.chatMail.count({
-                where: {
-                    channelId: mail.channelId,
-                    recipientId: mail.recipientId,
-                    deliveredAt: null,
-                },
+                where: { channelId: mail.channelId, recipientId: mail.recipientId, deliveredAt: null },
             });
             if (otherMails === 0) {
                 channelMails.delete(mail.recipientId);
@@ -176,7 +140,6 @@ export class ChatMail {
 
         return { status: "success", mailId: mail.mailCode };
     }
-
 
     private scheduleMailCleanupTask() {
         cron.schedule(
