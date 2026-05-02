@@ -184,22 +184,24 @@ export function getQualityStars(quality: Quality): string {
     }
 }
 
-export function getQualityRecordBonus(quality: Quality): number {
-    switch (quality) {
-        case "Normal":
+export function getQualityRecordBonus(rarity: Rarity): number {
+    switch (rarity) {
+        case "Common":
+        case "Uncommon":
+        case "Fine":
             return 100;
-        case "Shining":
-            return 150;
-        case "Glistening":
-            return 250;
-        case "Opulent":
-            return 500;
-        case "Radiant":
-            return 750;
-        case "Alpha":
-            return 1000;
+        case "Rare":
+        case "Epic":
+        case "Exotic":
+            return 200;
+        case "Mythic":
+        case "Legendary":
+            return 300;
+        case "Trash":
+            return 0;
         default:
             return 0;
+
     }
 }
 

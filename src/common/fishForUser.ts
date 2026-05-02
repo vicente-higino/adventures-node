@@ -157,7 +157,7 @@ export async function fishForUser({
             });
             promises.push(newRecord);
             recordMessage = "This is the first of its kind!";
-            bonus = fish.rarity !== "Trash" ? getQualityRecordBonus(fish.quality) : 0;
+            bonus = getQualityRecordBonus(fish.rarity) * 4;
         } else {
             const record: string[] = [];
             const updates: { largestFishId?: number; smallestFishId?: number; heaviestFishId?: number; lightestFishId?: number } = {};
@@ -176,25 +176,25 @@ export async function fishForUser({
                 updates.largestFishId = createdFish.id;
                 const { multiplier, humanizedDuration } = calculateMultiplierAndDuration(existingRecord.largestFish.createdAt);
                 record.push(`size (held for ${humanizedDuration}, ${multiplier}x bonus)`);
-                bonus += getQualityRecordBonus(fish.quality) * multiplier;
+                bonus += getQualityRecordBonus(fish.rarity) * multiplier;
             }
             if (size < parseFloat(existingRecord.smallestFish.size)) {
                 updates.smallestFishId = createdFish.id;
                 const { multiplier, humanizedDuration } = calculateMultiplierAndDuration(existingRecord.smallestFish.createdAt);
                 record.push(`smallest (held for ${humanizedDuration}, ${multiplier}x bonus)`);
-                bonus += getQualityRecordBonus(fish.quality) * multiplier;
+                bonus += getQualityRecordBonus(fish.rarity) * multiplier;
             }
             if (weight > parseFloat(existingRecord.heaviestFish.weight)) {
                 updates.heaviestFishId = createdFish.id;
                 const { multiplier, humanizedDuration } = calculateMultiplierAndDuration(existingRecord.heaviestFish.createdAt);
                 record.push(`weight (held for ${humanizedDuration}, ${multiplier}x bonus)`);
-                bonus += getQualityRecordBonus(fish.quality) * multiplier;
+                bonus += getQualityRecordBonus(fish.rarity) * multiplier;
             }
             if (weight < parseFloat(existingRecord.lightestFish.weight)) {
                 updates.lightestFishId = createdFish.id;
                 const { multiplier, humanizedDuration } = calculateMultiplierAndDuration(existingRecord.lightestFish.createdAt);
                 record.push(`lightest (held for ${humanizedDuration}, ${multiplier}x bonus)`);
-                bonus += getQualityRecordBonus(fish.quality) * multiplier;
+                bonus += getQualityRecordBonus(fish.rarity) * multiplier;
             }
             if (Object.keys(updates).length > 0) {
                 promises.push(prisma.fishRecord.update({ where: { id: existingRecord.id }, data: updates }));
