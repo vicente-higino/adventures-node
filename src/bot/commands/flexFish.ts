@@ -9,6 +9,8 @@ import utc from "dayjs/plugin/utc";
 import z from "zod";
 import { createBotCommand } from "../botCommandWithKeywords";
 import { getQualityStars } from "@/fishing";
+import { EmoteManager } from "@/emotes";
+import logger from "@/logger";
 dayjs.extend(relativeTime);
 dayjs.extend(utc);
 dayjs.extend(calendar);
@@ -62,7 +64,8 @@ function formatFishDisplay(fish: FishWithRecords) {
     });
     const quality = getQualityStars(fish.quality);
     const records = getRecords(fish);
-    return `[${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} ${quality} #${fish.fishId} ${sizeStr} ${weightStr}, ${records} worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
+    const emote = fish.emote ? EmoteManager.getEmote(fish.emote as any) : "";
+    return `[${fish.rarity}] ${fish.prefix} ${fish.name} ${emote} ${quality} #${fish.fishId} ${sizeStr} ${weightStr}, ${records} worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
 }
 
 export const flexFishCommand = createBotCommand(

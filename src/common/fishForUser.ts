@@ -125,6 +125,7 @@ export async function fishForUser({
                     weight: fish.weight.toString(),
                     value: fish.sellValue,
                     prefix: fish.prefix,
+                    quality: fish.quality,
                     channel: channelLogin,
                     channelProviderId: channelProviderId,
                     userId: userProviderId,
