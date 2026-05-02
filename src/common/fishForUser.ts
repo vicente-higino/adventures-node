@@ -254,7 +254,7 @@ export async function fishForUser({
         const checkUpgrade = checkIfUpgradeAvailable(stats.fishingRodLevel, stats.totalSilverWorth);
         if (checkUpgrade.canUpgrade && !fishStats.hasNotifiedUpgrade) {
             promises.push(prisma.fishStats.update({ where: { id: fishStats.id }, data: { hasNotifiedUpgrade: true } }));
-            notifyUpgradeMessage = `$(newline)/me @${userDisplayName} You have unlocked the ${checkUpgrade.nextRodName}! Use ${getBotPrefix()}rod buy to upgrade!`;
+            notifyUpgradeMessage = `$(newline)/me @${userDisplayName} You have unlocked the ${checkUpgrade.nextRodName}! Use "${getBotPrefix()}rod buy" to upgrade!`;
         }
         // Add to FishDex and check if it's a new entry
         let fishDexMessage = "";
