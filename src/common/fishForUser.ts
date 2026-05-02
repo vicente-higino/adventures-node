@@ -100,7 +100,7 @@ export async function fishForUser({
         if (fish.rarity === Rarity.Trash && Math.random() < 0.25) {
             const chestBonus = Math.floor(boxMullerTransform(1000, 500, 250));
             treasureBonus += chestBonus;
-            treasureMessage = `💰 While sifting through the trash, you discovered a hidden treasure chest containing ${chestBonus} silver! ${getValueEmote(chestBonus)}`;
+            treasureMessage = `💰 While sifting through the trash, you discovered a hidden treasure chest containing ${chestBonus} silver! ${getValueEmote(chestBonus, channelLogin)}`;
             setTimeout(async () => {
                 sendActionToChannel(
                     channelLogin,
@@ -275,7 +275,7 @@ export async function fishForUser({
         await Promise.all(promises);
 
         const totalValueMessage = bonus > 0 ? `${fish.sellValue} + ${bonus} (Bonus) = ${fish.sellValue + bonus}` : `${fish.sellValue}`;
-        const valueEmote = bonus > 0 ? getValueEmote(fish.sellValue + bonus) : fish.rarityEmote;
+        const valueEmote = bonus > 0 ? getValueEmote(fish.sellValue + bonus, channelLogin) : fish.rarityEmote;
         const useAction = fish.rarity == Rarity.Legendary ? "/me " : "";
         const rod = getRod(fishStats.activeRodLevel);
         const resText = `${useAction}@${userDisplayName} [${rod.name}] Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} ${fish.formatedQuality} #${channelFishCount.total} ${fish.formatedSize} ${fish.formatedWeight}!

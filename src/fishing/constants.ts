@@ -1,4 +1,5 @@
 import { VALUE_EMOTES_LIST } from "@/emotes";
+import { EmoteName } from "@/emotes/emotesData";
 import type { Rarity, FishQuality as Quality } from "@prisma/client";
 
 export { Rarity, Quality };
@@ -35,7 +36,7 @@ export interface CatchDetails {
     weight: number; // in kilograms
     emote?: (channel?: string) => string;
 }
-export const VALUE_EMOTES: { threshold: number; emote: string }[] = [
+export const VALUE_EMOTES: { threshold: number; emote: EmoteName }[] = [
     { threshold: 10, emote: VALUE_EMOTES_LIST.WAJAJA.name }, //  < 10
     { threshold: 50, emote: VALUE_EMOTES_LIST.pogg.name }, //  < 50
     { threshold: 100, emote: VALUE_EMOTES_LIST.poggSpin.name }, //  < 100
@@ -44,8 +45,8 @@ export const VALUE_EMOTES: { threshold: number; emote: string }[] = [
     { threshold: 600, emote: VALUE_EMOTES_LIST.POGGERS.name }, //  < 600
     { threshold: 800, emote: VALUE_EMOTES_LIST.Pog.name }, //  < 800
     { threshold: 1000, emote: VALUE_EMOTES_LIST.HOLY.name }, //  < 1000
-    { threshold: 2500, emote: VALUE_EMOTES_LIST.Cereal.name }, //  < 2500
-    { threshold: 5000, emote: VALUE_EMOTES_LIST.MUGA.name }, //  < 5000
+    { threshold: 5000, emote: VALUE_EMOTES_LIST.Cereal.name }, //  < 2500
+    { threshold: 15000, emote: VALUE_EMOTES_LIST.MUGA.name }, //  < 5000
     { threshold: Infinity, emote: VALUE_EMOTES_LIST.OOOO.name }, // >= 5000
 ];
 

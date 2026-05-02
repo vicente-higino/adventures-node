@@ -14,6 +14,7 @@ import {
 } from "./constants";
 import { fishTable } from "./fishTable";
 import { getRarityWeights } from "./rarities";
+import { EmoteManager } from "@/emotes";
 
 export {
     endLegendaryEventById,
@@ -70,7 +71,7 @@ export const getFish: GetFishFunc = (args = {}) => {
     return {
         name: fish.name,
         rarity: fish.rarity,
-        rarityEmote: getValueEmote(actualSellValue),
+        rarityEmote: getValueEmote(actualSellValue, channel),
         size: actualSize,
         formatedSize: formatSize(actualSize, unitSystem),
         prefix: prefix,
@@ -139,13 +140,13 @@ export function getSellMultiplier(sizeMultiplier: number): number {
     return SELL_MULTIPLIERS[SELL_MULTIPLIERS.length - 1].multiplier; // Fallback to highest multiplier
 }
 
-export function getValueEmote(sellValue: number): string {
+export function getValueEmote(sellValue: number, channel?: string): string {
     for (const { threshold, emote } of VALUE_EMOTES) {
         if (sellValue < threshold) {
-            return emote;
+            return EmoteManager.getEmote(emote, channel);
         }
     }
-    return VALUE_EMOTES[VALUE_EMOTES.length - 1].emote; // Fallback to highest tier emote
+    return EmoteManager.getEmote(VALUE_EMOTES[VALUE_EMOTES.length - 1].emote, channel); // Fallback to highest tier emote
 }
 
 export function getQuality(rodLevel: number): Quality {

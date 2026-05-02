@@ -38,9 +38,9 @@ export class EmoteManager {
         };
     }
 
-    public static getEmote(name: EmoteName, channel: string): string {
+    public static getEmote(name: EmoteName, channel?: string): string {
         const emote = Emote(name);
-        if (emote.provider !== "native") {
+        if (channel && emote.provider !== "native") {
             const hasEmote = emoteTracker?.channelHasEmote(channel, name);
             if (hasEmote) return emote.name;
             else return "";
