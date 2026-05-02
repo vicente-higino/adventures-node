@@ -182,7 +182,7 @@ export const rodCommand = createBotCommand(
             }
         } catch (err) {
             logger.error(err, "Shop command error");
-            say(`@${userDisplayName} Something went wrong while processing your shop request.`);
+            say(`@${userDisplayName} Something went wrong.`);
         }
     },
     { ignoreCase: true },
