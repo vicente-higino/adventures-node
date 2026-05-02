@@ -180,6 +180,8 @@ model FishStats {
     fineFishCount      Int      @default(0)
     rareFishCount      Int      @default(0)
     epicFishCount      Int      @default(0)
+    exoticFishCount    Int      @default(0)
+    mythicFishCount    Int      @default(0)
     legendaryFishCount Int      @default(0)
     fishFines          Int      @default(0)
     fishFinesCount     Int      @default(0)

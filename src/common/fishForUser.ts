@@ -236,6 +236,12 @@ export async function fishForUser({
             case Rarity.Epic:
                 fishStatsUpdateData = { ...fishStatsUpdateData, epicFishCount: { increment: 1 } };
                 break;
+            case Rarity.Exotic:
+                fishStatsUpdateData = { ...fishStatsUpdateData, exoticFishCount: { increment: 1 } };
+                break;
+            case Rarity.Mythic:
+                fishStatsUpdateData = { ...fishStatsUpdateData, mythicFishCount: { increment: 1 } };
+                break;
             case Rarity.Legendary:
                 fishStatsUpdateData = { ...fishStatsUpdateData, legendaryFishCount: { increment: 1 } };
                 break;
