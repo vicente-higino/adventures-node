@@ -11,6 +11,7 @@ export const enum EmoteCategory {
     ADVENTURE_COOLDOWN = "ADVENTURE_COOLDOWN",
     FISH_COOLDOWN = "FISH_COOLDOWN",
     FISH_FINE = "FISH_FINE",
+    FISH_POLICE = "FISH_POLICE",
     MUSHY = "MUSHY",
     SOCKO = "SOCKO",
     APRIL_FOOZE = "APRIL_FOOZE",
@@ -30,6 +31,7 @@ export type EmoteProvider = "native" | "bttv" | "ffz" | "7tv";
 
 // Define all unique emotes with their providers (single source of truth)
 export const EMOTE_DEFINITIONS = {
+    POLICE: { name: "POLICE", provider: "7tv" },
     PauseChamp: { name: "PauseChamp", provider: "7tv" },
     AlienDance: { name: "AlienDance", provider: "bttv" },
     PAUSE: { name: "PAUSE", provider: "7tv" },
@@ -181,6 +183,7 @@ export function Emotes<const T extends readonly EmoteName[]>(...names: T): { [K 
 }
 
 export const CATEGORY_EMOTES_RECORD = {
+    [EmoteCategory.FISH_POLICE]: Emotes('POLICE'),
     [EmoteCategory.ALIEN]: Emotes("glorp", "AlienDance"),
     [EmoteCategory.ADVENTURE_END_EMOTES]: Emotes("dinkDonk", "Alarm"),
     [EmoteCategory.ADVENTURE_START_EMOTES]: Emotes("GAMBA"),

@@ -9,6 +9,7 @@ import {
 import {
     CONGRATULATIONS_EMOTES,
     CONGRATULATIONS_TRASH_FISH_DEX_EMOTES,
+    EmoteManager,
     FACTS_EMOTES,
     FISH_COOLDOWN_EMOTES,
     FISH_FINE_EMOTES,
@@ -75,7 +76,7 @@ export async function fishForUser({
         const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);
 
         // 1% chance to get caught
-        if (fishStats.totalSilverWorth > 0 && Math.random() < 0.01 && balance.value >= 50) {
+        if (fishStats.totalSilverWorth > 0 && Math.random() < 1 && balance.value >= 50) {
             const fine = Math.min(100, Math.floor(boxMullerTransform(50, 25, 25)));
             const place = pickRandom(wrongPlaces);
             if (!balance) {
@@ -86,8 +87,9 @@ export async function fishForUser({
                 where: { id: fishStats.id },
                 data: { fishFines: { increment: fine }, fishFinesCount: { increment: 1 } },
             });
+
             await Promise.all([increaseBalance(prisma, balance.id, -fine), updateFishFinesInFishStats, updateCaughtTimestamp]);
-            return `@${userDisplayName} POLICE You got caught fishing in ${place} and were fined ${fine} silver! ${FISH_FINE_EMOTES(channelLogin)}`;
+            return `@${userDisplayName} ${EmoteManager.getEmote('POLICE', channelLogin)} You got caught fishing in ${place} and were fined ${fine} silver! ${FISH_FINE_EMOTES(channelLogin)}`;
         }
 
         const unitSystem = balance.user.unitSystem ?? "metric";

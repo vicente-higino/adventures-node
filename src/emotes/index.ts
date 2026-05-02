@@ -1,6 +1,6 @@
 import { emoteTracker } from "@/bot";
-import { CATEGORY_EMOTES, CATEGORY_EMOTES_RECORD, Emote, EmoteCategory, EmoteName, EmoteProvider } from "./emotesData";
 import { pickRandom } from "@/utils/misc";
+import { CATEGORY_EMOTES, CATEGORY_EMOTES_RECORD, Emote, EmoteCategory, EmoteName } from "./emotesData";
 
 export class EmoteManager {
     private static readonly emoteCategoriesCache = new Map<EmoteCategory, Emote[]>();
@@ -38,8 +38,14 @@ export class EmoteManager {
         };
     }
 
-    public static getEmote(name: EmoteName): Emote {
-        return Emote(name);
+    public static getEmote(name: EmoteName, channel: string): string {
+        const emote = Emote(name);
+        if (emote.provider !== "native") {
+            const hasEmote = emoteTracker?.channelHasEmote(channel, name);
+            if (hasEmote) return emote.name;
+            else return "";
+        }
+        return emote.name;
     }
 
     public static getAllEmotes(): Emote[] {
