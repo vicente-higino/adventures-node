@@ -78,6 +78,8 @@ async function handleBuyOrUpgrade(
                 break;
             }
         }
+    } else if (maxStr) {
+        return `@${userDisplayName} Invalid argument for buy. Use ${getBotConfig().prefix}rod buy max to upgrade as much as possible.`;
     }
 
     let targetLevelCumulativeCost = 0;
@@ -173,7 +175,7 @@ export const rodCommand = createBotCommand(
                 const rodLevelStr = params[1]?.toLowerCase();
                 message = await handleSelect(fishStats, rodLevelStr || "", userDisplayName);
             } else {
-                message = `@${userDisplayName} Usage: ${getBotConfig().prefix}rod [list|sel <0-${fishingRodLevels.length - 1}|rod_name>|buy]`;
+                message = `@${userDisplayName} Usage: ${getBotConfig().prefix}rod [list|sel <0-${fishingRodLevels.length - 1}|rod_name>|buy <max>]`;
             }
             if (message) {
                 say(message);
