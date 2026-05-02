@@ -9,8 +9,9 @@ import { getRod } from "@/fishing";
 
 
 
-function handleList(fishStats: { fishingRodLevel: number }, userDisplayName: string): string {
+function handleList(fishStats: { fishingRodLevel: number, activeRodLevel: number }, userDisplayName: string): string {
     const currentLevel = fishStats.fishingRodLevel;
+    const activeLevel = fishStats.activeRodLevel;
     let listMessage = `@${userDisplayName} Available Rods: `;
     const rods: string[] = [];
 
@@ -20,7 +21,7 @@ function handleList(fishStats: { fishingRodLevel: number }, userDisplayName: str
             .filter(([idx]) => parseInt(idx) < i)
             .reduce((sum, [, val]) => sum + val, 0);
         const individualCost = i > 0 ? ROD_UPGRADE_COSTS[i - 1] : 0;
-        const status = i === currentLevel ? "[ACTIVE]" : i < currentLevel ? "[OWN]" : "";
+        const status = i === activeLevel ? "[ACTIVE]" : i <= currentLevel ? "[OWN]" : "";
         rods.push(`${status} ${rod.name}${i > 0 ? ` (${formatSilver(individualCost)} silver, ${formatSilver(cumulativeCost)} total)` : ""}`);
     }
 
@@ -54,7 +55,7 @@ async function handleBuyOrUpgrade(
 ): Promise<string> {
     const currentLevel = fishStats.fishingRodLevel;
     if (currentLevel >= fishingRodLevels.length - 1) {
-        return `@${userDisplayName} You already have the Legendary Rod!`;
+        return `@${userDisplayName} You already have the ${fishingRodLevels[fishingRodLevels.length - 1].name}!`;
     }
 
     let targetLevel = currentLevel + 1;
@@ -99,7 +100,7 @@ async function handleBuyOrUpgrade(
 
     await Promise.all([
         increaseBalance(prisma, balance.id, -cost),
-        prisma.fishStats.update({ where: { id: fishStats.id }, data: { fishingRodLevel: targetLevel, activeRodLevel: targetLevel, updatedAt: fishStats.updatedAt } }),
+        prisma.fishStats.update({ where: { id: fishStats.id }, data: { fishingRodLevel: targetLevel, activeRodLevel: targetLevel, hasNotifiedUpgrade: false, updatedAt: fishStats.updatedAt } }),
     ]);
 
     return `@${userDisplayName} Upgraded to ${targetRod.name}! You spent ${formatSilver(cost)} silver and have ${formatSilver(balance.value - cost)} silver left.`;

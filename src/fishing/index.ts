@@ -8,6 +8,7 @@ import {
     QUALITY_MULTIPLIERS,
     Rarity,
     RARITY_POINTS,
+    ROD_UPGRADE_COSTS,
     SELL_MULTIPLIERS,
     SIZE_PREFIXES,
     VALUE_EMOTES,
@@ -215,4 +216,32 @@ export function getFishExperience(rarity: Rarity, quality: Quality): number {
     const baseXp = RARITY_POINTS[rarity];
     const qualityMult = getQualityMultiplier(quality);
     return Math.round(Math.sqrt(baseXp * qualityMult));
+}
+type UpgradeCheckResult = {
+    canUpgrade: true;
+    nextRodName: string;
+    cost: number;
+    cumulativeCost: number;
+} |
+{
+    canUpgrade: false;
+};
+export function checkIfUpgradeAvailable(currentLevel: number, totalSilverWorth: number): UpgradeCheckResult {
+    if (currentLevel >= fishingRodLevels.length - 1) {
+        return { canUpgrade: false }; // Already at max level
+    }
+    const nextRod = fishingRodLevels[currentLevel + 1];
+    const cost = ROD_UPGRADE_COSTS[currentLevel];
+    const cumulativeCost = Object.entries(ROD_UPGRADE_COSTS)
+        .filter(([i]) => parseInt(i) <= currentLevel)
+        .reduce((sum, [, val]) => sum + val, 0);
+    if (totalSilverWorth >= cumulativeCost) {
+        return {
+            canUpgrade: true,
+            nextRodName: nextRod.name,
+            cost,
+            cumulativeCost,
+        };
+    }
+    return { canUpgrade: false };
 }

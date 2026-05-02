@@ -16,7 +16,7 @@ import {
     PAUSE_EMOTES,
     QUOTES_EMOTES,
 } from "@/emotes";
-import { getFish, getQualityRecordBonus, getRod, getValueEmote } from "@/fishing";
+import { checkIfUpgradeAvailable, getFish, getQualityRecordBonus, getRod, getValueEmote } from "@/fishing";
 import { fishingFacts } from "@/fishing/facts";
 import { fishTable } from "@/fishing/fishTable";
 import logger from "@/logger";
@@ -27,6 +27,7 @@ import { Prisma, Rarity } from "@prisma/client";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { friendlyCooldownMessages, motivationalQuotes, wrongPlaces } from "./phrases";
+import { getBotConfig } from "@/bot";
 dayjs.extend(relativeTime);
 
 interface FishForUserParams {
@@ -245,11 +246,16 @@ export async function fishForUser({
             case Rarity.Legendary:
                 fishStatsUpdateData = { ...fishStatsUpdateData, legendaryFishCount: { increment: 1 } };
                 break;
+            default:
+                ((x: never) => { throw new Error(`${x} was unhandled!`); })(fish.rarity);
         }
-        if (Object.keys(fishStatsUpdateData).length > 0) {
-            promises.push(prisma.fishStats.update({ where: { id: fishStats.id }, data: fishStatsUpdateData }));
+        const stats = await prisma.fishStats.update({ where: { id: fishStats.id }, data: fishStatsUpdateData });
+        let notifyUpgradeMessage = "";
+        const checkUpgrade = checkIfUpgradeAvailable(stats.fishingRodLevel, stats.totalSilverWorth);
+        if (checkUpgrade.canUpgrade && !fishStats.hasNotifiedUpgrade) {
+            promises.push(prisma.fishStats.update({ where: { id: fishStats.id }, data: { hasNotifiedUpgrade: true } }));
+            notifyUpgradeMessage = `$(newline)/me @${userDisplayName} You have unlocked the ${checkUpgrade.nextRodName}! Use ${getBotConfig().prefix}rod buy to upgrade!`;
         }
-
         // Add to FishDex and check if it's a new entry
         let fishDexMessage = "";
         let fishDexCompletionMessage = "";
@@ -286,7 +292,7 @@ export async function fishForUser({
         const useAction = fish.rarity == Rarity.Legendary ? "/me " : "";
         const rod = getRod(fishStats.activeRodLevel);
         const resText = `${useAction}@${userDisplayName} [${rod.name}] Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} ${fish.formatedQuality} #${channelFishCount.total} ${fish.formatedSize} ${fish.formatedWeight}!
-                    It sold for ${totalValueMessage} silver! ${recordMessage} ${fishDexMessage} ${valueEmote} ${fishDexCompletionMessage}`;
+                    It sold for ${totalValueMessage} silver! ${recordMessage} ${fishDexMessage} ${valueEmote} ${fishDexCompletionMessage} ${notifyUpgradeMessage}`;
         return resText;
     } catch (error) {
         logger.error(error, "Fish error");
