@@ -57,36 +57,58 @@ function handleShowCurrent(fishStats: { fishingRodLevel: number }, userDisplayNa
 async function handleBuyOrUpgrade(
     fishStats: { id: number; fishingRodLevel: number; totalSilverWorth: number },
     balance: { id: number; value: number },
+    maxStr: string | undefined,
     userDisplayName: string,
 ): Promise<string> {
     const currentLevel = fishStats.fishingRodLevel;
     if (currentLevel >= fishingRodLevels.length - 1) {
         return `@${userDisplayName} You already have the Legendary Rod!`;
     }
-    let cumulativeCost = 0;
-    for (let i = 0; i <= currentLevel; i++) {
-        cumulativeCost += ROD_UPGRADE_COSTS[i];
+
+    let targetLevel = currentLevel + 1;
+    if (maxStr === "max") {
+        for (let i = currentLevel + 1; i < fishingRodLevels.length; i++) {
+            let cumulativeCostForLevel = 0;
+            for (let j = 0; j < i; j++) {
+                cumulativeCostForLevel += ROD_UPGRADE_COSTS[j];
+            }
+            if (fishStats.totalSilverWorth >= cumulativeCostForLevel) {
+                targetLevel = i;
+            } else {
+                break;
+            }
+        }
     }
 
-    const cost = ROD_UPGRADE_COSTS[currentLevel];
-    const nextRod = fishingRodLevels[currentLevel + 1];
+    let targetLevelCumulativeCost = 0;
+    for (let i = 0; i < targetLevel; i++) {
+        targetLevelCumulativeCost += ROD_UPGRADE_COSTS[i];
+    }
 
-    if (fishStats.totalSilverWorth < cumulativeCost) {
-        const needed = cumulativeCost - fishStats.totalSilverWorth;
-        return `@${userDisplayName} You need to earn ${formatSilver(needed)} more silver from fishing to upgrade to ${nextRod.name}.`;
+    let currentLevelCumulativeCost = 0;
+    for (let i = 0; i < currentLevel; i++) {
+        currentLevelCumulativeCost += ROD_UPGRADE_COSTS[i];
+    }
+
+    const cost = targetLevelCumulativeCost - currentLevelCumulativeCost;
+    const targetRod = fishingRodLevels[targetLevel];
+
+    if (fishStats.totalSilverWorth < targetLevelCumulativeCost) {
+        const needed = targetLevelCumulativeCost - fishStats.totalSilverWorth;
+        return `@${userDisplayName} You need to earn ${formatSilver(needed)} more silver from fishing to upgrade to ${targetRod.name}.`;
     }
 
     if (balance.value < cost) {
         const needed = cost - Number(balance.value);
-        return `@${userDisplayName} You need ${formatSilver(needed)} more silver to upgrade to ${nextRod.name}. You have ${formatSilver(balance.value)} silver.`;
+        return `@${userDisplayName} You need ${formatSilver(needed)} more silver to upgrade to ${targetRod.name}. You have ${formatSilver(balance.value)} silver.`;
     }
 
     await Promise.all([
         increaseBalance(prisma, balance.id, -cost),
-        prisma.fishStats.update({ where: { id: fishStats.id }, data: { fishingRodLevel: { increment: 1 }, activeRodLevel: currentLevel + 1 } }),
+        prisma.fishStats.update({ where: { id: fishStats.id }, data: { fishingRodLevel: targetLevel, activeRodLevel: targetLevel } }),
     ]);
 
-    return `@${userDisplayName} Upgraded to ${nextRod.name}! You spent ${formatSilver(cost)} silver and have ${formatSilver(balance.value - cost)} silver left.`;
+    return `@${userDisplayName} Upgraded to ${targetRod.name}! You spent ${formatSilver(cost)} silver and have ${formatSilver(balance.value - cost)} silver left.`;
 }
 
 async function handleSelect(
@@ -100,13 +122,11 @@ async function handleSelect(
 
     let selectedLevel: number;
 
-    // Check for 'max' keyword
     if (rodLevelStr === "max") {
         selectedLevel = fishStats.fishingRodLevel;
     } else {
         selectedLevel = parseInt(rodLevelStr, 10);
 
-        // If it's not a number, try to find by name
         if (isNaN(selectedLevel)) {
             selectedLevel = fishingRodLevels.findIndex(rod => rod.name.toLowerCase().includes(rodLevelStr));
             if (selectedLevel === -1) {
@@ -147,7 +167,8 @@ export const rodCommand = createBotCommand(
             } else if (!subcommand) {
                 message = handleShowCurrent(fishStats, userDisplayName);
             } else if (subcommand === "buy" || subcommand === "upgrade") {
-                message = await handleBuyOrUpgrade(fishStats, balance, userDisplayName);
+                const maxStr = params[1]?.toLowerCase();
+                message = await handleBuyOrUpgrade(fishStats, balance, maxStr, userDisplayName);
             } else if (subcommand === "sel" || subcommand === "select") {
                 const rodLevelStr = params[1]?.toLowerCase();
                 message = await handleSelect(fishStats, rodLevelStr || "", userDisplayName);
