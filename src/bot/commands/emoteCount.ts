@@ -1,12 +1,12 @@
-import { createBotCommand } from "../botCommandWithKeywords";
-import { emoteTracker, getBotConfig } from "@/bot";
+import { emoteTracker, getBotPrefix } from "@/bot";
+import clickhouse from "@/db/clickhouse";
 import { prisma } from "@/prisma";
 import { getUserByUsername } from "@/twitch/api";
-import { z } from "zod";
 import { parseProviders } from "@/utils/params";
-import { parse, format } from "ms";
-import clickhouse from "@/db/clickhouse";
 import { EmoteProvider } from "@prisma/client";
+import { format, parse } from "ms";
+import { z } from "zod";
+import { createBotCommand } from "../botCommandWithKeywords";
 
 const TOP_EMOTES_COUNT = 15;
 
@@ -47,7 +47,7 @@ export const emoteRankCommand = createBotCommand(
             sort = parsed[3];
             channel = parsed[4];
         } catch (e) {
-            say(`Usage: ${getBotConfig().prefix}emoterank [count] [duration] [7tv|ffz|bttv|twitch] [asc|desc] `);
+            say(`Usage: ${getBotPrefix()}emoterank [count] [duration] [7tv|ffz|bttv|twitch] [asc|desc] `);
             return;
         }
 
@@ -128,7 +128,7 @@ export const emoteCountCommand = createBotCommand(
         try {
             [emoteName, range, channel] = EmoteParamsSchema.parse([params[0], format(parse(params[1] ?? "24h"), { long: true }), params[2]]);
         } catch (e) {
-            say(`Usage: ${getBotConfig().prefix}emotecount <emote> [duration]`);
+            say(`Usage: ${getBotPrefix()}emotecount <emote> [duration]`);
             return;
         }
 
@@ -171,7 +171,7 @@ export const myEmoteRankCommand = createBotCommand(
         try {
             [range, sort] = ParamsSchema.parse([format(parse(params[0] ?? "24h"), { long: true }), params[1] ?? "desc", undefined]);
         } catch (e) {
-            say(`Usage: ${getBotConfig().prefix}myemoterank [duration] [asc|desc]`);
+            say(`Usage: ${getBotPrefix()}myemoterank [duration] [asc|desc]`);
             return;
         }
 
@@ -221,7 +221,7 @@ export const myEmoteCountCommand = createBotCommand(
         try {
             [emoteName, range] = EmoteParamsSchema.parse([params[0], format(parse(params[1] ?? "24h"), { long: true })]);
         } catch (e) {
-            say(`Usage: ${getBotConfig().prefix}myemotecount <emote> [duration]`);
+            say(`Usage: ${getBotPrefix()}myemotecount <emote> [duration]`);
             return;
         }
 

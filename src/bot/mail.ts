@@ -1,12 +1,11 @@
-import { Emote } from "@/common/emotes";
 import logger from "@/logger";
+import { prisma } from "@/prisma";
+import { getUserById, getUserByUsername } from "@/twitch/api";
+import { sendActionToChannel } from "@/utils/misc";
 import { Bot } from "@twurple/easy-bot";
+import { format } from "ms";
 import cron from "node-cron";
 import { getBotConfig } from "./index";
-import { prisma } from "@/prisma";
-import { sendActionToChannel, sendMessageToChannel } from "@/utils/misc";
-import { getUserById, getUserByUsername } from "@/twitch/api";
-import { format, ms } from "ms";
 
 export class ChatMail {
     private channelMails: Map<string, Set<string>> = new Map();

@@ -1,6 +1,6 @@
-import { Context, Next } from "hono";
-import { HonoEnv } from "@/types";
 import { getBotConfig } from "@/bot";
+import { HonoEnv } from "@/types";
+import { Context, Next } from "hono";
 
 export const ignoreMiddleware = async (c: Context<HonoEnv>, next: Next) => {
     try {

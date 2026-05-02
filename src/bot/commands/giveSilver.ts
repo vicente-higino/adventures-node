@@ -2,7 +2,7 @@ import { createBotCommand } from "../botCommandWithKeywords";
 import { getUserByUsername } from "@/twitch/api";
 import { prisma } from "@/prisma";
 import { giveSilver, giveSilverCommandSyntax } from "@/common/giveSilver";
-import { getBotConfig } from "..";
+import { getBotPrefix } from "..";
 
 export const giveSilverCommand = createBotCommand(
     "givesilver",
@@ -11,7 +11,7 @@ export const giveSilverCommand = createBotCommand(
         let targetUsername = params.shift();
         const giveAmountStr = params.shift();
         if (!targetUsername || !giveAmountStr) {
-            say(giveSilverCommandSyntax(getBotConfig().prefix));
+            say(giveSilverCommandSyntax(getBotPrefix()));
             return;
         }
         targetUsername = targetUsername.replaceAll("@", "");
@@ -29,7 +29,7 @@ export const giveSilverCommand = createBotCommand(
             fromUserDisplayName: userDisplayName,
             toUserProviderId: targetUser.id,
             giveAmountStr,
-            prefix: getBotConfig().prefix,
+            prefix: getBotPrefix(),
         });
         say(result.message);
     },

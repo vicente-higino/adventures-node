@@ -1,4 +1,4 @@
-import { getBotConfig } from "@/bot";
+import { getBotPrefix } from "@/bot";
 import { findOrCreateBalance, increaseBalance } from "@/db";
 import { prisma } from "@/prisma";
 import z, { number } from "zod";
@@ -16,7 +16,7 @@ export async function handleAddSilver(params: {
     const parseResult = z.coerce.bigint().max(BigInt(Number.MAX_SAFE_INTEGER)).safeParse(add);
     if (!parseResult.success) {
         const error = parseResult.error.errors.map(e => e.message).join(", ");
-        return `Usage: ${prefix ?? getBotConfig().prefix}addsilver <username> <new_balance> (${error})`;
+        return `Usage: ${prefix ?? getBotPrefix()}addsilver <username> <new_balance> (${error})`;
     }
     const value = Number(parseResult.data);
     const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);

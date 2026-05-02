@@ -2,7 +2,7 @@ import { createBotCommand } from "../botCommandWithKeywords";
 import { prisma } from "@/prisma";
 import { formatSize, formatWeight } from "@/utils/misc";
 import { z } from "zod";
-import { getBotConfig } from "..";
+import { getBotPrefix } from "..";
 import { Fish, Prisma } from "@prisma/client";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -70,7 +70,7 @@ export const fishGalleryCommand = createBotCommand(
 
         // Validate page
         if (isNaN(page) || typeof page !== "number") {
-            say(`@${userDisplayName}, invalid page number. Usage: ${getBotConfig().prefix}fishgallery [page (int)] [sort (rarity|value|date)]`);
+            say(`@${userDisplayName}, invalid page number. Usage: ${getBotPrefix()}fishgallery [page (int)] [sort (rarity|value|date)]`);
             return;
         }
 

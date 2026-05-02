@@ -36,6 +36,19 @@ let botConfig = BotConfigSchema.parse(JSON.parse(config));
 export function getBotConfig() {
     return botConfig;
 }
+
+export function isSuperUser(userId: string) {
+    return userId === botConfig.superUserId;
+}
+
+export function isForceSendChannel(channel: string) {
+    return botConfig.forceSendChannels.includes(channel.toLowerCase());
+}
+
+export function getBotPrefix() {
+    return botConfig.prefix;
+}
+
 export const refreshingAuthProvider = new RefreshingAuthProvider({ clientId, clientSecret });
 refreshingAuthProvider.onRefresh(
     async (userId, newTokenData) => await fs.writeFile(`./secrets/tokens.${userId}.json`, JSON.stringify(newTokenData, null, 4), "utf-8"),

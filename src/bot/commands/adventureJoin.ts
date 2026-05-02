@@ -1,4 +1,4 @@
-import { getBotConfig } from "..";
+import { getBotPrefix } from "..";
 import { createBotCommand } from "../botCommandWithKeywords";
 import { handleAdventureJoin } from "@/common/handleAdventure";
 
@@ -14,7 +14,7 @@ export const adventureJoinCommand = createBotCommand(
             userLogin: userName,
             userDisplayName,
             amountParam,
-            prefix: getBotConfig().prefix,
+            prefix: getBotPrefix(),
         });
         const response = result.split("$(newline)");
         for (const line of response) say(line);

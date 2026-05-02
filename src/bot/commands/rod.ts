@@ -1,11 +1,11 @@
-import { createBotCommand } from "../botCommandWithKeywords";
-import { getBotConfig } from "@/bot";
-import { prisma } from "@/prisma";
+import { getBotPrefix } from "@/bot";
 import { findOrCreateBalance, findOrCreateFishStats, increaseBalance } from "@/db";
+import { getRod } from "@/fishing";
 import { fishingRodLevels, ROD_UPGRADE_COSTS } from "@/fishing/constants";
 import logger from "@/logger";
+import { prisma } from "@/prisma";
 import { formatSilver } from "@/utils/misc";
-import { getRod } from "@/fishing";
+import { createBotCommand } from "../botCommandWithKeywords";
 
 
 
@@ -72,7 +72,7 @@ async function handleBuyOrUpgrade(
             }
         }
     } else if (maxStr) {
-        return `@${userDisplayName} Invalid argument for buy. Use ${getBotConfig().prefix}rod buy max to upgrade as much as possible.`;
+        return `@${userDisplayName} Invalid argument for buy. Use ${getBotPrefix()}rod buy max to upgrade as much as possible.`;
     }
 
     let targetLevelCumulativeCost = 0;
@@ -112,7 +112,7 @@ async function handleSelect(
     userDisplayName: string,
 ): Promise<string> {
     if (!rodLevelStr) {
-        return `@${userDisplayName} Usage: ${getBotConfig().prefix}rod select <0-${fishingRodLevels.length - 1}|rod_name|max>`;
+        return `@${userDisplayName} Usage: ${getBotPrefix()}rod select <0-${fishingRodLevels.length - 1}|rod_name|max>`;
     }
 
     let selectedLevel: number;
@@ -168,7 +168,7 @@ export const rodCommand = createBotCommand(
                 const rodLevelStr = params[1]?.toLowerCase();
                 message = await handleSelect(fishStats, rodLevelStr || "", userDisplayName);
             } else {
-                message = `@${userDisplayName} Usage: ${getBotConfig().prefix}rod [list|sel <0-${fishingRodLevels.length - 1}|rod_name>|buy <max>]`;
+                message = `@${userDisplayName} Usage: ${getBotPrefix()}rod [list|sel <0-${fishingRodLevels.length - 1}|rod_name>|buy <max>]`;
             }
             if (message) {
                 say(message);

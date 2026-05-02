@@ -1,19 +1,19 @@
-import { getBotConfig } from "@/bot";
-import { createBotCommand } from "../botCommandWithKeywords";
+import { getBotPrefix, isSuperUser } from "@/bot";
 import { handleUpdateSilver } from "@/common/handleUpdateSilver";
-import { getUserByUsername } from "@/twitch/api";
 import { prisma } from "@/prisma";
+import { getUserByUsername } from "@/twitch/api";
+import { createBotCommand } from "../botCommandWithKeywords";
 
 export const updateSilverCommand = createBotCommand(
     "updatesilver",
     async (params, ctx) => {
         const { say, broadcasterName, broadcasterId } = ctx;
         const { isMod, isBroadcaster, userId, displayName } = ctx.msg.userInfo;
-        if (!isMod && !isBroadcaster && getBotConfig().superUserId !== userId) return;
+        if (!isMod && !isBroadcaster && !isSuperUser(userId)) return;
         let targetUsername = params.shift()?.replaceAll("@", "");
         const newBalance = params.shift();
         if (!targetUsername || !newBalance) {
-            say(`Usage: ${getBotConfig().prefix}updatesilver <username> <new_balance>`);
+            say(`Usage: ${getBotPrefix()}updatesilver <username> <new_balance>`);
             return;
         }
         const user = await getUserByUsername(prisma, targetUsername);

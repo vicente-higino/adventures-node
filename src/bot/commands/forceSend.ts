@@ -1,8 +1,8 @@
-import { createBotCommand } from "../botCommandWithKeywords";
-import { getBotConfig, updateBotConfig } from "@/bot";
+import { getBotConfig, getBotPrefix, updateBotConfig } from "@/bot";
 import { prisma } from "@/prisma";
 import { getUserByUsername } from "@/twitch/api";
 import { z } from "zod";
+import { createBotCommand } from "../botCommandWithKeywords";
 
 export const forceSendCommand = createBotCommand(
     "allowmessages",
@@ -29,7 +29,7 @@ export const forceSendCommand = createBotCommand(
         const ActionSchema = z.enum(["on", "off", "enable", "disable", "toggle"]);
         const actionParse = ActionSchema.safeParse(action);
         if (!actionParse.success) {
-            say(`Usage: ${getBotConfig().prefix}allowmessages <on|off|toggle> [channel]`);
+            say(`Usage: ${getBotPrefix()}allowmessages <on|off|toggle> [channel]`);
             return;
         }
 

@@ -1,8 +1,8 @@
-import { createBotCommand } from "../botCommandWithKeywords";
-import { getUserByUsername } from "@/twitch/api";
-import { prisma } from "@/prisma";
+import { chatMail, getBotPrefix } from "@/bot";
 import logger from "@/logger";
-import { chatMail, getBotConfig } from "..";
+import { prisma } from "@/prisma";
+import { getUserByUsername } from "@/twitch/api";
+import { createBotCommand } from "../botCommandWithKeywords";
 
 export const mailCommand = createBotCommand(
     "mail",
@@ -13,7 +13,7 @@ export const mailCommand = createBotCommand(
         const message = params.join(" ");
 
         if (!recipientUsername || !message) {
-            say(`@${userDisplayName}, usage: ${getBotConfig().prefix}mail <@username> <message>`);
+            say(`@${userDisplayName}, usage: ${getBotPrefix()}mail <@username> <message>`);
             return;
         }
 

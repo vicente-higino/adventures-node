@@ -1,5 +1,5 @@
 import { runGroupAdventure } from "@/adventures";
-import { getBotConfig } from "@/bot";
+import { isSuperUser } from "@/bot";
 import { addBonusToUserStats, findOrCreateBalance, increaseBalanceWithChannelID, setBalance, updateUserAdventureStats } from "@/db";
 import { ADVENTURE_COOLDOWN_EMOTES, ADVENTURE_GAMBA_EMOTE } from "@/emotes";
 import env from "@/env";
@@ -12,15 +12,14 @@ import {
     formatSilver,
     limitAdvMessage,
     limitMessageLength,
-    pickRandom,
-    roundToDecimalPlaces,
+    roundToDecimalPlaces
 } from "@/utils/misc";
 import { formatTimeToWithSeconds } from "@/utils/time";
 import { Mutex } from "async-mutex";
 import dayjs from "dayjs";
+import Decimal from "decimal.js";
 import z from "zod";
 import { cancelScheduleAdventureWarnings, scheduleAdventureWarnings } from "./helpers/schedule";
-import Decimal from "decimal.js";
 
 // Replace single mutex with a map of mutexes per channel
 const advEndMutexMap: Map<string, Mutex> = new Map();
@@ -81,7 +80,7 @@ export async function handleAdventureEnd(params: {
     const nextAvailable = new Date(adv.createdAt.getTime() + timeLimit);
     const secondsLeft = Math.floor((nextAvailable.getTime() - now.getTime()) / 1000);
 
-    if (secondsLeft >= 1 && userProviderId !== getBotConfig().userId) {
+    if (secondsLeft >= 1 && !isSuperUser(userProviderId)) {
         let cooldownMessage = `@${userDisplayName}, hold tight! The adventure is locked for ${formatTimeToWithSeconds(nextAvailable)} to allow others to join.`;
         return cooldownMessage;
     }

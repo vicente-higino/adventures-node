@@ -1,7 +1,7 @@
 import { createAdminBotCommand } from "../botCommandWithKeywords";
 import { endLegendaryEventById } from "@/fishing";
 import { z } from "zod";
-import { getBotConfig } from "..";
+import { getBotPrefix } from "..";
 
 export const legendaryEndCommand = createAdminBotCommand(
     "legendary-event-end",
@@ -10,7 +10,7 @@ export const legendaryEndCommand = createAdminBotCommand(
         const schema = z.tuple([z.coerce.number().int().positive()]);
         const parsed = schema.safeParse(params);
         if (!parsed.success) {
-            say(`Usage: ${getBotConfig().prefix}legendary-end <id>`);
+            say(`Usage: ${getBotPrefix()}legendary-end <id>`);
             return;
         }
         const [id] = parsed.data;

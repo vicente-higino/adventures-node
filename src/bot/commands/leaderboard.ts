@@ -1,7 +1,7 @@
 import { createBotCommand } from "../botCommandWithKeywords";
 import { prisma } from "@/prisma";
 import { getLeaderboard, leaderboardCommandSyntax, leaderboardSchema } from "@/common/leaderboardHandler";
-import { getBotConfig } from "..";
+import { getBotPrefix } from "..";
 
 export const leaderboardCommand = createBotCommand(
     "leaderboard",
@@ -12,7 +12,7 @@ export const leaderboardCommand = createBotCommand(
 
         const validation = leaderboardSchema.safeParse({ sortBy, amount });
         if (!validation.success) {
-            say(leaderboardCommandSyntax(getBotConfig().prefix));
+            say(leaderboardCommandSyntax(getBotPrefix()));
             return;
         }
 

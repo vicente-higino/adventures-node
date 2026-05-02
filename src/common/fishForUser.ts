@@ -1,3 +1,4 @@
+import { getBotPrefix } from "@/bot";
 import {
     createFishDexCompletion,
     findOrCreateBalance,
@@ -27,7 +28,6 @@ import { Prisma, Rarity } from "@prisma/client";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { friendlyCooldownMessages, motivationalQuotes, wrongPlaces } from "./phrases";
-import { getBotConfig } from "@/bot";
 dayjs.extend(relativeTime);
 
 interface FishForUserParams {
@@ -254,7 +254,7 @@ export async function fishForUser({
         const checkUpgrade = checkIfUpgradeAvailable(stats.fishingRodLevel, stats.totalSilverWorth);
         if (checkUpgrade.canUpgrade && !fishStats.hasNotifiedUpgrade) {
             promises.push(prisma.fishStats.update({ where: { id: fishStats.id }, data: { hasNotifiedUpgrade: true } }));
-            notifyUpgradeMessage = `$(newline)/me @${userDisplayName} You have unlocked the ${checkUpgrade.nextRodName}! Use ${getBotConfig().prefix}rod buy to upgrade!`;
+            notifyUpgradeMessage = `$(newline)/me @${userDisplayName} You have unlocked the ${checkUpgrade.nextRodName}! Use ${getBotPrefix()}rod buy to upgrade!`;
         }
         // Add to FishDex and check if it's a new entry
         let fishDexMessage = "";

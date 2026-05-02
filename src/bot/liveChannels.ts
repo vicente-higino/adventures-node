@@ -1,6 +1,6 @@
+import { getBotConfig } from "@/bot";
 import logger from "@/logger";
 import { apiClient } from "@/twitch/api";
-import { getBotConfig } from "./index";
 import { AtLeastOne } from "@/utils/misc";
 
 class LiveChannelManager {

@@ -1,6 +1,6 @@
 import { createBotCommand } from "../botCommandWithKeywords";
 import { handleDuelCreate } from "@/common/handleDuels";
-import { getBotConfig } from "..";
+import { getBotPrefix } from "..";
 import { getUserByUsername } from "@/twitch/api";
 import { prisma } from "@/prisma";
 
@@ -8,7 +8,7 @@ export const duelCreateCommand = createBotCommand(
     "duel",
     async (params, ctx) => {
         const { broadcasterId, broadcasterName, userDisplayName, userId, userName, say } = ctx;
-        const useMsg = `Usage: ${getBotConfig().prefix}duel username [silver(K/M/B)|%|all]`;
+        const useMsg = `Usage: ${getBotPrefix()}duel username [silver(K/M/B)|%|all]`;
         let usernameArg = params.shift();
         const wagerAmountStr = params.shift();
         if (!usernameArg || !wagerAmountStr) {
@@ -29,7 +29,7 @@ export const duelCreateCommand = createBotCommand(
             userlogin: userName,
             userDisplayName,
             wagerAmountStr,
-            prefix: getBotConfig().prefix,
+            prefix: getBotPrefix(),
         });
         const response = result.split("$(newline)");
         for (const line of response) say(line);

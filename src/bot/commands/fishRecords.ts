@@ -1,4 +1,4 @@
-import { getBotConfig } from "@/bot";
+import { getBotPrefix } from "@/bot";
 import { getFishRecordStats } from "@/common/fishRecordStats";
 import { prisma } from "@/prisma";
 import { getUserByUsername } from "@/twitch/api";
@@ -42,7 +42,7 @@ export const fishRecordsCommand = createBotCommand(
         // Handle invalid page numbers
         if (page < 1 || page > totalPages) {
             say(
-                `@${userDisplayName}, invalid page number. Available pages: 1-${totalPages}. Usage: ${getBotConfig().prefix}fishrecords [@username] [page]`,
+                `@${userDisplayName}, invalid page number. Available pages: 1-${totalPages}. Usage: ${getBotPrefix()}fishrecords [@username] [page]`,
             );
             return;
         }

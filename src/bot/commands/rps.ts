@@ -1,5 +1,5 @@
 import { createBotCommand } from "../botCommandWithKeywords";
-import { getBotConfig } from "@/bot";
+import { getBotPrefix } from "@/bot";
 import { getUserByUsername } from "@/twitch/api";
 import { prisma } from "@/prisma";
 import { cancelRPSMatch, createMatch } from "@/bot/rps";
@@ -27,7 +27,7 @@ export const rpsCommand = createBotCommand(
     "rps",
     async (params, ctx) => {
         const { broadcasterId, broadcasterName, userDisplayName, userId, userName, say } = ctx;
-        const useMsg = `Usage: ${getBotConfig().prefix}rps username [silver(K/M/B)|%|all]`;
+        const useMsg = `Usage: ${getBotPrefix()}rps username [silver(K/M/B)|%|all]`;
         let usernameArg = params.shift();
         const wagerAmountStr = params.shift();
         if (!usernameArg || !wagerAmountStr) {

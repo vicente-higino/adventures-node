@@ -5,7 +5,7 @@ import { listener } from "@/twitch/eventsub";
 import { liveChannels } from "./liveChannels";
 import Whispers from "./whispers";
 import { UserIdResolvable } from "@twurple/api";
-import { getBotConfig } from ".";
+import { getBotPrefix } from ".";
 
 // Track which userIds have listeners to avoid duplicate listeners
 const eventsubListeners = new Set<string>();
@@ -38,7 +38,7 @@ export async function createWhisperListener(user: UserIdResolvable, whispers: Wh
         logger.debug({ id, userId, userDisplayName, senderUserId, senderUserName, messageText }, `Received whisper`);
 
         for (const whisper of whispers) {
-            const params = whisper.match(messageText, getBotConfig().prefix);
+            const params = whisper.match(messageText, getBotPrefix());
             if (params) {
                 await whisper.execute(params, e);
                 return; // Stop after first match
