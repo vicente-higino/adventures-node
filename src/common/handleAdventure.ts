@@ -1,5 +1,5 @@
 import { runGroupAdventure } from "@/adventures";
-import { isSuperUser } from "@/bot";
+import { getBotConfig } from "@/bot";
 import { addBonusToUserStats, findOrCreateBalance, increaseBalanceWithChannelID, setBalance, updateUserAdventureStats } from "@/db";
 import { ADVENTURE_COOLDOWN_EMOTES, ADVENTURE_GAMBA_EMOTE } from "@/emotes";
 import env from "@/env";
@@ -80,7 +80,7 @@ export async function handleAdventureEnd(params: {
     const nextAvailable = new Date(adv.createdAt.getTime() + timeLimit);
     const secondsLeft = Math.floor((nextAvailable.getTime() - now.getTime()) / 1000);
 
-    if (secondsLeft >= 1 && !isSuperUser(userProviderId)) {
+    if (secondsLeft >= 1 && userProviderId !== getBotConfig().userId) {
         let cooldownMessage = `@${userDisplayName}, hold tight! The adventure is locked for ${formatTimeToWithSeconds(nextAvailable)} to allow others to join.`;
         return cooldownMessage;
     }
