@@ -7,7 +7,7 @@
 
 
 cd ${REPO_PATH};
-docker compose up -d --force-recreate --pull always --no-deps "server";
+docker compose up -d --pull always --no-deps "server";
 docker image prune -a -f;
 docker ps;
 # docker compose restart "server";
