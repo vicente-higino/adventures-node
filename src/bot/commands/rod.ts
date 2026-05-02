@@ -10,12 +10,12 @@ import { getRod } from "@/fishing";
 
 // Rod upgrade costs (silver needed to upgrade to next level)
 const ROD_UPGRADE_COSTS: Record<number, number> = {
-    0: 500, // Wooden to Reinforced
-    1: 5000, // Reinforced to Fiberglass
-    2: 25000, // Fiberglass to Carbon Fiber
-    3: 100000, // Carbon Fiber to Titanium
-    4: 250000, // Titanium to Mythril
-    5: 500000, // Mythril to Legendary
+    0: 1000, // Wooden to Reinforced
+    1: 15_000, // Reinforced to Fiberglass
+    2: 75_000, // Fiberglass to Carbon Fiber
+    3: 250_000, // Carbon Fiber to Titanium
+    4: 500_000, // Titanium to Mythril
+    5: 750_000, // Mythril to Legendary
 };
 
 function handleList(fishStats: { fishingRodLevel: number }, userDisplayName: string): string {

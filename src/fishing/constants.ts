@@ -18,9 +18,9 @@ export const RARITY_POINTS: Record<Rarity, number> = {
 
 export const QUALITY_MULTIPLIERS: Record<Quality, number> = {
     Normal: 1.0,
-    Shining: 2.5,
-    Glistening: 5,
-    Opulent: 7.5,
+    Shining: 1.8,
+    Glistening: 4,
+    Opulent: 6,
     Radiant: 10,
     Alpha: 15,
 } as const;
