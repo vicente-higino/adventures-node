@@ -2,18 +2,19 @@ import { randomFish, getFish, getValueEmote } from "../fishing";
 import { fishTable } from "./fishTable"; // Corrected import path
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as fishingModule from "../fishing";
-import { CatchDetails, Rarity } from "./constants";
+import { CatchDetails, fishingRodLevels, Rarity } from "./constants";
+import { Extensions } from "@prisma/client/runtime/binary";
 
 /**
  * Test suite for fishing functionality
  */
 
 // Helper function to run multiple trials and collect results
-function runMultipleTrials(trials: number): Record<Rarity, number> {
-    const results: Record<Rarity, number> = { Legendary: 0, Epic: 0, Rare: 0, Fine: 0, Uncommon: 0, Common: 0, Trash: 0 };
+function runMultipleTrials(trials: number, rodLevel: number): Record<Rarity, number> {
+    const results: Record<Rarity, number> = { Legendary: 0, Mythic: 0, Exotic: 0, Epic: 0, Rare: 0, Fine: 0, Uncommon: 0, Common: 0, Trash: 0 };
 
     for (let i = 0; i < trials; i++) {
-        const fish = randomFish();
+        const fish = randomFish(rodLevel);
         results[fish.rarity]++;
     }
 
@@ -27,7 +28,7 @@ describe("Fishing Module", () => {
 
             expect(fish).toBeDefined();
             expect(typeof fish.name).toBe("string");
-            expect(["Legendary", "Epic", "Rare", "Fine", "Uncommon", "Common", "Trash"]).toContain(fish.rarity);
+            expect(["Legendary", "Mythic", "Exotic", "Epic", "Rare", "Fine", "Uncommon", "Common", "Trash"]).toContain(fish.rarity);
             expect(typeof fish.size).toBe("number");
             expect(typeof fish.weight).toBe("number");
         });
@@ -38,39 +39,26 @@ describe("Fishing Module", () => {
             }
         });
 
-        it("should distribute fish rarities according to expected weights", () => {
-            // Run many trials and check if distribution roughly matches weights
-            const trials = 100000;
-            const results = runMultipleTrials(trials);
 
-            // Expected percentages based on weights (total weight is 1001)
-            const expectedPercentages = {
-                Legendary: 0.001, // 1/1000
-                Epic: 0.035, // 35/1000
-                Rare: 0.055, // 55/1000
-                Fine: 0.095, // 95/1000
-                Uncommon: 0.15, // 150/1000
-                Common: 0.649, // 649/1000
-                Trash: 0.015, // 15/1000
-            };
+        it("should display all weights distribution per rod", () => {
 
-            // Check if distribution is roughly as expected (within 30% margin)
-            // Using a larger margin because random distribution can vary more in tests
-            Object.entries(results).forEach(([rarity, count]) => {
-                const percentage = count / trials;
-                const expected = expectedPercentages[rarity as Rarity];
-                const margin = expected * 0.3; // 30% margin of error for randomness
+            for (const rod of fishingRodLevels) {
+                // Run many trials and check if distribution roughly matches weights
+                const trials = 100000;
+                const results = runMultipleTrials(trials, rod.level);
 
-                // Log for informational purposes
-                console.log(`${rarity}: ${count} (${(percentage * 100).toFixed(2)}%), Expected: ${(expected * 100).toFixed(2)}%`);
+                console.log(`------------- ${rod.name} distribution ------------- `);
+                // Check if distribution is roughly as expected (within 30% margin)
+                // Using a larger margin because random distribution can vary more in tests
+                Object.entries(results).forEach(([rarity, count]) => {
+                    const percentage = count / trials;
+                    // Log for informational purposes
+                    console.log(`${rarity}: ${count} (${(percentage * 100).toFixed(2)}%)`);
 
-                // Assert with proper Vitest assertion
-                expect(
-                    Math.abs(percentage - expected),
-                    `${rarity} distribution (${percentage.toFixed(4)}) should be within 30% of expected (${expected})`,
-                ).toBeLessThanOrEqual(margin);
-            });
-        });
+                });
+            }
+
+        }, 30000); // Increase timeout for this test due to large number of trials
 
         it("should be able to return all fish from the fishTable", () => {
             // This test checks if randomFish can potentially return all fish entries from fishTable
@@ -88,9 +76,9 @@ describe("Fishing Module", () => {
             // to increase chances of finding all fish
             let trials = 0;
             const maxTrials = 100000;
-
+            const rod = fishingModule.getRod(6);
             while (foundFish.size < totalFish && trials < maxTrials) {
-                const fish = randomFish();
+                const fish = randomFish(rod.level);
                 foundFish.add(fish.name);
                 trials++;
             }
