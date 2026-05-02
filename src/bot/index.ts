@@ -1,7 +1,7 @@
 import env from "@/env";
 import logger from "@/logger";
 import { getChannelsModForUser } from "@/twitch/api";
-import { sendActionToChannelWithAPI, sendMessageToChannelWithAPI } from "@/utils/misc";
+import { sendActionToChannelWithAPI, sendMessageToChannelWithAPI, splitOnSpaces } from "@/utils/misc";
 import { RefreshingAuthProvider } from "@twurple/auth";
 import { Bot } from "@twurple/easy-bot";
 import { promises as fs, readFileSync } from "fs";
@@ -74,14 +74,20 @@ export const createBot = async (forceRecreate?: boolean): Promise<boolean> => {
             if (getBotConfig().modChannels.includes(channel)) {
                 sendMessageToChannelWithAPI(channel, message);
             } else {
-                bot?.chat.say(channel, message);
+                const msgs = splitOnSpaces(message, 500);
+                for (const msg of msgs) {
+                    bot?.chat.say(channel, msg);
+                }
             }
         };
         bot.action = async (channel: string, message: string) => {
             if (getBotConfig().modChannels.includes(channel)) {
                 sendActionToChannelWithAPI(channel, message);
             } else {
-                bot?.chat.action(channel, message);
+                const msgs = splitOnSpaces(message, 500);
+                for (const msg of msgs) {
+                    bot?.chat.action(channel, msg);
+                }
             }
         };
 

@@ -41,7 +41,6 @@ export const fishTable: CatchDetails[] = [
     { sellValue: RARITY_POINTS.Mythic, name: "Abaia", rarity: "Mythic", size: 1500, weight: 10000 },
     { sellValue: RARITY_POINTS.Mythic, name: "Isonade", rarity: "Mythic", size: 1000, weight: 5000 },
 
-
     // Exotic fish
     { sellValue: RARITY_POINTS.Exotic, name: "Bignose fanskate", rarity: "Exotic", size: 150, weight: 30 },
     { sellValue: RARITY_POINTS.Exotic, name: "Plownose chimaera", rarity: "Exotic", size: 90, weight: 25 },

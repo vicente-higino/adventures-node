@@ -243,6 +243,7 @@ export async function fishForUser({
 
         // Add to FishDex and check if it's a new entry
         let fishDexMessage = "";
+        let fishDexCompletionMessage = "";
         const { created } = await findOrCreateFishDexEntry(prisma, channelProviderId, userProviderId, fish.name, fish.rarity);
         if (created) {
             // This is a new entry (just created)
@@ -260,19 +261,11 @@ export async function fishForUser({
                     if (bonus > 0) {
                         await increaseBalance(prisma, balance.id, bonus);
                     }
-                    setTimeout(() => {
-                        if (fish.rarity === Rarity.Trash) {
-                            sendActionToChannel(
-                                channelLogin,
-                                `@${userDisplayName} completed the Trash FishDex and earned ${bonus} silver! EarthDay Thanks for cleaning up the ocean and helping nature! ${CONGRATULATIONS_TRASH_FISH_DEX_EMOTES(channelLogin)}`,
-                            );
-                        } else {
-                            sendActionToChannel(
-                                channelLogin,
-                                `@${userDisplayName} has completed the FishDex for [${fish.rarity}] rarity and earned a bonus of ${bonus} silver! ${CONGRATULATIONS_EMOTES(channelLogin)}`,
-                            );
-                        }
-                    }, 1000);
+                    if (fish.rarity === Rarity.Trash) {
+                        fishDexCompletionMessage += `$(newline)/me @${userDisplayName} completed the Trash FishDex and earned ${bonus} silver! EarthDay Thanks for cleaning up the ocean and helping nature! ${CONGRATULATIONS_TRASH_FISH_DEX_EMOTES(channelLogin)}`;
+                    } else {
+                        fishDexCompletionMessage += `$(newline)/me @${userDisplayName} has completed the FishDex for [${fish.rarity}] rarity and earned a bonus of ${bonus} silver! ${CONGRATULATIONS_EMOTES(channelLogin)}`;
+                    }
                 }
             }
         }
@@ -284,7 +277,7 @@ export async function fishForUser({
         const useAction = fish.rarity == Rarity.Legendary ? "/me " : "";
         const rod = getRod(fishStats.activeRodLevel);
         const resText = `${useAction}@${userDisplayName} [${rod.name}] Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} ${fish.formatedQuality} #${channelFishCount.total} ${fish.formatedSize} ${fish.formatedWeight}!
-                    It sold for ${totalValueMessage} silver! ${recordMessage} ${fishDexMessage} ${valueEmote}`;
+                    It sold for ${totalValueMessage} silver! ${recordMessage} ${fishDexMessage} ${valueEmote} ${fishDexCompletionMessage}`;
         return resText;
     } catch (error) {
         logger.error(error, "Fish error");

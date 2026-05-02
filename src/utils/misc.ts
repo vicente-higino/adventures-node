@@ -367,33 +367,37 @@ export function calculateLoseStreakBonus(streak: number, streakWager: number): n
 }
 
 export function splitOnSpaces(text: string, maxMsgLength: number): string[] {
-    if (text.length <= maxMsgLength) {
-        return [text];
-    }
+    const lines = text.split("$(newline)");
+    const result: string[] = [];
 
-    text = text.trim();
-    const res = [];
-
-    let startIndex = 0;
-    let endIndex = maxMsgLength;
-
-    while (startIndex < text.length) {
-        let spaceIndex = text.lastIndexOf(" ", endIndex);
-
-        if (spaceIndex === -1 || spaceIndex <= startIndex || text.length - startIndex + 1 <= maxMsgLength) {
-            spaceIndex = startIndex + maxMsgLength;
+    for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (!trimmedLine.length) {
+            continue;
         }
+        if (trimmedLine.length <= maxMsgLength) {
+            result.push(trimmedLine);
+        } else {
+            let startIndex = 0;
+            let endIndex = maxMsgLength;
+            while (startIndex < trimmedLine.length) {
+                let spaceIndex = trimmedLine.lastIndexOf(" ", endIndex);
 
-        const textSlice = text.slice(startIndex, spaceIndex).trim();
-        if (textSlice.length) {
-            res.push(textSlice);
+                if (spaceIndex === -1 || spaceIndex <= startIndex || trimmedLine.length - startIndex <= maxMsgLength) {
+                    spaceIndex = startIndex + maxMsgLength;
+                }
+
+                const textSlice = trimmedLine.slice(startIndex, spaceIndex).trim();
+                if (textSlice.length) {
+                    result.push(textSlice);
+                }
+
+                startIndex = spaceIndex + (trimmedLine[spaceIndex] === " " ? 1 : 0); // to skip the space
+                endIndex = startIndex + maxMsgLength;
+            }
         }
-
-        startIndex = spaceIndex + (text[spaceIndex] === " " ? 1 : 0); // to skip the space
-        endIndex = startIndex + maxMsgLength;
     }
-
-    return res;
+    return result;
 }
 
 export type AtLeastOne<T, K extends keyof T = keyof T> = Partial<T> & { [P in K]: Required<Pick<T, P>> }[K];
