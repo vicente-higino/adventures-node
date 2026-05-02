@@ -36,9 +36,10 @@ function handleList(fishStats: { fishingRodLevel: number }, userDisplayName: str
     return listMessage + rods.join(" | ");
 }
 
-function handleShowCurrent(fishStats: { fishingRodLevel: number }, userDisplayName: string): string {
+function handleShowCurrent(fishStats: { fishingRodLevel: number, activeRodLevel: number }, userDisplayName: string): string {
     const currentLevel = fishStats.fishingRodLevel;
-    const currentRod = fishingRodLevels[currentLevel];
+    const activeLevel = fishStats.activeRodLevel;
+    const currentRod = fishingRodLevels[activeLevel];
     let listMessage = `@${userDisplayName} [ACTIVE] ${currentRod.name}`;
 
     if (currentLevel < fishingRodLevels.length - 1) {
@@ -55,7 +56,7 @@ function handleShowCurrent(fishStats: { fishingRodLevel: number }, userDisplayNa
 }
 
 async function handleBuyOrUpgrade(
-    fishStats: { id: number; fishingRodLevel: number; totalSilverWorth: number },
+    fishStats: { id: number; fishingRodLevel: number; totalSilverWorth: number, updatedAt: Date },
     balance: { id: number; value: number },
     maxStr: string | undefined,
     userDisplayName: string,
@@ -107,14 +108,14 @@ async function handleBuyOrUpgrade(
 
     await Promise.all([
         increaseBalance(prisma, balance.id, -cost),
-        prisma.fishStats.update({ where: { id: fishStats.id }, data: { fishingRodLevel: targetLevel, activeRodLevel: targetLevel } }),
+        prisma.fishStats.update({ where: { id: fishStats.id }, data: { fishingRodLevel: targetLevel, activeRodLevel: targetLevel, updatedAt: fishStats.updatedAt } }),
     ]);
 
     return `@${userDisplayName} Upgraded to ${targetRod.name}! You spent ${formatSilver(cost)} silver and have ${formatSilver(balance.value - cost)} silver left.`;
 }
 
 async function handleSelect(
-    fishStats: { id: number; fishingRodLevel: number; activeRodLevel: number },
+    fishStats: { id: number; fishingRodLevel: number; activeRodLevel: number, updatedAt: Date },
     rodLevelStr: string,
     userDisplayName: string,
 ): Promise<string> {
@@ -148,7 +149,7 @@ async function handleSelect(
         return `@${userDisplayName} You already have the ${fishingRodLevels[selectedLevel].name} selected.`;
     }
 
-    await prisma.fishStats.update({ where: { id: fishStats.id }, data: { activeRodLevel: selectedLevel } });
+    await prisma.fishStats.update({ where: { id: fishStats.id }, data: { activeRodLevel: selectedLevel, updatedAt: fishStats.updatedAt } });
 
     return `@${userDisplayName} Selected ${fishingRodLevels[selectedLevel].name}!`;
 }
