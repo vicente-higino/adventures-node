@@ -1,15 +1,15 @@
-import cron from "node-cron";
 import { getBotConfig, isChannelLive } from "@/bot";
+import { CONGRATULATIONS_EMOTES, EVENT_STARTED_EMOTES, SAD_EMOTES } from "@/emotes";
+import logger from "@/logger";
 import { prisma } from "@/prisma";
+import { getUsersByUsername } from "@/twitch/api";
+import { boxMullerTransform, roundToDecimalPlaces, sendActionToAllChannel, sendActionToChannel } from "@/utils/misc";
+import { formatMinutes } from "@/utils/time";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { formatMinutes } from "@/utils/time";
-import { CONGRATULATIONS_EMOTES, EVENT_STARTED_EMOTES, SAD_EMOTES } from "@/emotes";
-import { getUsersByUsername } from "@/twitch/api";
-import { pickRandom, sendActionToAllChannel, sendActionToChannel, boxMullerTransform, roundToDecimalPlaces } from "@/utils/misc";
-import { modifyRarityWeights, resetRarityWeights, getChanceByRarity } from "./rarities";
-import logger from "@/logger";
+import cron from "node-cron";
+import { getChanceByRarity, modifyRarityWeights, resetRarityWeights } from "./rarities";
 
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
@@ -101,7 +101,6 @@ async function endLegendaryEvent(name: string) {
 export const legendaryEventTaskPerChannel = (channels: string[]) =>
     cron.createTask("*/1 * * * *", c => {
         if (legendaryEventState.active) {
-            logger.info(`Legendary event already active, skipping random event.`);
             return;
         }
         // logger.info(`[${c.dateLocalIso}] Running legendary event task for channels: ${channels.join(", ")}`);
@@ -130,8 +129,11 @@ export function manualLegendaryEventTask(
     modifyRarityWeights({ Legendary: legendaryWeight, Common: w => w - legendaryWeight + 1 });
     const legendaryChanceAfter = getChanceByRarity("Legendary");
     const chanceStr = `${roundToDecimalPlaces(legendaryChanceBefore, 2).toFixed(2)}% -> ${roundToDecimalPlaces(legendaryChanceAfter, 2).toFixed(2)}%`;
-    sendActionToAllChannel(`A ${name} has started! ${msg} ${formatMinutes(durationMs)}! ${chanceStr} ${EVENT_STARTED_EMOTES()}`);
-
+    const { channels } = getBotConfig();
+    for (const channel of channels) {
+        if (isChannelLive({ username: channel })) continue;
+        sendActionToChannel(channel, `A ${name} has started! ${msg} ${formatMinutes(durationMs)}! ${chanceStr} ${EVENT_STARTED_EMOTES(channel)}`);
+    }
     // persist event to DB
     prisma.legendaryEvent
         .create({ data: { name, legendaryWeight, message: msg, startedAt: new Date(), endsAt: new Date(Date.now() + durationMs) } })
