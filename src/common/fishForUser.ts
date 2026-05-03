@@ -291,7 +291,8 @@ export async function fishForUser({
         const valueEmote = bonus > 0 ? getValueEmote(fish.sellValue + bonus, channelLogin) : fish.rarityEmote;
         const useAction = fish.rarity == Rarity.Legendary ? "/me " : "";
         const rod = getRod(fishStats.activeRodLevel);
-        const resText = `${useAction}@${userDisplayName} [${rod.name}] Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} ${fish.formatedQuality} #${channelFishCount.total} ${fish.formatedSize} ${fish.formatedWeight}!
+        const rodName = `(${rod.name.replaceAll(" ", "_")})`;
+        const resText = `${useAction}@${userDisplayName} ${rodName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} ${fish.formatedQuality} #${channelFishCount.total} ${fish.formatedSize} ${fish.formatedWeight}!
                     It sold for ${totalValueMessage} silver! ${recordMessage} ${fishDexMessage} ${valueEmote} ${fishDexCompletionMessage} ${notifyUpgradeMessage}`;
         return resText;
     } catch (error) {
