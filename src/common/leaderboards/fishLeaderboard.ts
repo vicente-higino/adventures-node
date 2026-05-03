@@ -1,29 +1,41 @@
 import { LeaderboardResult } from "@/common/leaderboards";
 import { dbClient } from "@/prisma";
-import { formatSilver, roundToDecimalPlaces } from "@/utils/misc";
+import { assertNever, formatSilver, roundToDecimalPlaces } from "@/utils/misc";
+import { z } from "zod";
 
-type FishMetric =
-    | "count"
-    | "silver"
-    | "fines"
-    | "avg"
-    | "trash"
-    | "common"
-    | "uncommon"
-    | "fine"
-    | "rare"
-    | "epic"
-    | "legendary"
-    | "top"
-    | "treasure";
+const fishMetricSchema = z.enum([
+    "count",
+    "silver",
+    "fines",
+    "avg",
+    "trash",
+    "common",
+    "uncommon",
+    "fine",
+    "rare",
+    "epic",
+    "exotic",
+    "mythic",
+    "legendary",
+    "top",
+    "treasure",
+]);
 
 export async function handleFish(
     prisma: dbClient,
     channelProviderId: string,
-    metric: FishMetric,
+    internalMetric: string,
     order: "asc" | "desc",
     amount: number,
 ): Promise<LeaderboardResult> {
+    const parsedFishMetric = fishMetricSchema.safeParse(internalMetric);
+    if (!parsedFishMetric.success) {
+        return {
+            error: true,
+            reason: "Invalid fish metric for leaderboard.",
+        };
+    }
+    const metric = parsedFishMetric.data;
     if (metric === "top") {
         // Fetch the most valuable individual fish caught in this channel
         // Assumes a FishCatch table with value, species, userId, and user relation
@@ -59,6 +71,8 @@ export async function handleFish(
                 fs.fineFishCount +
                 fs.rareFishCount +
                 fs.epicFishCount +
+                fs.exoticFishCount +
+                fs.mythicFishCount +
                 fs.legendaryFishCount;
             const value = fs.totalSilverWorth;
             const fines = fs.fishFines;
@@ -78,6 +92,8 @@ export async function handleFish(
                 fine: fs.fineFishCount,
                 rare: fs.rareFishCount,
                 epic: fs.epicFishCount,
+                exotic: fs.exoticFishCount,
+                mythic: fs.mythicFishCount,
                 legendary: fs.legendaryFishCount,
                 treasure,
             };
@@ -95,8 +111,11 @@ export async function handleFish(
                 if (metric === "fine") return entry.fine > 0;
                 if (metric === "rare") return entry.rare > 0;
                 if (metric === "epic") return entry.epic > 0;
+                if (metric === "exotic") return entry.exotic > 0;
+                if (metric === "mythic") return entry.mythic > 0;
                 if (metric === "legendary") return entry.legendary > 0;
                 if (metric === "treasure") return entry.treasure > 0;
+                assertNever(metric);
             }
             return true; // Keep all for ascending sort or if value is non-zero
         });
@@ -156,6 +175,14 @@ export async function handleFish(
                     compareA = a.epic;
                     compareB = b.epic;
                     break;
+                case "exotic":
+                    compareA = a.exotic;
+                    compareB = b.exotic;
+                    break;
+                case "mythic":
+                    compareA = a.mythic;
+                    compareB = b.mythic;
+                    break;
                 case "legendary":
                     compareA = a.legendary;
                     compareB = b.legendary;
@@ -164,6 +191,8 @@ export async function handleFish(
                     compareA = a.treasure;
                     compareB = b.treasure;
                     break;
+                default:
+                    assertNever(metric);
             }
 
             if (compareA !== compareB) {
@@ -198,12 +227,16 @@ export async function handleFish(
                     return `${index}. ${entry.name}: ${entry.rare} Rare Fish`;
                 case "epic":
                     return `${index}. ${entry.name}: ${entry.epic} Epic Fish`;
+                case "exotic":
+                    return `${index}. ${entry.name}: ${entry.exotic} Exotic Fish`;
+                case "mythic":
+                    return `${index}. ${entry.name}: ${entry.mythic} Mythic Fish`;
                 case "legendary":
                     return `${index}. ${entry.name}: ${entry.legendary} Legendary Fish`;
                 case "treasure":
                     return `${index}. ${entry.name}: ${entry.treasure} Silver found`;
                 default:
-                    return "";
+                    assertNever(metric);
             }
         });
 
@@ -240,12 +273,20 @@ export async function handleFish(
         case "epic":
             metricDisplay = "epic fish";
             break;
+        case "exotic":
+            metricDisplay = "exotic fish";
+            break;
+        case "mythic":
+            metricDisplay = "mythic fish";
+            break;
         case "legendary":
             metricDisplay = "legendary fish";
             break;
         case "treasure":
             metricDisplay = "treasure chests";
             break;
+        default:
+            assertNever(metric);
     }
 
     return { formattedLeaderboard, metricDisplay, leaderboardType: "Fish" };

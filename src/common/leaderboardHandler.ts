@@ -6,7 +6,7 @@ import { z } from "zod";
 import { handleRPS } from "./leaderboards/rpsLeaderboard";
 
 const paramsRegex =
-    /^(?:(adv|duel|rps)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|legendary|top|treasure))?|silver)(-(?:asc|bottom))?$/i;
+    /^(?:(adv|duel|rps)-)?(wins|played|wagered|profit|streak|fish(?:-(?:silver|avg|fines|trash|common|uncommon|fine|rare|epic|exotic|mythic|legendary|top|treasure))?|silver)(-(?:asc|bottom))?$/i;
 
 export const leaderboardCommandSyntax = (prefix: string = "!") =>
     `Usage: ${prefix}leaderboard [duel-|rps-][wins|played|wagered|profit|streak] | fish[-silver|-avg|-fines|-rarity|-top|-treasure] | silver [-asc|-bottom] [amount] (default: silver, 5)`;
@@ -85,26 +85,8 @@ export async function getLeaderboard(
             }
             result = await handleRPS(prisma, channelProviderId, parsedDuelMetric.data, order, amount);
         } else if (leaderboardType === "Fish") {
-            const fishMetricSchema = z.enum([
-                "count",
-                "silver",
-                "fines",
-                "avg",
-                "trash",
-                "common",
-                "uncommon",
-                "fine",
-                "rare",
-                "epic",
-                "legendary",
-                "top",
-                "treasure",
-            ]);
-            const parsedFishMetric = fishMetricSchema.safeParse(internalMetric);
-            if (!parsedFishMetric.success) {
-                return "Invalid metric for Fish leaderboard.";
-            }
-            result = await handleFish(prisma, channelProviderId, parsedFishMetric.data, order, amount);
+            result = await handleFish(prisma, channelProviderId, internalMetric, order, amount);
+            if (result.error) return result.reason;
         } else if (leaderboardType === "Silver") {
             result = await handleSilver(prisma, channelProviderId, order, amount);
         }
