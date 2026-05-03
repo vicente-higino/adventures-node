@@ -1,14 +1,24 @@
 import { LeaderboardResult } from "@/common/leaderboards";
 import { dbClient } from "@/prisma";
 import { formatSilver } from "@/utils/misc";
+import { z } from "zod";
+const adventureMetricSchema = z.enum(["wins", "played", "wagered", "profit", "streak"]);
 
 export async function handleAdventure(
     prisma: dbClient,
     channelProviderId: string,
-    metric: "wins" | "played" | "wagered" | "profit" | "streak",
+    internalMetric: string,
     order: "asc" | "desc",
     amount: number,
 ): Promise<LeaderboardResult> {
+    const parsedMetric = adventureMetricSchema.safeParse(internalMetric);
+    if (!parsedMetric.success) {
+        return {
+            error: true,
+            reason: "Invalid metric for Adventure leaderboard.",
+        };
+    }
+    const metric = parsedMetric.data;
     const stats = await prisma.userStats.findMany({
         where: { channelProviderId: channelProviderId, gamesPlayed: { gt: 0 } },
         include: { user: true },

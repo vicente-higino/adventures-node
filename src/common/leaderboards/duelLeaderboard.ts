@@ -1,14 +1,24 @@
 import { dbClient } from "@/prisma";
 import { formatSilver } from "@/utils/misc";
 import { LeaderboardResult } from ".";
+import { z } from "zod";
+const duelMetricSchema = z.enum(["wins", "played", "wagered", "profit", "streak"]);
 
 export async function handleDuel(
     prisma: dbClient,
     channelProviderId: string,
-    metric: "wins" | "played" | "wagered" | "profit" | "streak",
+    internalMetric: string,
     order: "asc" | "desc",
     amount: number,
 ): Promise<LeaderboardResult> {
+    const parsedDuelMetric = duelMetricSchema.safeParse(internalMetric);
+    if (!parsedDuelMetric.success) {
+        return {
+            error: true,
+            reason: "Invalid metric for Duel leaderboard.",
+        };
+    }
+    const metric = parsedDuelMetric.data;
     const stats = await prisma.userStats.findMany({
         where: { channelProviderId: channelProviderId, duelsPlayed: { gt: 0 } },
         include: { user: true },

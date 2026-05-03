@@ -64,32 +64,17 @@ export async function getLeaderboard(
 
     try {
         if (leaderboardType === "Adventure") {
-            const adventureMetricSchema = z.enum(["wins", "played", "wagered", "profit", "streak"]);
-            const parsedMetric = adventureMetricSchema.safeParse(internalMetric);
-            if (!parsedMetric.success) {
-                return "Invalid metric for Adventure leaderboard.";
-            }
-            result = await handleAdventure(prisma, channelProviderId, parsedMetric.data, order, amount);
+            result = await handleAdventure(prisma, channelProviderId, internalMetric, order, amount);
         } else if (leaderboardType === "Duel") {
-            const duelMetricSchema = z.enum(["wins", "played", "wagered", "profit", "streak"]);
-            const parsedDuelMetric = duelMetricSchema.safeParse(internalMetric);
-            if (!parsedDuelMetric.success) {
-                return "Invalid metric for Duel leaderboard.";
-            }
-            result = await handleDuel(prisma, channelProviderId, parsedDuelMetric.data, order, amount);
+            result = await handleDuel(prisma, channelProviderId, internalMetric, order, amount);
         } else if (leaderboardType === "RPS") {
-            const duelMetricSchema = z.enum(["wins", "played", "wagered", "profit", "streak"]);
-            const parsedDuelMetric = duelMetricSchema.safeParse(internalMetric);
-            if (!parsedDuelMetric.success) {
-                return "Invalid metric for RPS leaderboard.";
-            }
-            result = await handleRPS(prisma, channelProviderId, parsedDuelMetric.data, order, amount);
+            result = await handleRPS(prisma, channelProviderId, internalMetric, order, amount);
         } else if (leaderboardType === "Fish") {
             result = await handleFish(prisma, channelProviderId, internalMetric, order, amount);
-            if (result.error) return result.reason;
         } else if (leaderboardType === "Silver") {
             result = await handleSilver(prisma, channelProviderId, order, amount);
         }
+        if (result && result.error) return result.reason;
     } catch (error) {
         logger.error(error, "Leaderboard generation error");
         // Check if error is a Prisma error and provide more details if needed
