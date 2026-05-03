@@ -22,7 +22,7 @@ import { fishingFacts } from "@/fishing/facts";
 import { fishTable } from "@/fishing/fishTable";
 import logger from "@/logger";
 import { dbClient } from "@/prisma";
-import { boxMullerTransform, delay, pickRandom, sendActionToChannel } from "@/utils/misc";
+import { boxMullerTransform, delay, assertNever, pickRandom, sendActionToChannel } from "@/utils/misc";
 import { formatTimeToWithSeconds } from "@/utils/time";
 import { Prisma, Rarity } from "@prisma/client";
 import dayjs from "dayjs";
@@ -247,7 +247,7 @@ export async function fishForUser({
                 fishStatsUpdateData = { ...fishStatsUpdateData, legendaryFishCount: { increment: 1 } };
                 break;
             default:
-                ((x: never) => { throw new Error(`${x} was unhandled!`); })(fish.rarity);
+                assertNever(fish.rarity);
         }
         const stats = await prisma.fishStats.update({ where: { id: fishStats.id }, data: fishStatsUpdateData });
         let notifyUpgradeMessage = "";

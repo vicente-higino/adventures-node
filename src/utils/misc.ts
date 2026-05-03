@@ -401,3 +401,8 @@ export function splitOnSpaces(text: string, maxMsgLength: number): string[] {
 }
 
 export type AtLeastOne<T, K extends keyof T = keyof T> = Partial<T> & { [P in K]: Required<Pick<T, P>> }[K];
+
+
+export function assertNever(value: never): never {
+    throw new Error(`Unhandled case: ${value}`);
+}
