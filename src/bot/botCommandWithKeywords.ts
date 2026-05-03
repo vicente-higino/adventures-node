@@ -38,16 +38,17 @@ class BotCommandWithKeywords extends BotCommand {
     }
 
     match(line: string, prefix: string): string[] | null {
-        let [command, ...params] = line.split(" ");
+        let [command, ...params] = line.replaceAll(/[^\x20-\x7E]/g, '').split(" ");
+        let trimmedParams = params.map(p => p.trim()).filter(p => p !== "");
         if (this.matchesKeyword(line, this._ignoreCase)) {
-            return [command, ...params];
+            return [command, ...trimmedParams];
         }
         if (!command.startsWith(prefix)) {
             return null;
         }
         command = command.slice(prefix.length);
         if (command === this.name || this.aliases.includes(command)) {
-            return params;
+            return trimmedParams;
         }
         return null;
     }
