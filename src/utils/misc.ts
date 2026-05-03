@@ -324,11 +324,12 @@ export function sendActionToChannel(channel: string, message: string) {
         });
 }
 
-export function sendMessageToAllChannel(message: string) {
+export function sendMessageToAllChannel(message: string, onlyOffline = true) {
     // Placeholder function to send a message to a channel
     // Replace with actual implementation
     const { channels } = getBotConfig();
     for (const channel of channels) {
+        if (onlyOffline && isChannelLive({ username: channel })) continue;
         logger.info(`Sending message to ${channel}: ${message}`);
         GetBot()
             ?.say(channel, message)
