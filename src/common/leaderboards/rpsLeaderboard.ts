@@ -1,5 +1,5 @@
 import { dbClient } from "@/prisma";
-import { formatSilver } from "@/utils/misc";
+import { assertNever, formatSilver } from "@/utils/misc";
 import { LeaderboardResult } from ".";
 import { z } from "zod";
 
@@ -57,6 +57,8 @@ export async function handleRPS(
                     compareA = a.streak;
                     compareB = b.streak;
                     break;
+                default:
+                    assertNever(metric);
             }
             let tieBreakerA = a.winRate,
                 tieBreakerB = b.winRate;
@@ -90,7 +92,7 @@ export async function handleRPS(
                     const streakValue = Math.abs(entry.streak);
                     return `${index}. ${entry.name}: ${streakValue}x ${streakType} streak`;
                 default:
-                    return "";
+                    assertNever(metric);
             }
         });
 

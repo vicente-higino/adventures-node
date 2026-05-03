@@ -1,6 +1,6 @@
 import { LeaderboardResult } from "@/common/leaderboards";
 import { dbClient } from "@/prisma";
-import { formatSilver } from "@/utils/misc";
+import { assertNever, formatSilver } from "@/utils/misc";
 import { z } from "zod";
 const adventureMetricSchema = z.enum(["wins", "played", "wagered", "profit", "streak"]);
 
@@ -59,6 +59,8 @@ export async function handleAdventure(
                     compareA = a.streak;
                     compareB = b.streak;
                     break;
+                default:
+                    assertNever(metric);
             }
             let tieBreakerA = a.winRate,
                 tieBreakerB = b.winRate;
@@ -89,7 +91,7 @@ export async function handleAdventure(
                     const streakValue = Math.abs(entry.streak);
                     return `${index}. ${entry.name}: ${streakValue}x ${streakType} streak`;
                 default:
-                    return "";
+                    assertNever(metric);
             }
         });
 
