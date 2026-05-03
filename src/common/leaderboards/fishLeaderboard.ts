@@ -212,7 +212,7 @@ export async function handleFish(
                 case "silver":
                     return `${index}. ${entry.name}: ${entry.count} Fish (${formatSilver(entry.value)} Silver)`;
                 case "avg":
-                    return `${index}. ${entry.name}: ${entry.count > 0 ? formatSilver(entry.avg) : "0"} avg Silver per fish`;
+                    return `${index}. ${entry.name}: ${entry.count > 0 ? formatSilver(entry.avg) : "0"} Silver/Fish`;
                 case "fines":
                     return `${index}. ${entry.name}: ${formatSilver(entry.fines)} Silver in fines`;
                 case "trash":
