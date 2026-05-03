@@ -51,7 +51,7 @@ export async function handleFish(
             // Show fish species, value, and who caught it
             return `${index}. ${entry.user.displayName}: ${formatSilver(entry.value)} Silver (${entry.name} - ${entry.rarity})`;
         });
-        return { formattedLeaderboard, metricDisplay: "most valuable fish", leaderboardType: "Fish" };
+        return { formattedLeaderboard, metricDisplay: "most valuable fish", leaderboardType: "Fish", order };
     }
 
     // 1. Fetch FishStats including User for displayName
@@ -289,5 +289,5 @@ export async function handleFish(
             assertNever(metric);
     }
 
-    return { formattedLeaderboard, metricDisplay, leaderboardType: "Fish" };
+    return { formattedLeaderboard, metricDisplay, leaderboardType: "Fish", order };
 }

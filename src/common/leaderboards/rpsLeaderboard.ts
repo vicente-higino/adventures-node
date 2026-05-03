@@ -94,5 +94,5 @@ export async function handleRPS(
             }
         });
 
-    return { formattedLeaderboard, metricDisplay: metric, leaderboardType: "RPS" };
+    return { formattedLeaderboard, metricDisplay: metric, leaderboardType: "RPS", order };
 }

@@ -17,13 +17,16 @@ export async function getLeaderboard(
     prisma: dbClient,
     channelProviderId: string,
     params: z.infer<typeof leaderboardSchema>,
-): Promise<(LeaderboardResult & { order: "asc" | "desc" }) | string> {
+): Promise<LeaderboardResult> {
     const { amount, sortBy } = params;
 
     const sortParts = sortBy.toLowerCase().match(paramsRegex);
 
     if (!sortParts) {
-        return "Invalid sort parameter format.";
+        return {
+            error: true,
+            reason: "Invalid sort type.",
+        };
     }
 
     const prefix = sortParts[1];
@@ -57,7 +60,10 @@ export async function getLeaderboard(
         leaderboardType = "Silver";
         internalMetric = "value";
     } else {
-        return "Invalid sort type.";
+        return {
+            error: true,
+            reason: "Invalid sort type.",
+        };
     }
 
     let result: LeaderboardResult | undefined;
@@ -74,7 +80,7 @@ export async function getLeaderboard(
         } else if (leaderboardType === "Silver") {
             result = await handleSilver(prisma, channelProviderId, order, amount);
         }
-        if (result && result.error) return result.reason;
+        if (result && result.error) return result;
     } catch (error) {
         logger.error(error, "Leaderboard generation error");
         // Check if error is a Prisma error and provide more details if needed
@@ -82,11 +88,17 @@ export async function getLeaderboard(
             logger.error(error, "Prisma Error Code: " + error.code);
             logger.error(error, "Prisma Error Meta: " + error.meta);
         }
-        return "An error occurred while generating the leaderboard.";
+        return {
+            error: true,
+            reason: "An error occurred while generating the leaderboard.",
+        };
     }
 
     if (!result) {
-        return "Failed to generate leaderboard.";
+        return {
+            error: true,
+            reason: "Failed to generate leaderboard.",
+        };
     }
 
     return { ...result, order };

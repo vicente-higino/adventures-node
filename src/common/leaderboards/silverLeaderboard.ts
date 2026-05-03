@@ -22,5 +22,5 @@ export async function handleSilver(prisma: dbClient, channelProviderId: string, 
             return `${index}. ${entry.displayName}: ${formatSilver(entry.value)} Silver`;
         });
 
-    return { formattedLeaderboard, metricDisplay: "silver", leaderboardType: "Silver" };
+    return { formattedLeaderboard, metricDisplay: "silver", leaderboardType: "Silver", order };
 }

@@ -1,7 +1,7 @@
-import { createBotCommand } from "../botCommandWithKeywords";
-import { prisma } from "@/prisma";
+import { getBotPrefix } from "@/bot";
 import { getLeaderboard, leaderboardCommandSyntax, leaderboardSchema } from "@/common/leaderboardHandler";
-import { getBotPrefix } from "..";
+import { prisma } from "@/prisma";
+import { createBotCommand } from "../botCommandWithKeywords";
 
 export const leaderboardCommand = createBotCommand(
     "leaderboard",
@@ -18,8 +18,8 @@ export const leaderboardCommand = createBotCommand(
 
         const result = await getLeaderboard(prisma, broadcasterId, validation.data);
 
-        if (typeof result === "string") {
-            say(result);
+        if (result.error) {
+            say(result.reason);
             return;
         }
 

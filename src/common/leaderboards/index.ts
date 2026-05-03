@@ -14,4 +14,5 @@ export type LeaderboardResult =
         formattedLeaderboard: string[];
         metricDisplay: string;
         leaderboardType: LeaderboardType;
+        order: "asc" | "desc";
     };

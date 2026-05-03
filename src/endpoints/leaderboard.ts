@@ -17,8 +17,8 @@ export class ConsolidatedLeaderboard extends OpenAPIRoute {
 
         const result = await getLeaderboard(prisma, channelProviderId, data.params);
 
-        if (typeof result === "string") {
-            return c.text(result, { status: 400 });
+        if (result.error) {
+            return c.text(result.reason, { status: 400 });
         }
 
         if (result.formattedLeaderboard.length === 0) {
