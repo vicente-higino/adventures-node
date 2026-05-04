@@ -32,6 +32,7 @@ import { emotesChannel } from "@/endpoints/emotesChannel";
 import { cors } from "hono/cors";
 import logger from "@/logger";
 import { startPgBoss } from "@/bot/queue";
+import { customLogger, loggingMiddleware } from "./middleware/logging";
 // Start a Hono app
 const hono = new Hono<HonoEnv>();
 const honoWithAuth = new Hono<HonoEnv>();
@@ -59,11 +60,13 @@ createBot()
     })
     .catch(e => logger.error(e, "Bot failed to start"));
 
-app.use(honoLogger());
-
+app.use(honoLogger(customLogger));
+app.use("*", loggingMiddleware);
 // Add validation middleware before routes
 app.use("*", timeout(9500, new HTTPException(408, { message: "oopsie Something went wrong. Please try again in a few seconds." })));
 
+authenticatedRoute.use(honoLogger(customLogger));
+authenticatedRoute.use("*", loggingMiddleware);
 authenticatedRoute.use("*", authMiddleware);
 // Add health endpoint
 app.get("/health", async c => {
@@ -87,8 +90,6 @@ app.get("/auth/twitch", AuthTwitch);
 app.use("/auth/twitch/login", bearerAuth({ token: env.TWTICH_EVENTSUB_SECRET }));
 app.get("/auth/twitch/login", AuthTwitchRedirect);
 
-app.use("*", bearerAuth({ token: env.TWITCH_CLIENT_SECRET }));
-// app.use("*", trollMiddleware);
 // Register OpenAPI endpoints
 app.get("/api/points/:userId", Point);
 authenticatedRoute.get("/api/points/update/:userId/:newBalance", PointUpdate);
