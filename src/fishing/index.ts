@@ -156,10 +156,9 @@ export function getQuality(rodLevel: number): Quality {
     let q = 0;
     for (const quality of rod.qualityChance) {
         let random = Math.random();
-        logger.debug(`Quality check: random=${random}, threshold=${quality}, current quality=${QUALITY_ARRAY[q]}, rod=${rod.name}`);
+        logger.debug(`Quality check: random=${random}, threshold=${quality}, quality=${QUALITY_ARRAY[q]}, rod=${rod.name}`);
         if (random < quality) {
             q += 1;
-            continue;
         } else break;
     }
     return QUALITY_ARRAY[q - 1] || "Normal";
@@ -196,9 +195,11 @@ export function getQualityRecordBonus(rarity: Rarity): number {
             return 100;
         case "Rare":
         case "Epic":
+            return 150;
         case "Exotic":
             return 200;
         case "Mythic":
+            return 250;
         case "Legendary":
             return 300;
         case "Trash":
