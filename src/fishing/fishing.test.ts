@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as fishingModule from "../fishing";
 import { CatchDetails, fishingRodLevels, Rarity } from "./constants";
 import { Extensions } from "@prisma/client/runtime/binary";
+import { getRarityWeights } from "./rarities";
 
 /**
  * Test suite for fishing functionality
@@ -39,21 +40,27 @@ describe("Fishing Module", () => {
             }
         });
 
-
         it("should display all weights distribution per rod", () => {
 
             for (const rod of fishingRodLevels) {
                 // Run many trials and check if distribution roughly matches weights
-                const trials = 100000;
+                // Run many trials and check if distribution roughly matches weights
+                const weight = getRarityWeights(rod.level);
+                const totalWeight = Object.values(weight).reduce((sum, w) => sum + w, 0);
+                const expectedPercentages = Object.fromEntries(
+                    Object.entries(weight).map(([rarity, w]) => [rarity, w / totalWeight])
+                );
+                const trials = 1000;
                 const results = runMultipleTrials(trials, rod.level);
-
                 console.log(`------------- ${rod.name} distribution ------------- `);
                 // Check if distribution is roughly as expected (within 30% margin)
                 // Using a larger margin because random distribution can vary more in tests
                 Object.entries(results).forEach(([rarity, count]) => {
                     const percentage = count / trials;
                     // Log for informational purposes
-                    console.log(`${rarity}: ${count} (${(percentage * 100).toFixed(2)}%)`);
+                    const expected = expectedPercentages[rarity];
+                    // Log for informational purposes
+                    console.log(`${rarity}: ${count} (${(percentage * 100).toFixed(2)}%), Expected: ${(expected * 100).toFixed(2)}%`);
 
                 });
             }
