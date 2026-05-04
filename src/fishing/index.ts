@@ -247,3 +247,12 @@ export function checkIfUpgradeAvailable(currentLevel: number, totalSilverWorth: 
     }
     return { canUpgrade: false };
 }
+
+export function checkIfUserHasAvailableFundsToReNotify(balance: number, fishStats: { fishingRodLevel: number; totalSilverWorth: number, hasNotifiedUpgrade: boolean }): boolean {
+    if (!fishStats.hasNotifiedUpgrade) return true; // User has not been notified yet, so we can notify them regardless of current balance
+    const upgradeCheck = checkIfUpgradeAvailable(fishStats.fishingRodLevel, fishStats.totalSilverWorth);
+    if (!upgradeCheck.canUpgrade) {
+        return false; // No upgrade available, so no need to re-notify
+    }
+    return balance >= upgradeCheck.cost; // User can afford the next upgrade
+}

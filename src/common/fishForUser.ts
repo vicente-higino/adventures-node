@@ -17,7 +17,7 @@ import {
     PAUSE_EMOTES,
     QUOTES_EMOTES,
 } from "@/emotes";
-import { checkIfUpgradeAvailable, getFish, getQualityRecordBonus, getRod, getValueEmote } from "@/fishing";
+import { checkIfUpgradeAvailable, checkIfUserHasAvailableFundsToReNotify, getFish, getQualityRecordBonus, getRod, getValueEmote } from "@/fishing";
 import { fishingFacts } from "@/fishing/facts";
 import { fishTable } from "@/fishing/fishTable";
 import logger from "@/logger";
@@ -210,7 +210,7 @@ export async function fishForUser({
             const updateFishValue = prisma.fish.update({ where: { id: createdFish.id }, data: { value: { increment: bonus } } });
             promises.push(updateFishValue);
         }
-        promises.push(increaseBalance(prisma, balance.id, fish.sellValue + bonus + treasureBonus));
+        await increaseBalance(prisma, balance.id, fish.sellValue + bonus + treasureBonus);
 
         let fishStatsUpdateData: Prisma.FishStatsUpdateInput = {
             totalSilverWorth: { increment: fish.sellValue + bonus + treasureBonus },
@@ -249,13 +249,7 @@ export async function fishForUser({
             default:
                 assertNever(fish.rarity);
         }
-        const stats = await prisma.fishStats.update({ where: { id: fishStats.id }, data: fishStatsUpdateData });
-        let notifyUpgradeMessage = "";
-        const checkUpgrade = checkIfUpgradeAvailable(stats.fishingRodLevel, stats.totalSilverWorth);
-        if (checkUpgrade.canUpgrade && !fishStats.hasNotifiedUpgrade) {
-            promises.push(prisma.fishStats.update({ where: { id: fishStats.id }, data: { hasNotifiedUpgrade: true } }));
-            notifyUpgradeMessage = `$(newline)/me @${userDisplayName} You have unlocked the ${checkUpgrade.nextRodName}! Use "${getBotPrefix()}rod buy" to upgrade!`;
-        }
+
         // Add to FishDex and check if it's a new entry
         let fishDexMessage = "";
         let fishDexCompletionMessage = "";
@@ -283,6 +277,19 @@ export async function fishForUser({
                     }
                 }
             }
+        }
+
+        const stats = await prisma.fishStats.update({ where: { id: fishStats.id }, data: fishStatsUpdateData });
+        let notifyUpgradeMessage = "";
+        const checkUpgrade = checkIfUpgradeAvailable(stats.fishingRodLevel, stats.totalSilverWorth);
+        if (checkUpgrade.canUpgrade && !fishStats.hasNotifiedUpgrade) {
+            promises.push(prisma.fishStats.update({ where: { id: fishStats.id }, data: { hasNotifiedUpgrade: true } }));
+            notifyUpgradeMessage = `$(newline)/me @${userDisplayName} You have unlocked the ${checkUpgrade.nextRodName}! Use "${getBotPrefix()}rod buy" to upgrade! ${CONGRATULATIONS_EMOTES(channelLogin)}`;
+        } else if (checkUpgrade.canUpgrade && fishStats.hasNotifiedUpgrade) {
+            const totalBalance = balance.value + fish.sellValue + bonus + treasureBonus;
+            const check = checkIfUserHasAvailableFundsToReNotify(totalBalance, stats);
+            if (check)
+                notifyUpgradeMessage = `$(newline)/me @${userDisplayName} You can upgrade to the ${checkUpgrade.nextRodName}! Use "${getBotPrefix()}rod buy" to upgrade! ${CONGRATULATIONS_EMOTES(channelLogin)}`;
         }
 
         await Promise.all(promises);
