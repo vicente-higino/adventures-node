@@ -41,7 +41,6 @@ describe("Fishing Module", () => {
         });
 
         it("should display all weights distribution per rod", () => {
-
             for (const rod of fishingRodLevels) {
                 // Run many trials and check if distribution roughly matches weights
                 // Run many trials and check if distribution roughly matches weights
@@ -50,7 +49,7 @@ describe("Fishing Module", () => {
                 const expectedPercentages = Object.fromEntries(
                     Object.entries(weight).map(([rarity, w]) => [rarity, w / totalWeight])
                 );
-                const trials = 1000;
+                const trials = 100000;
                 const results = runMultipleTrials(trials, rod.level);
                 console.log(`------------- ${rod.name} distribution ------------- `);
                 // Check if distribution is roughly as expected (within 30% margin)
@@ -61,7 +60,6 @@ describe("Fishing Module", () => {
                     const expected = expectedPercentages[rarity];
                     // Log for informational purposes
                     console.log(`${rarity}: ${count} (${(percentage * 100).toFixed(2)}%), Expected: ${(expected * 100).toFixed(2)}%`);
-
                 });
             }
 
