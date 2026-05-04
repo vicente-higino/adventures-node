@@ -23,8 +23,9 @@ function handleList(fishStats: { fishingRodLevel: number, activeRodLevel: number
             .filter(([idx]) => parseInt(idx) < i)
             .reduce((sum, [, val]) => sum + val, 0);
         const individualCost = i > 0 ? ROD_UPGRADE_COSTS[i - 1] : 0;
-        const status = i === activeLevel ? "[ACTIVE]" : i <= currentLevel ? "[OWN]" : `(${formatSilver(individualCost)} silver, ${formatSilver(cumulativeCost)} total)`;
-        rods.push(`${status} ${formatRodName(rod.name)}`);
+        const status = i === activeLevel ? "[ACTIVE]" : i <= currentLevel ? "[OWN]" : "";
+        const cost = i <= currentLevel ? "" : `(${formatSilver(individualCost)} silver, ${formatSilver(cumulativeCost)} total)`;
+        rods.push(`${status} ${formatRodName(rod.name)} ${cost}`);
     }
 
     return listMessage + rods.join(" | ");
@@ -42,7 +43,7 @@ function handleShowCurrent(fishStats: { fishingRodLevel: number, activeRodLevel:
         const cumulativeCost = Object.entries(ROD_UPGRADE_COSTS)
             .filter(([i]) => parseInt(i) <= currentLevel)
             .reduce((sum, [, val]) => sum + val, 0);
-        listMessage += ` | Next: ${formatRodName(nextRod.name)} (${formatSilver(cost)} silver) | Total needed: ${formatSilver(cumulativeCost)} silver`;
+        listMessage += ` | Next: ${formatRodName(nextRod.name)} (${formatSilver(cost)} silver, ${formatSilver(cumulativeCost)} total)`;
     }
     return listMessage;
 }
