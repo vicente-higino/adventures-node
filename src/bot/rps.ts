@@ -10,21 +10,21 @@ type SubmitMoveResult =
     | { status: "canceled"; msg: string; channel: string }
     | { status: "pending" }
     | {
-          status: "resolved";
-          channelId: string;
-          channel: string;
-          round: number;
-          moveA: RpsMove;
-          moveB: RpsMove;
-          playerA: string;
-          playerB: string;
-          scoreA: number;
-          scoreB: number;
-          matchEnd: boolean;
-          winner: string | null;
-          wager: number;
-          winStreak: number;
-      };
+        status: "resolved";
+        channelId: string;
+        channel: string;
+        round: number;
+        moveA: RpsMove;
+        moveB: RpsMove;
+        playerA: string;
+        playerB: string;
+        scoreA: number;
+        scoreB: number;
+        matchEnd: boolean;
+        winner: string | null;
+        wager: number;
+        winStreak: number;
+    };
 
 function resolveMove(a: RpsMove, b: RpsMove) {
     if (a === b) return "DRAW";
@@ -166,14 +166,6 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
     logger.debug({ playerA: userA.login, playerB: userB.login, channel: channel.login }, "Users fetched successfully");
     const round = match.rounds[0];
 
-    try {
-        await prisma.move.create({ data: { roundId: round.id, player: userId, move } });
-        logger.debug({ roundId: round.id, userId, move }, "Move created successfully");
-    } catch (e) {
-        logger.warn({ roundId: round.id, userId, move, error: e }, "Move creation failed - already submitted");
-        return { status: "error", error: "Move already submitted" };
-    }
-
     if (userB.id == userId && round.roundNum === 1) {
         logger.debug({ userId, roundNum: round.roundNum }, "PlayerB on round 1, checking balance");
         const playerB_balance = await findOrCreateBalance(prisma, channel.login, channel.id, userB.id, userB.login, userB.displayName);
@@ -198,6 +190,15 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
         logger.debug({ playerBId: userB.id, amount: match.wager }, "Deducting wager from playerB");
         await decreaseBalance(prisma, playerB_balance.id, match.wager);
     }
+
+    try {
+        await prisma.move.create({ data: { roundId: round.id, player: userId, move } });
+        logger.debug({ roundId: round.id, userId, move }, "Move created successfully");
+    } catch (e) {
+        logger.warn({ roundId: round.id, userId, move, error: e }, "Move creation failed - already submitted");
+        return { status: "error", error: "Move already submitted" };
+    }
+
 
     // check if both moves are in
     const moves = await prisma.move.findMany({ where: { roundId: round.id } });
