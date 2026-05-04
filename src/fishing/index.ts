@@ -16,6 +16,7 @@ import {
 import { fishTable } from "./fishTable";
 import { getRarityWeights } from "./rarities";
 import { EmoteManager } from "@/emotes";
+import logger from "@/logger";
 
 export {
     endLegendaryEventById,
@@ -155,10 +156,11 @@ export function getQuality(rodLevel: number): Quality {
     let q = 0;
     for (const quality of rod.qualityChance) {
         let random = Math.random();
+        logger.debug(`Quality check: random=${random}, threshold=${quality}, current quality=${QUALITY_ARRAY[q]}, rod=${rod.name}`);
         if (random < quality) {
             q += 1;
             continue;
-        }
+        } else break;
     }
     return QUALITY_ARRAY[q - 1] || "Normal";
 }
