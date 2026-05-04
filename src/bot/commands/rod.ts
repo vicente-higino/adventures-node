@@ -7,7 +7,9 @@ import { prisma } from "@/prisma";
 import { formatSilver } from "@/utils/misc";
 import { createBotCommand } from "../botCommandWithKeywords";
 
-
+function formatRodName(name: string): string {
+    return `(${name.replaceAll(" ", "_")})`;
+}
 
 function handleList(fishStats: { fishingRodLevel: number, activeRodLevel: number }, userDisplayName: string): string {
     const currentLevel = fishStats.fishingRodLevel;
@@ -21,8 +23,8 @@ function handleList(fishStats: { fishingRodLevel: number, activeRodLevel: number
             .filter(([idx]) => parseInt(idx) < i)
             .reduce((sum, [, val]) => sum + val, 0);
         const individualCost = i > 0 ? ROD_UPGRADE_COSTS[i - 1] : 0;
-        const status = i === activeLevel ? "[ACTIVE]" : i <= currentLevel ? "[OWN]" : "";
-        rods.push(`${status} ${rod.name}${i > 0 ? ` (${formatSilver(individualCost)} silver, ${formatSilver(cumulativeCost)} total)` : ""}`);
+        const status = i === activeLevel ? "[ACTIVE]" : i <= currentLevel ? "[OWN]" : `(${formatSilver(individualCost)} silver, ${formatSilver(cumulativeCost)} total)`;
+        rods.push(`${status} ${formatRodName(rod.name)}`);
     }
 
     return listMessage + rods.join(" | ");
@@ -32,7 +34,7 @@ function handleShowCurrent(fishStats: { fishingRodLevel: number, activeRodLevel:
     const currentLevel = fishStats.fishingRodLevel;
     const activeLevel = fishStats.activeRodLevel;
     const currentRod = fishingRodLevels[activeLevel];
-    let listMessage = `@${userDisplayName} [ACTIVE] ${currentRod.name}`;
+    let listMessage = `@${userDisplayName} [ACTIVE] ${formatRodName(currentRod.name)}`;
 
     if (currentLevel < fishingRodLevels.length - 1) {
         const nextRod = fishingRodLevels[currentLevel + 1];
@@ -40,9 +42,7 @@ function handleShowCurrent(fishStats: { fishingRodLevel: number, activeRodLevel:
         const cumulativeCost = Object.entries(ROD_UPGRADE_COSTS)
             .filter(([i]) => parseInt(i) <= currentLevel)
             .reduce((sum, [, val]) => sum + val, 0);
-        listMessage += ` | Next: ${nextRod.name} (${formatSilver(cost)} silver) | Total needed: ${formatSilver(cumulativeCost)} silver`;
-    } else {
-        listMessage += ` | [MAX]`;
+        listMessage += ` | Next: ${formatRodName(nextRod.name)} (${formatSilver(cost)} silver) | Total needed: ${formatSilver(cumulativeCost)} silver`;
     }
     return listMessage;
 }
