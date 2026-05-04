@@ -1,4 +1,4 @@
-import { boxMullerTransform, formatSize, formatWeight, pickRandom, roundToDecimalPlaces, UnitSystem } from "@/utils/misc";
+import { assertNever, boxMullerTransform, formatSize, formatWeight, pickRandom, roundToDecimalPlaces, UnitSystem } from "@/utils/misc";
 import {
     CatchDetails,
     FishingRodLevel,
@@ -183,7 +183,7 @@ export function getQualityStars(quality: Quality): string {
         case "Alpha":
             return "★★★★★";
         default:
-            return "";
+            assertNever(quality);
     }
 }
 
@@ -205,8 +205,7 @@ export function getQualityRecordBonus(rarity: Rarity): number {
         case "Trash":
             return 0;
         default:
-            return 0;
-
+            assertNever(rarity);
     }
 }
 
