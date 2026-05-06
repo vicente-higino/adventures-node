@@ -101,7 +101,7 @@ async function handleBuyOrUpgrade(
 
     await Promise.all([
         increaseBalance(prisma, balance.id, -cost),
-        prisma.fishStats.update({ where: { id: fishStats.id }, data: { fishingRodLevel: targetLevel, activeRodLevel: targetLevel, hasNotifiedUpgrade: false, updatedAt: fishStats.updatedAt } }),
+        prisma.fishStats.update({ where: { id: fishStats.id }, data: { fishingRodLevel: targetLevel, activeRodLevel: targetLevel, hasNotifiedUpgrade: false, hasNotifiedEnoughSilver: false, updatedAt: fishStats.updatedAt } }),
     ]);
 
     return `@${userDisplayName} Upgraded to ${targetRod.name}! You spent ${formatSilver(cost)} silver and have ${formatSilver(balance.value - cost)} silver left.`;

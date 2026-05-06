@@ -166,31 +166,32 @@ model UserStats {
 }
 
 model FishStats {
-    id                 Int      @id @default(autoincrement())
-    user               User     @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
-    userId             String
-    channelProviderId  String
-    channel            String
-    xp                 BigInt   @default(0)
-    fishingRodLevel    Int      @default(0)
-    activeRodLevel     Int      @default(0)
-    hasNotifiedUpgrade Boolean  @default(false)
-    trashFishCount     Int      @default(0)
-    commonFishCount    Int      @default(0)
-    uncommonFishCount  Int      @default(0)
-    fineFishCount      Int      @default(0)
-    rareFishCount      Int      @default(0)
-    epicFishCount      Int      @default(0)
-    exoticFishCount    Int      @default(0)
-    mythicFishCount    Int      @default(0)
-    legendaryFishCount Int      @default(0)
-    fishFines          Int      @default(0)
-    fishFinesCount     Int      @default(0)
-    treasureSilver     Int      @default(0)
-    treasureCount      Int      @default(0)
-    totalSilverWorth   Int      @default(0)
-    createdAt          DateTime @default(now())
-    updatedAt          DateTime @updatedAt
+    id                      Int      @id @default(autoincrement())
+    user                    User     @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
+    userId                  String
+    channelProviderId       String
+    channel                 String
+    xp                      BigInt   @default(0)
+    fishingRodLevel         Int      @default(0)
+    activeRodLevel          Int      @default(0)
+    hasNotifiedUpgrade      Boolean  @default(false)
+    hasNotifiedEnoughSilver Boolean  @default(false)
+    trashFishCount          Int      @default(0)
+    commonFishCount         Int      @default(0)
+    uncommonFishCount       Int      @default(0)
+    fineFishCount           Int      @default(0)
+    rareFishCount           Int      @default(0)
+    epicFishCount           Int      @default(0)
+    exoticFishCount         Int      @default(0)
+    mythicFishCount         Int      @default(0)
+    legendaryFishCount      Int      @default(0)
+    fishFines               Int      @default(0)
+    fishFinesCount          Int      @default(0)
+    treasureSilver          Int      @default(0)
+    treasureCount           Int      @default(0)
+    totalSilverWorth        Int      @default(0)
+    createdAt               DateTime @default(now())
+    updatedAt               DateTime @updatedAt
 
     @@unique([channelProviderId, userId])
     @@index([channelProviderId, userId])

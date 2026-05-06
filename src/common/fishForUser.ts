@@ -285,11 +285,13 @@ export async function fishForUser({
         if (checkUpgrade.canUpgrade && !fishStats.hasNotifiedUpgrade) {
             promises.push(prisma.fishStats.update({ where: { id: fishStats.id }, data: { hasNotifiedUpgrade: true } }));
             notifyUpgradeMessage = `$(newline)/me @${userDisplayName} You have unlocked the ${checkUpgrade.nextRodName}! Use "${getBotPrefix()}rod buy" to upgrade! ${CONGRATULATIONS_EMOTES(channelLogin)}`;
-        } else if (checkUpgrade.canUpgrade && fishStats.hasNotifiedUpgrade) {
+        } else if (checkUpgrade.canUpgrade && fishStats.hasNotifiedUpgrade && !stats.hasNotifiedEnoughSilver) {
             const totalBalance = balance.value + fish.sellValue + bonus + treasureBonus;
             const check = checkIfUserHasAvailableFundsToReNotify(totalBalance, stats);
-            if (check)
+            if (check) {
+                promises.push(prisma.fishStats.update({ where: { id: fishStats.id }, data: { hasNotifiedEnoughSilver: true } }));
                 notifyUpgradeMessage = `$(newline)/me @${userDisplayName} You can upgrade to the ${checkUpgrade.nextRodName}! Use "${getBotPrefix()}rod buy" to upgrade! ${CONGRATULATIONS_EMOTES(channelLogin)}`;
+            }
         }
 
         await Promise.all(promises);
