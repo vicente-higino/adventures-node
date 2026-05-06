@@ -82,6 +82,8 @@ export async function getFishCountSummary({
                 fineFishCount: true,
                 rareFishCount: true,
                 epicFishCount: true,
+                exoticFishCount: true,
+                mythicFishCount: true,
                 legendaryFishCount: true,
                 fishFines: true,
                 fishFinesCount: true,
@@ -92,6 +94,8 @@ export async function getFishCountSummary({
         });
         const fishCountsByRarity = [
             { rarity: Rarity.Legendary, count: stats._sum.legendaryFishCount ?? 0 },
+            { rarity: Rarity.Mythic, count: stats._sum.mythicFishCount ?? 0 },
+            { rarity: Rarity.Exotic, count: stats._sum.exoticFishCount ?? 0 },
             { rarity: Rarity.Epic, count: stats._sum.epicFishCount ?? 0 },
             { rarity: Rarity.Rare, count: stats._sum.rareFishCount ?? 0 },
             { rarity: Rarity.Fine, count: stats._sum.fineFishCount ?? 0 },
@@ -126,6 +130,8 @@ export async function getFishCountSummary({
 
     const fishCountsByRarity = [
         { rarity: Rarity.Legendary, count: fishStats.legendaryFishCount },
+        { rarity: Rarity.Mythic, count: fishStats.mythicFishCount },
+        { rarity: Rarity.Exotic, count: fishStats.exoticFishCount },
         { rarity: Rarity.Epic, count: fishStats.epicFishCount },
         { rarity: Rarity.Rare, count: fishStats.rareFishCount },
         { rarity: Rarity.Fine, count: fishStats.fineFishCount },
