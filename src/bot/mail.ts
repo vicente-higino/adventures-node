@@ -5,7 +5,7 @@ import { sendActionToChannel } from "@/utils/misc";
 import { Bot } from "@twurple/easy-bot";
 import { format } from "ms";
 import cron from "node-cron";
-import { getBotConfig } from "./index";
+import { getBotConfig, isChannelLive } from "./index";
 
 export class ChatMail {
     private channelMails: Map<string, Set<string>> = new Map();
@@ -40,6 +40,7 @@ export class ChatMail {
         this.bot.onMessage(async ctx => {
             const channel = ctx.broadcasterName;
             const channelId = ctx.broadcasterId;
+            if (isChannelLive({ id: channelId })) return; // Don't deliver mail if channel is live, to avoid spamming during streams
             const userId = ctx.userId;
             const text = ctx.text;
             const channelMails = this.channelMails.get(channelId);
