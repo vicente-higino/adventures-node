@@ -17,14 +17,7 @@ export const RARITY_POINTS: Record<Rarity, number> = {
     Trash: 1,
 } as const;
 
-export const QUALITY_MULTIPLIERS: Record<Quality, number> = {
-    Normal: 1.0,
-    Shining: 1.8,
-    Glistening: 4,
-    Opulent: 6,
-    Radiant: 10,
-    Alpha: 15,
-} as const;
+export const QUALITY_MULTIPLIERS: Record<Quality, number> = { Normal: 1.0, Shining: 1.8, Glistening: 4, Opulent: 6, Radiant: 10, Alpha: 15 } as const;
 
 export const QUALITY_ARRAY: Quality[] = ["Normal", "Shining", "Glistening", "Opulent", "Radiant", "Alpha"];
 
@@ -53,7 +46,7 @@ type PercentageMap = Record<Rarity, number>;
 type WeightMap = Record<Rarity, number>;
 export function createRarityWeightsWithPercentage(
     percentages: PercentageMap,
-    precision = 1000 // 1000 = 0.1% resolution
+    precision = 1000, // 1000 = 0.1% resolution
 ): WeightMap {
     const entries = Object.entries(percentages) as [Rarity, number][];
     const totalPercent = entries.reduce((sum, [, p]) => sum + p, 0);
@@ -74,9 +67,7 @@ export function createRarityWeightsWithPercentage(
     const diff = precision - total;
     if (diff !== 0) {
         // adjust the largest bucket (usually Common)
-        const largest = entries.reduce((a, b) =>
-            percentages[a[0]] > percentages[b[0]] ? a : b
-        )[0];
+        const largest = entries.reduce((a, b) => (percentages[a[0]] > percentages[b[0]] ? a : b))[0];
 
         weights[largest]! += diff;
     }
@@ -131,11 +122,7 @@ export type FishingRodLevel = {
     qualityChance: number[]; // Cumulative chances for each quality tier, starting from Normal. Length determines number of quality tiers available.
     weightModifier: WeightModifiers; // Modifiers to rarity weights when using this rod
 };
-export function createWeightModifiersFromPercentages(
-    base: Record<Rarity, number>,
-    deltas: PercentageDeltas,
-    precision = 1000
-): WeightModifiers {
+export function createWeightModifiersFromPercentages(base: Record<Rarity, number>, deltas: PercentageDeltas, precision = 1000): WeightModifiers {
     const baseTotal = Object.values(base).reduce((a, b) => a + b, 0);
 
     const basePercent: Record<Rarity, number> = {} as any;
@@ -153,9 +140,7 @@ export function createWeightModifiersFromPercentages(
         deltaSum += d;
     }
 
-    const unspecified = (Object.keys(base) as Rarity[]).filter(
-        r => !(r in deltas)
-    );
+    const unspecified = (Object.keys(base) as Rarity[]).filter(r => !(r in deltas));
 
     if (unspecified.length > 0 && deltaSum !== 0) {
         const pool = unspecified.reduce((sum, r) => sum + basePercent[r], 0);
@@ -166,9 +151,7 @@ export function createWeightModifiersFromPercentages(
     }
     const targetWeights: Record<Rarity, number> = {} as any;
     for (const r in nextPercent) {
-        targetWeights[r as Rarity] = Math.round(
-            (nextPercent[r as Rarity] / 100) * precision
-        );
+        targetWeights[r as Rarity] = Math.round((nextPercent[r as Rarity] / 100) * precision);
     }
     const modifiers: WeightModifiers = {};
     for (const r in base) {
@@ -187,24 +170,13 @@ export const fishingRodLevels: FishingRodLevel[] = [
         level: 1,
         name: "Reinforced Rod",
         qualityChance: [1.0, 0.05],
-        weightModifier: createWeightModifiersFromPercentages(RARITY_WEIGHTS_DEFAULT, {
-            Exotic: 0.5,
-            Epic: 1.5,
-            Uncommon: 3,
-            Trash: 0
-        })
+        weightModifier: createWeightModifiersFromPercentages(RARITY_WEIGHTS_DEFAULT, { Exotic: 0.5, Epic: 1.5, Uncommon: 3, Trash: 0 }),
     },
     {
         level: 2,
         name: "Fiberglass Rod",
         qualityChance: [1.0, 0.15, 0.05],
-        weightModifier: createWeightModifiersFromPercentages(RARITY_WEIGHTS_DEFAULT, {
-            Mythic: 0.3,
-            Exotic: 1,
-            Fine: 1.5,
-            Uncommon: 7,
-            Trash: 0
-        })
+        weightModifier: createWeightModifiersFromPercentages(RARITY_WEIGHTS_DEFAULT, { Mythic: 0.3, Exotic: 1, Fine: 1.5, Uncommon: 7, Trash: 0 }),
     },
     {
         level: 3,
@@ -218,8 +190,8 @@ export const fishingRodLevels: FishingRodLevel[] = [
             Rare: 1,
             Fine: 4,
             Uncommon: 10,
-            Trash: 0
-        })
+            Trash: 0,
+        }),
     },
     {
         level: 4,
@@ -233,8 +205,8 @@ export const fishingRodLevels: FishingRodLevel[] = [
             Rare: 5,
             Fine: 10,
             Uncommon: 15,
-            Trash: 0
-        })
+            Trash: 0,
+        }),
     },
     {
         level: 5,
@@ -248,8 +220,8 @@ export const fishingRodLevels: FishingRodLevel[] = [
             Rare: 8,
             Fine: 10,
             Uncommon: 10,
-            Trash: 0
-        })
+            Trash: 0,
+        }),
     },
     {
         level: 6,
@@ -263,8 +235,8 @@ export const fishingRodLevels: FishingRodLevel[] = [
             Rare: 10,
             Fine: 5,
             Uncommon: 10,
-            Trash: 0
-        })
+            Trash: 0,
+        }),
     },
 ] as const;
 

@@ -41,9 +41,7 @@ export const fishRecordsCommand = createBotCommand(
 
         // Handle invalid page numbers
         if (page < 1 || page > totalPages) {
-            say(
-                `@${userDisplayName}, invalid page number. Available pages: 1-${totalPages}. Usage: ${getBotPrefix()}fishrecords [@username] [page]`,
-            );
+            say(`@${userDisplayName}, invalid page number. Available pages: 1-${totalPages}. Usage: ${getBotPrefix()}fishrecords [@username] [page]`);
             return;
         }
 

@@ -219,15 +219,7 @@ export function getFishExperience(rarity: Rarity, quality: Quality): number {
     const qualityMult = getQualityMultiplier(quality);
     return Math.round(Math.sqrt(baseXp * qualityMult));
 }
-type UpgradeCheckResult = {
-    canUpgrade: true;
-    nextRodName: string;
-    cost: number;
-    cumulativeCost: number;
-} |
-{
-    canUpgrade: false;
-};
+type UpgradeCheckResult = { canUpgrade: true; nextRodName: string; cost: number; cumulativeCost: number } | { canUpgrade: false };
 export function checkIfUpgradeAvailable(currentLevel: number, totalSilverWorth: number): UpgradeCheckResult {
     if (currentLevel >= fishingRodLevels.length - 1) {
         return { canUpgrade: false }; // Already at max level
@@ -238,17 +230,15 @@ export function checkIfUpgradeAvailable(currentLevel: number, totalSilverWorth: 
         .filter(([i]) => parseInt(i) <= currentLevel)
         .reduce((sum, [, val]) => sum + val, 0);
     if (totalSilverWorth >= cumulativeCost) {
-        return {
-            canUpgrade: true,
-            nextRodName: nextRod.name,
-            cost,
-            cumulativeCost,
-        };
+        return { canUpgrade: true, nextRodName: nextRod.name, cost, cumulativeCost };
     }
     return { canUpgrade: false };
 }
 
-export function checkIfUserHasAvailableFundsToReNotify(balance: number, fishStats: { fishingRodLevel: number; totalSilverWorth: number, hasNotifiedUpgrade: boolean }): boolean {
+export function checkIfUserHasAvailableFundsToReNotify(
+    balance: number,
+    fishStats: { fishingRodLevel: number; totalSilverWorth: number; hasNotifiedUpgrade: boolean },
+): boolean {
     if (!fishStats.hasNotifiedUpgrade) return true; // User has not been notified yet, so we can notify them regardless of current balance
     const upgradeCheck = checkIfUpgradeAvailable(fishStats.fishingRodLevel, fishStats.totalSilverWorth);
     if (!upgradeCheck.canUpgrade) {

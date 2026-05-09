@@ -5,7 +5,7 @@ import { Context, Next } from "hono";
 export const customLogger = (message: string, ...rest: string[]) => {
     logger.info(message);
     for (const item of rest) logger.info(item);
-}
+};
 
 export const loggingMiddleware = async (c: Context<HonoEnv>, next: Next) => {
     try {

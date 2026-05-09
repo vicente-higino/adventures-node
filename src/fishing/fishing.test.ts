@@ -46,9 +46,7 @@ describe("Fishing Module", () => {
                 // Run many trials and check if distribution roughly matches weights
                 const weight = getRarityWeights(rod.level);
                 const totalWeight = Object.values(weight).reduce((sum, w) => sum + w, 0);
-                const expectedPercentages = Object.fromEntries(
-                    Object.entries(weight).map(([rarity, w]) => [rarity, w / totalWeight])
-                );
+                const expectedPercentages = Object.fromEntries(Object.entries(weight).map(([rarity, w]) => [rarity, w / totalWeight]));
                 const trials = 100000;
                 const results = runMultipleTrials(trials, rod.level);
                 console.log(`------------- ${rod.name} distribution ------------- `);
@@ -62,7 +60,6 @@ describe("Fishing Module", () => {
                     console.log(`${rarity}: ${count} (${(percentage * 100).toFixed(2)}%), Expected: ${(expected * 100).toFixed(2)}%`);
                 });
             }
-
         }, 30000); // Increase timeout for this test due to large number of trials
 
         it("should be able to return all fish from the fishTable", () => {

@@ -13,10 +13,7 @@ export async function handleDuel(
 ): Promise<LeaderboardResult> {
     const parsedDuelMetric = duelMetricSchema.safeParse(internalMetric);
     if (!parsedDuelMetric.success) {
-        return {
-            error: true,
-            reason: "Invalid metric for Duel leaderboard.",
-        };
+        return { error: true, reason: "Invalid metric for Duel leaderboard." };
     }
     const metric = parsedDuelMetric.data;
     const stats = await prisma.userStats.findMany({

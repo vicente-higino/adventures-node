@@ -12,7 +12,7 @@ import {
     formatSilver,
     limitAdvMessage,
     limitMessageLength,
-    roundToDecimalPlaces
+    roundToDecimalPlaces,
 } from "@/utils/misc";
 import { formatTimeToWithSeconds } from "@/utils/time";
 import { Mutex } from "async-mutex";

@@ -30,10 +30,7 @@ export async function handleFish(
 ): Promise<LeaderboardResult> {
     const parsedFishMetric = fishMetricSchema.safeParse(internalMetric);
     if (!parsedFishMetric.success) {
-        return {
-            error: true,
-            reason: "Invalid fish metric for leaderboard.",
-        };
+        return { error: true, reason: "Invalid fish metric for leaderboard." };
     }
     const metric = parsedFishMetric.data;
     if (metric === "top") {

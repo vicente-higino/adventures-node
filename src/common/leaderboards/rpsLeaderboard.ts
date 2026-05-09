@@ -14,10 +14,7 @@ export async function handleRPS(
 ): Promise<LeaderboardResult> {
     const parsedDuelMetric = duelMetricSchema.safeParse(internalMetric);
     if (!parsedDuelMetric.success) {
-        return {
-            error: true,
-            reason: "Invalid metric for RPS leaderboard.",
-        }
+        return { error: true, reason: "Invalid metric for RPS leaderboard." };
     }
     const metric = parsedDuelMetric.data;
     const stats = await prisma.userStats.findMany({ where: { channelProviderId: channelProviderId, rpsPlayed: { gt: 0 } }, include: { user: true } });

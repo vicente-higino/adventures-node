@@ -38,7 +38,7 @@ class BotCommandWithKeywords extends BotCommand {
     }
 
     match(line: string, prefix: string): string[] | null {
-        let [command, ...params] = line.replaceAll(/[^\x20-\x7E]/g, '').split(" ");
+        let [command, ...params] = line.replaceAll(/[^\x20-\x7E]/g, "").split(" ");
         let trimmedParams = params.map(p => p.trim()).filter(p => p !== "");
         if (this.matchesKeyword(line, this._ignoreCase)) {
             return [command, ...trimmedParams];

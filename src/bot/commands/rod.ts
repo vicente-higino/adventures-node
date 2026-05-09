@@ -11,7 +11,7 @@ function formatRodName(name: string): string {
     return `(${name.replaceAll(" ", "_")})`;
 }
 
-function handleList(fishStats: { fishingRodLevel: number, activeRodLevel: number }, userDisplayName: string): string {
+function handleList(fishStats: { fishingRodLevel: number; activeRodLevel: number }, userDisplayName: string): string {
     const currentLevel = fishStats.fishingRodLevel;
     const activeLevel = fishStats.activeRodLevel;
     let listMessage = `@${userDisplayName} Available Rods: `;
@@ -31,7 +31,7 @@ function handleList(fishStats: { fishingRodLevel: number, activeRodLevel: number
     return listMessage + rods.join(" | ");
 }
 
-function handleShowCurrent(fishStats: { fishingRodLevel: number, activeRodLevel: number }, userDisplayName: string): string {
+function handleShowCurrent(fishStats: { fishingRodLevel: number; activeRodLevel: number }, userDisplayName: string): string {
     const currentLevel = fishStats.fishingRodLevel;
     const activeLevel = fishStats.activeRodLevel;
     const currentRod = fishingRodLevels[activeLevel];
@@ -49,7 +49,7 @@ function handleShowCurrent(fishStats: { fishingRodLevel: number, activeRodLevel:
 }
 
 async function handleBuyOrUpgrade(
-    fishStats: { id: number; fishingRodLevel: number; totalSilverWorth: number, updatedAt: Date },
+    fishStats: { id: number; fishingRodLevel: number; totalSilverWorth: number; updatedAt: Date },
     balance: { id: number; value: number },
     maxStr: string | undefined,
     userDisplayName: string,
@@ -101,14 +101,23 @@ async function handleBuyOrUpgrade(
 
     await Promise.all([
         increaseBalance(prisma, balance.id, -cost),
-        prisma.fishStats.update({ where: { id: fishStats.id }, data: { fishingRodLevel: targetLevel, activeRodLevel: targetLevel, hasNotifiedUpgrade: false, hasNotifiedEnoughSilver: false, updatedAt: fishStats.updatedAt } }),
+        prisma.fishStats.update({
+            where: { id: fishStats.id },
+            data: {
+                fishingRodLevel: targetLevel,
+                activeRodLevel: targetLevel,
+                hasNotifiedUpgrade: false,
+                hasNotifiedEnoughSilver: false,
+                updatedAt: fishStats.updatedAt,
+            },
+        }),
     ]);
 
     return `@${userDisplayName} Upgraded to ${targetRod.name}! You spent ${formatSilver(cost)} silver and have ${formatSilver(balance.value - cost)} silver left.`;
 }
 
 async function handleSelect(
-    fishStats: { id: number; fishingRodLevel: number; activeRodLevel: number, updatedAt: Date },
+    fishStats: { id: number; fishingRodLevel: number; activeRodLevel: number; updatedAt: Date },
     rodLevelStr: string,
     userDisplayName: string,
 ): Promise<string> {

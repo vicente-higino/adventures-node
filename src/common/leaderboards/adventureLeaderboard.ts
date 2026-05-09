@@ -13,10 +13,7 @@ export async function handleAdventure(
 ): Promise<LeaderboardResult> {
     const parsedMetric = adventureMetricSchema.safeParse(internalMetric);
     if (!parsedMetric.success) {
-        return {
-            error: true,
-            reason: "Invalid metric for Adventure leaderboard.",
-        };
+        return { error: true, reason: "Invalid metric for Adventure leaderboard." };
     }
     const metric = parsedMetric.data;
     const stats = await prisma.userStats.findMany({

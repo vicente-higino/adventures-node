@@ -5,14 +5,5 @@ export * from "./silverLeaderboard";
 export type LeaderboardType = "Adventure" | "Duel" | "RPS" | "Fish" | "Silver";
 
 export type LeaderboardResult =
-    | {
-        error: true;
-        reason: string;
-    }
-    | {
-        error?: false;
-        formattedLeaderboard: string[];
-        metricDisplay: string;
-        leaderboardType: LeaderboardType;
-        order: "asc" | "desc";
-    };
+    | { error: true; reason: string }
+    | { error?: false; formattedLeaderboard: string[]; metricDisplay: string; leaderboardType: LeaderboardType; order: "asc" | "desc" };

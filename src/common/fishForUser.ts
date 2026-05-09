@@ -90,7 +90,7 @@ export async function fishForUser({
             });
 
             await Promise.all([increaseBalance(prisma, balance.id, -fine), updateFishFinesInFishStats, updateCaughtTimestamp]);
-            return `@${userDisplayName} ${EmoteManager.getEmote('POLICE', channelLogin)} You got caught fishing in ${place} and were fined ${fine} silver! ${FISH_FINE_EMOTES(channelLogin)}`;
+            return `@${userDisplayName} ${EmoteManager.getEmote("POLICE", channelLogin)} You got caught fishing in ${place} and were fined ${fine} silver! ${FISH_FINE_EMOTES(channelLogin)}`;
         }
 
         const unitSystem = balance.user.unitSystem ?? "metric";

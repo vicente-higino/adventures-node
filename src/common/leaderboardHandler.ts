@@ -23,10 +23,7 @@ export async function getLeaderboard(
     const sortParts = sortBy.toLowerCase().match(paramsRegex);
 
     if (!sortParts) {
-        return {
-            error: true,
-            reason: "Invalid sort type.",
-        };
+        return { error: true, reason: "Invalid sort type." };
     }
 
     const prefix = sortParts[1];
@@ -60,10 +57,7 @@ export async function getLeaderboard(
         leaderboardType = "Silver";
         internalMetric = "value";
     } else {
-        return {
-            error: true,
-            reason: "Invalid sort type.",
-        };
+        return { error: true, reason: "Invalid sort type." };
     }
 
     let result: LeaderboardResult | undefined;
@@ -88,17 +82,11 @@ export async function getLeaderboard(
             logger.error(error, "Prisma Error Code: " + error.code);
             logger.error(error, "Prisma Error Meta: " + error.meta);
         }
-        return {
-            error: true,
-            reason: "An error occurred while generating the leaderboard.",
-        };
+        return { error: true, reason: "An error occurred while generating the leaderboard." };
     }
 
     if (!result) {
-        return {
-            error: true,
-            reason: "Failed to generate leaderboard.",
-        };
+        return { error: true, reason: "Failed to generate leaderboard." };
     }
 
     return { ...result, order };

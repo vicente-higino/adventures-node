@@ -10,21 +10,21 @@ type SubmitMoveResult =
     | { status: "canceled"; msg: string; channel: string }
     | { status: "pending" }
     | {
-        status: "resolved";
-        channelId: string;
-        channel: string;
-        round: number;
-        moveA: RpsMove;
-        moveB: RpsMove;
-        playerA: string;
-        playerB: string;
-        scoreA: number;
-        scoreB: number;
-        matchEnd: boolean;
-        winner: string | null;
-        wager: number;
-        winStreak: number;
-    };
+          status: "resolved";
+          channelId: string;
+          channel: string;
+          round: number;
+          moveA: RpsMove;
+          moveB: RpsMove;
+          playerA: string;
+          playerB: string;
+          scoreA: number;
+          scoreB: number;
+          matchEnd: boolean;
+          winner: string | null;
+          wager: number;
+          winStreak: number;
+      };
 
 function resolveMove(a: RpsMove, b: RpsMove) {
     if (a === b) return "DRAW";
@@ -198,7 +198,6 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
         logger.warn({ roundId: round.id, userId, move, error: e }, "Move creation failed - already submitted");
         return { status: "error", error: "Move already submitted" };
     }
-
 
     // check if both moves are in
     const moves = await prisma.move.findMany({ where: { roundId: round.id } });

@@ -183,7 +183,7 @@ export function Emotes<const T extends readonly EmoteName[]>(...names: T): { [K 
 }
 
 export const CATEGORY_EMOTES_RECORD = {
-    [EmoteCategory.FISH_POLICE]: Emotes('POLICE'),
+    [EmoteCategory.FISH_POLICE]: Emotes("POLICE"),
     [EmoteCategory.ALIEN]: Emotes("glorp", "AlienDance"),
     [EmoteCategory.ADVENTURE_END_EMOTES]: Emotes("dinkDonk", "Alarm"),
     [EmoteCategory.ADVENTURE_START_EMOTES]: Emotes("GAMBA"),
