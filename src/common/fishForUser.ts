@@ -301,7 +301,7 @@ export async function fishForUser({
         const useAction = fish.rarity == Rarity.Legendary ? "/me " : "";
         const rod = getRod(fishStats.activeRodLevel);
         const rodName = `(${rod.name.replaceAll(" ", "_")})`;
-        const resText = `${useAction}@${userDisplayName} ${rodName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.emote} ${fish.formatedQuality} #${channelFishCount.total} ${fish.formatedSize} ${fish.formatedWeight}!
+        const resText = `${useAction}@${userDisplayName} ${rodName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.formatedQuality} ${fish.emote} #${channelFishCount.total} ${fish.formatedSize} ${fish.formatedWeight}!
                     It sold for ${totalValueMessage} silver! ${recordMessage} ${fishDexMessage} ${valueEmote} ${fishDexCompletionMessage} ${notifyUpgradeMessage}`;
         return resText;
     } catch (error) {

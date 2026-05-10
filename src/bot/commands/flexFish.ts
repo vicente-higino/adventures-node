@@ -65,7 +65,7 @@ function formatFishDisplay(fish: FishWithRecords) {
     const quality = getQualityStars(fish.quality);
     const records = getRecords(fish);
     const emote = fish.emote ? EmoteManager.getEmote(fish.emote as any) : "";
-    return `[${fish.rarity}] ${fish.prefix} ${fish.name} ${emote} ${quality} #${fish.fishId} ${sizeStr} ${weightStr}, ${records} worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
+    return `[${fish.rarity}] ${fish.prefix} ${fish.name} ${quality} ${emote} #${fish.fishId} ${sizeStr} ${weightStr}, ${records} worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
 }
 
 export const flexFishCommand = createBotCommand(
