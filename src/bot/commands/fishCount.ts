@@ -31,8 +31,15 @@ export const fishCountCommand = createBotCommand(
 // New global fish count command using getFishCountSummary
 export const fishCountGlobalCommand = createBotCommand(
     "fishcountglobal",
-    async (_params, ctx) => {
-        const { broadcasterId, broadcasterName, say } = ctx;
+    async (params, ctx) => {
+        let { broadcasterId, broadcasterName, say } = ctx;
+        let usernameArg = params.shift();
+        if (usernameArg) {
+            usernameArg = usernameArg.replaceAll("@", "");
+            const user = await getUserByUsername(prisma, usernameArg);
+            broadcasterId = user?.id ?? broadcasterId;
+            broadcasterName = user?.displayName ?? broadcasterName;
+        }
         // Use getFishCountSummary with userProviderId = null to get channel stats
         const summary = await getFishCountSummary({
             prisma,
