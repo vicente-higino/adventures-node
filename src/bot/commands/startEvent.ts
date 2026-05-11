@@ -2,9 +2,10 @@ import { ms } from "ms";
 import { getBotPrefix } from "..";
 import { createAdminBotCommand, createBotCommand } from "../botCommandWithKeywords";
 import { manualLegendaryEventTask } from "@/fishing";
-import { consumeRedeemable } from "@/common/redeemables";
+import { consumeRedeemable, grantRedeemable } from "@/common/redeemables";
 import { boxMullerTransform } from "@/utils/misc";
 import { Mutex } from "async-mutex";
+import { isLegendaryEventActive } from "@/fishing/legendaryEvents";
 
 const mutex = new Mutex();
 export const startEventCommand = createAdminBotCommand(
@@ -35,15 +36,18 @@ export const startLegendaryEventCommand = createBotCommand(
     async (params, ctx) => {
         const { say, userId, broadcasterId, userDisplayName } = ctx;
         await mutex.runExclusive(async () => {
-            const redeem = await consumeRedeemable({ userId, channelProviderId: broadcasterId, redeemableCode: "legendary_event_ticket" });
-            if (redeem) {
-                const legendaryWeight = Math.round(boxMullerTransform(25, 10, 20));
-                const msg = `@${userDisplayName} has started a Legendary Fishing Event!`
-                if (!manualLegendaryEventTask(legendaryWeight, 90 * 60 * 1000, msg)) {
-                    say(`@${userDisplayName}, A Legendary Fishing Event is already active. Please wait until it ends.`);
+            if (!isLegendaryEventActive()) {
+                const redeem = await consumeRedeemable({ userId, channelProviderId: broadcasterId, redeemableCode: "legendary_event_ticket" });
+                if (redeem) {
+                    const legendaryWeight = Math.round(boxMullerTransform(25, 10, 20));
+                    const msg = `@${userDisplayName} has started a Legendary Fishing Event!`
+                    if (!manualLegendaryEventTask(legendaryWeight, 90 * 60 * 1000, msg)) {
+                        await grantRedeemable({ userId, channelProviderId: broadcasterId, redeemableCode: "legendary_event_ticket" });
+                        say(`@${userDisplayName}, A Legendary Fishing Event is already active. Please wait until it ends.`);
+                    }
+                } else {
+                    say(`@${userDisplayName}, you dont have a ticket to start the legendary event.`);
                 }
-            } else {
-                say(`@${userDisplayName}, you dont have a ticket to start the legendary event.`);
             }
         })
     },

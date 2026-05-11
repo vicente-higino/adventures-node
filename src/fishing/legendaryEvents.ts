@@ -21,6 +21,10 @@ const legendaryEventState: { active: boolean; timeout: NodeJS.Timeout | null; re
     recordId: null,
 };
 
+export function isLegendaryEventActive() {
+    return legendaryEventState.active;
+}
+
 async function endLegendaryEvent(name: string) {
     if (!legendaryEventState.active) return;
     legendaryEventState.active = false;
