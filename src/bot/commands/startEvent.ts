@@ -36,7 +36,7 @@ export const startLegendaryEventCommand = createBotCommand(
                 say(`@${userDisplayName}, A Legendary Fishing Event is already active. Please wait until it ends.`);
             }
         } else {
-            say(`@${userDisplayName}, you dont have a ticket to start the legendary event.`)
+            say(`@${userDisplayName}, you dont have a ticket to start the legendary event.`);
         }
     },
     { ignoreCase: true, aliases: ["sle"] },

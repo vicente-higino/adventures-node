@@ -25,7 +25,6 @@ export const fishOddsCommand = createBotCommand(
                 say(`@${userDisplayName}, User "${param}" not found.`);
                 return;
             }
-
         }
         const fishStats = await prisma.fishStats.findUnique({ where: { channelProviderId_userId: { channelProviderId: broadcasterId, userId } } });
         if (!fishStats) {
@@ -33,7 +32,7 @@ export const fishOddsCommand = createBotCommand(
             return;
         }
         let rodLevel = fishStats.activeRodLevel;
-        const rod = getRod(rodLevel)
+        const rod = getRod(rodLevel);
         const weights = getRarityWeights(rodLevel);
         say(`@${userDisplayName} ${rod.name} odds: ${formatRarityWeightDisplay(weights)}`);
     },

@@ -373,7 +373,7 @@ export async function deleteOldCompletedDuels(prisma: dbClient, duelCooldownHour
 }
 export async function deleteOldRPSMatches(prisma: dbClient, CutOffHours: number) {
     const cutoff = new Date(Date.now() - CutOffHours * 60 * 60 * 1000);
-    const { count } = await prisma.match.deleteMany({ where: { createdAt: { lt: cutoff }, status: { not: 'ACTIVE' } } });
+    const { count } = await prisma.match.deleteMany({ where: { createdAt: { lt: cutoff }, status: { not: "ACTIVE" } } });
     if (count > 0) {
         logger.info(`Deleted ${count} old rps matches.`);
     }

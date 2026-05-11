@@ -307,7 +307,7 @@ export async function handleAdventureJoin(params: {
     });
 
     if (!adv) {
-        const redeem = await consumeRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: 'adventure_2x' });
+        const redeem = await consumeRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: "adventure_2x" });
         const payoutRate = redeem ? 2 : roundToDecimalPlaces(generatePayoutRate(), 2);
         const formattedPayoutRate = payoutRate.toFixed(2);
         const buyin = calculateAmount(amountParam, balance.value, undefined, true, payoutRate);

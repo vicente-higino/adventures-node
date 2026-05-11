@@ -97,7 +97,14 @@ export async function fishForUser({
         const unitSystem = balance.user.unitSystem ?? "metric";
         const fish = getFish({ unitSystem, channel: channelLogin, rodLevel: fishStats.activeRodLevel });
         let bonus = 0;
-        let treasureBonus = await handleTrashReward({ rarity: fish.rarity, userProviderId, userDisplayName, channelLogin, channelProviderId, rodLevel: fishStats.activeRodLevel });
+        let treasureBonus = await handleTrashReward({
+            rarity: fish.rarity,
+            userProviderId,
+            userDisplayName,
+            channelLogin,
+            channelProviderId,
+            rodLevel: fishStats.activeRodLevel,
+        });
 
         const [createdFish, channelFishCount] = await prisma.$transaction(async tx => {
             const channelFishCount = await prisma.channelFishCount.upsert({
@@ -340,7 +347,7 @@ async function handleTrashReward({
     userDisplayName,
     channelLogin,
     channelProviderId,
-    rodLevel
+    rodLevel,
 }: {
     rarity: Rarity;
     userProviderId: string;
@@ -354,54 +361,41 @@ async function handleTrashReward({
     }
 
     const rewards = [
+        { type: "silver" },
         {
-            type: 'silver',
+            type: "redeemable",
+            code: "adventure_2x",
+            message: "You found a mysterious Adventure ticket hidden in the trash! Your next adventure will reward 2x payouts!",
         },
         {
-            type: 'redeemable',
-            code: 'adventure_2x',
-            message: 'You found a mysterious Adventure ticket hidden in the trash! Your next adventure will reward 2x payouts!'
+            type: "redeemable",
+            code: "legendary_event_ticket",
+            message: `You uncovered a Legendary Event Ticket buried in the trash! Use ${getBotPrefix()}startLegendaryEvent to start it!`,
         },
-        {
-            type: 'redeemable',
-            code: 'legendary_event_ticket',
-            message: `You uncovered a Legendary Event Ticket buried in the trash! Use ${getBotPrefix()}startLegendaryEvent to start it!`
-        }
     ] as const;
 
     const reward = pickRandom(rewards);
     const mult = Math.pow(1.25, rodLevel);
     const chestBonus = Math.floor(boxMullerTransform(1000 * mult, 500, 250));
     setTimeout(async () => {
-        sendActionToChannel(
-            channelLogin,
-            `@${userDisplayName} Hold on... something's glimmering in the trash! ${PAUSE_EMOTES(channelLogin)}`
-        );
+        sendActionToChannel(channelLogin, `@${userDisplayName} Hold on... something's glimmering in the trash! ${PAUSE_EMOTES(channelLogin)}`);
 
         await delay(2000);
 
-        if (reward.type === 'silver') {
-
+        if (reward.type === "silver") {
             sendActionToChannel(
                 channelLogin,
-                `@${userDisplayName} 💰 While sifting through the trash, you discovered a hidden treasure chest containing ${chestBonus} silver! ${getValueEmote(chestBonus, channelLogin)}`
+                `@${userDisplayName} 💰 While sifting through the trash, you discovered a hidden treasure chest containing ${chestBonus} silver! ${getValueEmote(chestBonus, channelLogin)}`,
             );
             return;
         }
 
-        await grantRedeemable({
-            userId: userProviderId,
-            channelProviderId,
-            redeemableCode: reward.code
-        });
+        await grantRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: reward.code });
 
-        sendActionToChannel(
-            channelLogin,
-            `@${userDisplayName} ${reward.message} ${CONGRATULATIONS_EMOTES(channelLogin)}`
-        );
+        sendActionToChannel(channelLogin, `@${userDisplayName} ${reward.message} ${CONGRATULATIONS_EMOTES(channelLogin)}`);
     }, 2000);
 
-    if (reward.type === 'silver') {
+    if (reward.type === "silver") {
         return chestBonus;
     }
 
