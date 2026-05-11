@@ -118,8 +118,8 @@ export const legendaryEventTaskPerChannel = (channels: string[]) =>
 export function manualLegendaryEventTask(
     legendaryWeight: number,
     durationMs: number,
-    name: string = "Legendary Fishing Event",
-    msg: string = "Legendary fish are much more likely for the next",
+    name: string = "A Legendary Fishing Event has started!",
+    msg: string = "Legendary fish are much more likely",
 ): boolean {
     if (legendaryEventState.active) {
         return false;
@@ -132,7 +132,7 @@ export function manualLegendaryEventTask(
     const { channels } = getBotConfig();
     for (const channel of channels) {
         if (isChannelLive({ username: channel })) continue;
-        sendActionToChannel(channel, `A ${name} has started! ${msg} ${formatMinutes(durationMs)}! ${chanceStr} ${EVENT_STARTED_EMOTES(channel)}`);
+        sendActionToChannel(channel, `${name} ${msg} for the next ${formatMinutes(durationMs)}! ${chanceStr} ${EVENT_STARTED_EMOTES(channel)}`);
     }
     // persist event to DB
     prisma.legendaryEvent
@@ -182,8 +182,8 @@ function christmasLegendaryEvent() {
             manualLegendaryEventTask(
                 100,
                 24 * 60 * 60 * 1000,
-                "Legendary Christmas Event",
-                "Holiday magic is in the water, and legendary fish are much more likely for the next",
+                "The Legendary Christmas Event has started!",
+                "Holiday magic is in the water, and legendary fish are much more likely",
             );
         },
         { timezone: "UTC" },

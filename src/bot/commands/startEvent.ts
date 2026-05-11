@@ -31,8 +31,8 @@ export const startLegendaryEventCommand = createBotCommand(
         const redeem = await consumeRedeemable({ userId, channelProviderId: broadcasterId, redeemableCode: "legendary_event_ticket" });
         if (redeem) {
             const legendaryWeight = Math.round(boxMullerTransform(25, 10, 20));
-            if (manualLegendaryEventTask(legendaryWeight, 90 * 60 * 1000)) {
-            } else {
+            const msg = `@${userDisplayName} has started a Legendary Fishing Event!`
+            if (!manualLegendaryEventTask(legendaryWeight, 90 * 60 * 1000, msg)) {
                 say(`@${userDisplayName}, A Legendary Fishing Event is already active. Please wait until it ends.`);
             }
         } else {
