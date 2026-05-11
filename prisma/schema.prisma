@@ -31,6 +31,7 @@ model User {
     FishDexCompletion  FishDexCompletion[]
     ChatMailsSender    ChatMail[]          @relation("Sender")
     ChatMailsRecipient ChatMail[]          @relation("Recipient")
+    userRedeemables    UserRedeemable[]
 }
 
 model Balance {
@@ -396,4 +397,38 @@ model ChatMail {
     createdAt   DateTime  @default(now())
     deliveredAt DateTime?
     expiresAt   DateTime?
+}
+
+enum RedeemableType {
+    START_ADVENTURE_MULTIPLIER
+    START_LEGENDARY_EVENT
+}
+
+model Redeemable {
+    id          Int            @id @default(autoincrement())
+    code        String         @unique
+    name        String
+    description String
+    type        RedeemableType
+    config      Json
+    active      Boolean        @default(true)
+    createdAt   DateTime       @default(now())
+    updatedAt   DateTime       @updatedAt
+
+    inventories UserRedeemable[]
+}
+
+model UserRedeemable {
+    id                Int        @id @default(autoincrement())
+    channelProviderId String
+    user              User       @relation(fields: [userId], references: [providerId], onDelete: Cascade)
+    userId            String
+    redeemable        Redeemable @relation(fields: [redeemableId], references: [id], onDelete: Cascade)
+    redeemableId      Int
+    quantity          Int        @default(0)
+    createdAt         DateTime   @default(now())
+    updatedAt         DateTime   @updatedAt
+
+    @@unique([channelProviderId, userId, redeemableId])
+    @@index([channelProviderId, userId])
 }

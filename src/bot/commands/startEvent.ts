@@ -1,7 +1,9 @@
 import { ms } from "ms";
 import { getBotPrefix } from "..";
-import { createAdminBotCommand } from "../botCommandWithKeywords";
+import { createAdminBotCommand, createBotCommand } from "../botCommandWithKeywords";
 import { manualLegendaryEventTask } from "@/fishing";
+import { consumeRedeemable } from "@/common/redeemables";
+import { boxMullerTransform } from "@/utils/misc";
 
 export const startEventCommand = createAdminBotCommand(
     "startevent",
@@ -21,4 +23,21 @@ export const startEventCommand = createAdminBotCommand(
         }
     },
     { ignoreCase: true, aliases: ["se"] },
+);
+export const startLegendaryEventCommand = createBotCommand(
+    "startlegendaryevent",
+    async (params, ctx) => {
+        const { say, userId, broadcasterId, userDisplayName } = ctx;
+        const redeem = await consumeRedeemable({ userId, channelProviderId: broadcasterId, redeemableCode: "legendary_event_ticket" });
+        if (redeem) {
+            const legendaryWeight = Math.round(boxMullerTransform(25, 10, 20));
+            if (manualLegendaryEventTask(legendaryWeight, 90 * 60 * 1000)) {
+            } else {
+                say(`@${userDisplayName}, A Legendary Fishing Event is already active. Please wait until it ends.`);
+            }
+        } else {
+            say(`@${userDisplayName}, you dont have a ticket to start the legendary event.`)
+        }
+    },
+    { ignoreCase: true, aliases: ["sle"] },
 );

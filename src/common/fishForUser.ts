@@ -22,12 +22,13 @@ import { fishingFacts } from "@/fishing/facts";
 import { fishTable } from "@/fishing/fishTable";
 import logger from "@/logger";
 import { dbClient } from "@/prisma";
-import { boxMullerTransform, delay, assertNever, pickRandom, sendActionToChannel } from "@/utils/misc";
+import { assertNever, boxMullerTransform, delay, pickRandom, sendActionToChannel } from "@/utils/misc";
 import { formatTimeToWithSeconds } from "@/utils/time";
 import { Prisma, Rarity } from "@prisma/client";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { friendlyCooldownMessages, motivationalQuotes, wrongPlaces } from "./phrases";
+import { grantRedeemable } from "./redeemables";
 dayjs.extend(relativeTime);
 
 interface FishForUserParams {
@@ -96,21 +97,7 @@ export async function fishForUser({
         const unitSystem = balance.user.unitSystem ?? "metric";
         const fish = getFish({ unitSystem, channel: channelLogin, rodLevel: fishStats.activeRodLevel });
         let bonus = 0;
-        let treasureBonus = 0;
-        let treasureMessage = "";
-        if (fish.rarity === Rarity.Trash && Math.random() < 0.25) {
-            const chestBonus = Math.floor(boxMullerTransform(1000, 500, 250));
-            treasureBonus += chestBonus;
-            treasureMessage = `💰 While sifting through the trash, you discovered a hidden treasure chest containing ${chestBonus} silver! ${getValueEmote(chestBonus, channelLogin)}`;
-            setTimeout(async () => {
-                sendActionToChannel(
-                    channelLogin,
-                    `@${userDisplayName} Hold on... something's glimmering in the trash! ${PAUSE_EMOTES(channelLogin)}`,
-                );
-                await delay(2000);
-                sendActionToChannel(channelLogin, `@${userDisplayName} ${treasureMessage}`);
-            }, 2000);
-        }
+        let treasureBonus = await handleTrashReward({ rarity: fish.rarity, userProviderId, userDisplayName, channelLogin, channelProviderId, rodLevel: fishStats.activeRodLevel });
 
         const [createdFish, channelFishCount] = await prisma.$transaction(async tx => {
             const channelFishCount = await prisma.channelFishCount.upsert({
@@ -346,3 +333,77 @@ const FISHDEX_COMPLETION_BONUS: Record<Rarity, number> = {
     Mythic: 500_000,
     Legendary: 5_000_000,
 };
+
+async function handleTrashReward({
+    rarity,
+    userProviderId,
+    userDisplayName,
+    channelLogin,
+    channelProviderId,
+    rodLevel
+}: {
+    rarity: Rarity;
+    userProviderId: string;
+    userDisplayName: string;
+    channelLogin: string;
+    channelProviderId: string;
+    rodLevel: number;
+}) {
+    if (rarity !== Rarity.Trash || Math.random() >= 0.25) {
+        return 0;
+    }
+
+    const rewards = [
+        {
+            type: 'silver',
+        },
+        {
+            type: 'redeemable',
+            code: 'adventure_2x',
+            message: 'You found a mysterious Adventure ticket hidden in the trash! Your next adventure will reward 2x payouts!'
+        },
+        {
+            type: 'redeemable',
+            code: 'legendary_event_ticket',
+            message: `You uncovered a Legendary Event Ticket buried in the trash! Use ${getBotPrefix()}startLegendaryEvent to start it!`
+        }
+    ] as const;
+
+    const reward = pickRandom(rewards);
+    const mult = Math.pow(1.25, rodLevel);
+    const chestBonus = Math.floor(boxMullerTransform(1000 * mult, 500, 250));
+    setTimeout(async () => {
+        sendActionToChannel(
+            channelLogin,
+            `@${userDisplayName} Hold on... something's glimmering in the trash! ${PAUSE_EMOTES(channelLogin)}`
+        );
+
+        await delay(2000);
+
+        if (reward.type === 'silver') {
+
+            sendActionToChannel(
+                channelLogin,
+                `@${userDisplayName} 💰 While sifting through the trash, you discovered a hidden treasure chest containing ${chestBonus} silver! ${getValueEmote(chestBonus, channelLogin)}`
+            );
+            return;
+        }
+
+        await grantRedeemable({
+            userId: userProviderId,
+            channelProviderId,
+            redeemableCode: reward.code
+        });
+
+        sendActionToChannel(
+            channelLogin,
+            `@${userDisplayName} ${reward.message} ${CONGRATULATIONS_EMOTES(channelLogin)}`
+        );
+    }, 2000);
+
+    if (reward.type === 'silver') {
+        return chestBonus;
+    }
+
+    return 0;
+}

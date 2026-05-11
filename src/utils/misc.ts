@@ -4,7 +4,7 @@ import { prisma } from "@/prisma";
 import { getUserById, getUserByUsername, getUsersByUsername, sendChatMessageToChannel } from "@/twitch/api";
 import Qty from "js-quantities";
 
-export function pickRandom<T>(arr: T[]): T {
+export function pickRandom<T>(arr: readonly T[]): T {
     return arr[Math.floor(Math.random() * arr.length)];
 }
 export const delay = (ms: number): Promise<void> => {

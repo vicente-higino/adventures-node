@@ -12,6 +12,7 @@ import { EmoteTracker } from "./emoteTracker";
 import { createEventsubListeners, createWhisperListener } from "./eventsubListeners";
 import { checkIfChannelIsForcedSend, fetchLiveChannels, isChannelLive } from "./liveChannels";
 import { ChatMail } from "./mail";
+import { syncRedeemables } from "@/common/redeemables";
 export { checkIfChannelIsForcedSend, isChannelLive };
 
 const clientId = env.TWITCH_CLIENT_ID;
@@ -68,6 +69,7 @@ export const createBot = async (forceRecreate?: boolean): Promise<boolean> => {
     }
     await fetchLiveChannels(botConfig.channels);
     await createEventsubListeners(botConfig.channels);
+    await syncRedeemables();
     const tokenFile = `./secrets/tokens.${botConfig.userId}.json`;
     bot?.chat.quit();
     try {

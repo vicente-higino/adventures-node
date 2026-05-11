@@ -20,6 +20,7 @@ import dayjs from "dayjs";
 import Decimal from "decimal.js";
 import z from "zod";
 import { cancelScheduleAdventureWarnings, scheduleAdventureWarnings } from "./helpers/schedule";
+import { consumeRedeemable } from "./redeemables";
 
 // Replace single mutex with a map of mutexes per channel
 const advEndMutexMap: Map<string, Mutex> = new Map();
@@ -306,7 +307,8 @@ export async function handleAdventureJoin(params: {
     });
 
     if (!adv) {
-        const payoutRate = roundToDecimalPlaces(generatePayoutRate(), 2);
+        const redeem = await consumeRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: 'adventure_2x' });
+        const payoutRate = redeem ? 2 : roundToDecimalPlaces(generatePayoutRate(), 2);
         const formattedPayoutRate = payoutRate.toFixed(2);
         const buyin = calculateAmount(amountParam, balance.value, undefined, true, payoutRate);
         const newBuyin = Math.min(buyin, balance.value);
