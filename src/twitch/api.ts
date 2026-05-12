@@ -152,6 +152,7 @@ export async function sendChatMessageToChannel(broadcaster_id: string, sender_id
 
     q.push(async () => {
         try {
+            logger.info(`Sending message to ${broadcaster_id}: ${message}`);
             const res = await apiClient.chat.sendChatMessageAsApp(sender_id, broadcaster_id, message);
             return res;
         } catch (error) {
