@@ -10,21 +10,21 @@ type SubmitMoveResult =
     | { status: "canceled"; msg: string; channel: string }
     | { status: "pending" }
     | {
-          status: "resolved";
-          channelId: string;
-          channel: string;
-          round: number;
-          moveA: RpsMove;
-          moveB: RpsMove;
-          playerA: string;
-          playerB: string;
-          scoreA: number;
-          scoreB: number;
-          matchEnd: boolean;
-          winner: string | null;
-          wager: number;
-          winStreak: number;
-      };
+        status: "resolved";
+        channelId: string;
+        channel: string;
+        round: number;
+        moveA: RpsMove;
+        moveB: RpsMove;
+        playerA: string;
+        playerB: string;
+        scoreA: number;
+        scoreB: number;
+        matchEnd: boolean;
+        winner: string | null;
+        wager: number;
+        winStreak: number;
+    };
 
 function resolveMove(a: RpsMove, b: RpsMove) {
     if (a === b) return "DRAW";
@@ -46,7 +46,7 @@ export async function cancelRPS_Job(matchId: bigint) {
 }
 type Reason = "player" | "timeout" | "no_balance";
 export async function cancelRPSMatch(matchId: bigint, reason: Reason, cancelPlayerId?: string): Promise<CancelRPSMatchResult> {
-    logger.debug({ matchId, reason, cancelPlayerId }, "cancelRPSMatch called");
+    logger.trace({ matchId, reason, cancelPlayerId }, "cancelRPSMatch called");
 
     const match = await prisma.match.findUnique({ where: { id: matchId }, include: { rounds: { include: { moves: true } } } });
 
@@ -60,7 +60,7 @@ export async function cancelRPSMatch(matchId: bigint, reason: Reason, cancelPlay
         return { status: "error", error: `Cannot cancel match with status: ${match.status}` };
     }
 
-    logger.debug({ match }, "Match found, fetching users");
+    logger.trace({ match }, "Match found, fetching users");
 
     // Fetch user information for both players and channel
     const [userA, userB, channel] = await Promise.all([
@@ -83,7 +83,7 @@ export async function cancelRPSMatch(matchId: bigint, reason: Reason, cancelPlay
     const playerASubmittedLastRound = lastRound.moves.some(m => m.player === match.playerA) ?? false;
     const playerBSubmittedLastRound = lastRound.moves.some(m => m.player === match.playerB) ?? false;
     const movesCount = match.rounds.reduce((p, m) => p + m.moves.length, 0);
-    logger.debug(
+    logger.trace(
         { matchId, playerASubmittedRound1, playerASubmittedLastRound, playerBSubmittedRound1, playerBSubmittedLastRound, movesCount, lastMove },
         "Player submission status checked",
     );
@@ -107,12 +107,12 @@ export async function cancelRPSMatch(matchId: bigint, reason: Reason, cancelPlay
 
     // Refund playerA's wager
     await increaseBalanceWithChannelID(prisma, channel.id, match.playerA, match.wager);
-    logger.debug({ matchId, playerA: userA.login, amount: match.wager }, "PlayerA wager refunded");
+    logger.trace({ matchId, playerA: userA.login, amount: match.wager }, "PlayerA wager refunded");
 
     // Refund playerB's wager if they submitted in round 1
     if (playerBSubmittedRound1) {
         await increaseBalanceWithChannelID(prisma, channel.id, match.playerB, match.wager);
-        logger.debug({ matchId, playerB: userB.login, amount: match.wager }, "PlayerB wager refunded");
+        logger.trace({ matchId, playerB: userB.login, amount: match.wager }, "PlayerB wager refunded");
     }
 
     // Cancel the match
@@ -123,7 +123,7 @@ export async function cancelRPSMatch(matchId: bigint, reason: Reason, cancelPlay
 }
 
 export async function createMatch(channelId: string, playerA_id: string, playerB_id: string, wager: number) {
-    logger.debug({ channelId, playerA_id, playerB_id, wager }, "createMatch called");
+    logger.trace({ channelId, playerA_id, playerB_id, wager }, "createMatch called");
 
     if (wager < 0 || playerA_id === playerB_id) {
         logger.warn({ channelId, playerA_id, playerB_id, wager }, "Invalid match parameters - negative wager or same player");
@@ -139,7 +139,7 @@ export async function createMatch(channelId: string, playerA_id: string, playerB
 }
 
 export async function submitMove(userId: string, move: RpsMove): Promise<SubmitMoveResult> {
-    logger.debug({ userId, move }, "submitMove called");
+    logger.trace({ userId, move }, "submitMove called");
 
     const match = await prisma.match.findFirst({
         where: { status: "ACTIVE", OR: [{ playerA: userId }, { playerB: userId }] },
@@ -147,11 +147,11 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
     });
 
     if (!match) {
-        logger.debug({ userId }, "No active match found");
+        logger.trace({ userId }, "No active match found");
         return { status: "error", error: "No active match" };
     }
 
-    logger.debug({ matchId: match.id, userId }, "Active match found");
+    logger.trace({ matchId: match.id, userId }, "Active match found");
 
     const [userA, userB, channel] = await Promise.all([
         getUserById(prisma, match.playerA),
@@ -163,13 +163,13 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
         return { status: "error", error: "Error fetching users" };
     }
 
-    logger.debug({ playerA: userA.login, playerB: userB.login, channel: channel.login }, "Users fetched successfully");
+    logger.trace({ playerA: userA.login, playerB: userB.login, channel: channel.login }, "Users fetched successfully");
     const round = match.rounds[0];
 
     if (userB.id == userId && round.roundNum === 1) {
-        logger.debug({ userId, roundNum: round.roundNum }, "PlayerB on round 1, checking balance");
+        logger.trace({ userId, roundNum: round.roundNum }, "PlayerB on round 1, checking balance");
         const playerB_balance = await findOrCreateBalance(prisma, channel.login, channel.id, userB.id, userB.login, userB.displayName);
-        logger.debug({ playerBBalance: playerB_balance.value, wager: match.wager }, "PlayerB balance retrieved");
+        logger.trace({ playerBBalance: playerB_balance.value, wager: match.wager }, "PlayerB balance retrieved");
 
         if (playerB_balance.value < match.wager) {
             logger.warn(
@@ -187,13 +187,13 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
                 channel: channel.login,
             };
         }
-        logger.debug({ playerBId: userB.id, amount: match.wager }, "Deducting wager from playerB");
+        logger.trace({ playerBId: userB.id, amount: match.wager }, "Deducting wager from playerB");
         await decreaseBalance(prisma, playerB_balance.id, match.wager);
     }
 
     try {
         await prisma.move.create({ data: { roundId: round.id, player: userId, move } });
-        logger.debug({ roundId: round.id, userId, move }, "Move created successfully");
+        logger.trace({ roundId: round.id, userId, move }, "Move created successfully");
     } catch (e) {
         logger.warn({ roundId: round.id, userId, move, error: e }, "Move creation failed - already submitted");
         return { status: "error", error: "Move already submitted" };
@@ -201,10 +201,10 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
 
     // check if both moves are in
     const moves = await prisma.move.findMany({ where: { roundId: round.id } });
-    logger.debug({ roundId: round.id, movesCount: moves.length }, "Moves for round");
+    logger.trace({ roundId: round.id, movesCount: moves.length }, "Moves for round");
 
     if (moves.length < 2) {
-        logger.debug({ matchId: match.id, roundNum: round.roundNum }, "Waiting for second move");
+        logger.trace({ matchId: match.id, roundNum: round.roundNum }, "Waiting for second move");
         return { status: "pending" };
     }
 
@@ -212,7 +212,7 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
     const moveA = moves.find(m => m.player === match.playerA)?.move!;
     const moveB = moves.find(m => m.player === match.playerB)?.move!;
     const result = resolveMove(moveA, moveB);
-    logger.debug({ roundNum: round.roundNum, moveA, moveB, result }, "Round resolved");
+    logger.trace({ roundNum: round.roundNum, moveA, moveB, result }, "Round resolved");
 
     await prisma.round.update({ where: { id: round.id }, data: { winner: result } });
 
@@ -226,7 +226,7 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
         if (r.winner === "PLAYER_A") scoreA++;
         if (r.winner === "PLAYER_B") scoreB++;
     }
-    logger.debug({ scoreA, scoreB }, "Match score computed");
+    logger.trace({ scoreA, scoreB }, "Match score computed");
 
     // check BO3 end
     let matchEnd = false;
@@ -240,7 +240,7 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
         statsWinner = await endMatch(match, winner, loser, channel);
     } else {
         // next round
-        logger.debug({ matchId: match.id, nextRound: round.roundNum + 1 }, "Creating next round");
+        logger.trace({ matchId: match.id, nextRound: round.roundNum + 1 }, "Creating next round");
         await prisma.round.create({ data: { matchId: match.id, roundNum: round.roundNum + 1 } });
     }
     const res = {
@@ -259,13 +259,13 @@ export async function submitMove(userId: string, move: RpsMove): Promise<SubmitM
         wager: match.wager,
         winStreak: statsWinner?.rpsWinStreak ?? 0,
     } as const;
-    logger.debug(res, "Match result prepared");
+    logger.trace(res, "Match result prepared");
     return res;
 }
 
 async function endMatch(match: Match, winnerId: string, loserId: string, channel: DbUser) {
     await increaseBalanceWithChannelID(prisma, channel.id, winnerId, match.wager * 2);
-    logger.debug({ winnerId: winnerId, amount: match.wager * 2 }, "Winner balance increased");
+    logger.trace({ winnerId: winnerId, amount: match.wager * 2 }, "Winner balance increased");
 
     cancelRPS_Job(match.id);
 
@@ -277,7 +277,7 @@ async function endMatch(match: Match, winnerId: string, loserId: string, channel
         winAmount: match.wager * 2,
         didWin: true,
     });
-    logger.debug({ userId: winnerId, didWin: true, statsA: statsWinner }, "Winner stats updated");
+    logger.trace({ userId: winnerId, didWin: true, statsA: statsWinner }, "Winner stats updated");
 
     // Update stats for loser
     const statsLoser = await updateUserRpsStats(prisma, channel.login, channel.id, loserId, {
@@ -285,6 +285,6 @@ async function endMatch(match: Match, winnerId: string, loserId: string, channel
         winAmount: 0,
         didWin: false,
     });
-    logger.debug({ userId: loserId, didWin: false, statsB: statsLoser }, "Loser stats updated");
+    logger.trace({ userId: loserId, didWin: false, statsB: statsLoser }, "Loser stats updated");
     return statsWinner;
 }
