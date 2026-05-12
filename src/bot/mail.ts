@@ -33,7 +33,7 @@ export class ChatMail {
         const mails = await prisma.chatMail.findMany({ where: { channelId: user.id, deliveredAt: null } });
         const recipientIds = new Set(mails.map(mail => mail.recipientId));
         this.channelMails.set(user.id, recipientIds);
-        logger.info(`Loaded ${mails.length} pending mails for channel: ${channel}`);
+        logger.debug(`Loaded ${mails.length} pending mails for channel: ${channel}`);
     }
 
     private listenToChat() {

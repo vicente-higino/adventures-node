@@ -21,7 +21,7 @@ export const redeemables = [
 
 export async function syncRedeemables() {
     for (const redeemable of redeemables) {
-        logger.info({ ...redeemable }, "Syncing Redeemables");
+        logger.debug({ ...redeemable }, "Syncing Redeemables");
         await prisma.redeemable.upsert({
             where: { code: redeemable.code },
 

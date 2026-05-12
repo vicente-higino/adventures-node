@@ -48,7 +48,7 @@ export function checkIfChannelIsForcedSend(channel: AtLeastOne<{ username: strin
 export function isChannelLive(channel: AtLeastOne<{ username: string; id: string }>) {
     const isLive = liveChannels.isLive(channel.id ?? channel.username ?? "");
     const forced = checkIfChannelIsForcedSend(channel);
-    logger.debug("Checking if channel: %s live: %s forced: %s", channel.id ?? channel.username, isLive, forced);
+    logger.trace("Checking if channel: %s live: %s forced: %s", channel.id ?? channel.username, isLive, forced);
     if (forced) return false;
     return isLive;
 }
