@@ -124,7 +124,7 @@ export function manualLegendaryEventTask(
     durationMs: number,
     start: string = "A Legendary Fishing Event has started!",
     msg: string = "Legendary fish are much more likely",
-    name: string = "Legendary Event"
+    name: string = "Legendary Event",
 ): boolean {
     if (legendaryEventState.active) {
         return false;
@@ -189,7 +189,7 @@ function christmasLegendaryEvent() {
                 24 * 60 * 60 * 1000,
                 "The Legendary Christmas Event has started!",
                 "Holiday magic is in the water, and legendary fish are much more likely",
-                "Legendary Christmas Event"
+                "Legendary Christmas Event",
             );
         },
         { timezone: "UTC" },

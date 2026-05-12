@@ -406,3 +406,19 @@ export type AtLeastOne<T, K extends keyof T = keyof T> = Partial<T> & { [P in K]
 export function assertNever(value: never): never {
     throw new Error(`Unhandled case: ${value}`);
 }
+
+export function pickWeightedRandom<T extends { weight: number }>(items: readonly T[]): T {
+    const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+
+    let roll = Math.random() * totalWeight;
+
+    for (const item of items) {
+        roll -= item.weight;
+
+        if (roll <= 0) {
+            return item;
+        }
+    }
+
+    return items[items.length - 1];
+}

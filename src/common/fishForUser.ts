@@ -22,7 +22,7 @@ import { fishingFacts } from "@/fishing/facts";
 import { fishTable } from "@/fishing/fishTable";
 import logger from "@/logger";
 import { dbClient } from "@/prisma";
-import { assertNever, boxMullerTransform, delay, pickRandom, sendActionToChannel } from "@/utils/misc";
+import { assertNever, boxMullerTransform, delay, pickRandom, pickWeightedRandom, sendActionToChannel } from "@/utils/misc";
 import { formatTimeToWithSeconds } from "@/utils/time";
 import { Prisma, Rarity } from "@prisma/client";
 import dayjs from "dayjs";
@@ -361,20 +361,22 @@ async function handleTrashReward({
     }
 
     const rewards = [
-        { type: "silver" },
+        { type: "silver", weight: 6 },
         {
             type: "redeemable",
             code: "adventure_2x",
             message: "You found a mysterious Adventure ticket hidden in the trash! Your next adventure will reward 2x payouts!",
+            weight: 1,
         },
         {
             type: "redeemable",
             code: "legendary_event_ticket",
             message: `You uncovered a Legendary Event Ticket buried in the trash! Use ${getBotPrefix()}startLegendaryEvent to start it!`,
+            weight: 1,
         },
     ] as const;
 
-    const reward = pickRandom(rewards);
+    const reward = pickWeightedRandom(rewards);
     const mult = Math.pow(1.25, rodLevel);
     const chestBonus = Math.floor(boxMullerTransform(1000 * mult, 500, 250));
     setTimeout(async () => {

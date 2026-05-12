@@ -8,7 +8,8 @@ import { assertNever } from "@/utils/misc";
 export const listener = new EventSubHttpListener({
     apiClient,
     logger: {
-        minLevel: "debug", custom: {
+        minLevel: env.LOG_LEVEL,
+        custom: {
             log: (level, msg) => {
                 switch (level) {
                     case LogLevel.INFO:
@@ -32,9 +33,8 @@ export const listener = new EventSubHttpListener({
                     default:
                         assertNever(level);
                 }
-
-            }
-        }
+            },
+        },
     }, // Set the log level to debug
     adapter: new ReverseProxyAdapter({
         hostName: env.TWTICH_EVENTSUB_PROXY_HOST, // The host name the server is available from

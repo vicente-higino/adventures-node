@@ -1,4 +1,4 @@
-import { CatchDetails, RARITY_POINTS } from "./constants"; // Import from constants
+import { CatchDetails, RARITY_POINTS, type Rarity } from "./constants"; // Import from constants
 import {
     MUSHY_EMOTES,
     SOCKO_EMOTES,
@@ -191,3 +191,19 @@ export const fishTable: CatchDetails[] = [
     { sellValue: RARITY_POINTS.Trash, name: "Cigarette Butt", rarity: "Trash", size: 1, weight: 0.001 },
     { sellValue: RARITY_POINTS.Trash, name: "Bottle Cap", rarity: "Trash", size: 2, weight: 0.001 },
 ];
+
+export const fishByRarity: Record<Rarity, CatchDetails[]> = {
+    Trash: [],
+    Common: [],
+    Uncommon: [],
+    Fine: [],
+    Rare: [],
+    Epic: [],
+    Exotic: [],
+    Mythic: [],
+    Legendary: [],
+};
+
+for (const fish of fishTable) {
+    fishByRarity[fish.rarity].push(fish);
+}

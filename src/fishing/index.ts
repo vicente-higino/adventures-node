@@ -1,4 +1,15 @@
-import { assertNever, boxMullerTransform, formatSize, formatWeight, pickRandom, roundToDecimalPlaces, UnitSystem } from "@/utils/misc";
+import { EmoteManager } from "@/emotes";
+import logger from "@/logger";
+import {
+    assertNever,
+    boxMullerTransform,
+    formatSize,
+    formatWeight,
+    pickRandom,
+    pickWeightedRandom,
+    roundToDecimalPlaces,
+    UnitSystem,
+} from "@/utils/misc";
 import {
     CatchDetails,
     FishingRodLevel,
@@ -6,6 +17,7 @@ import {
     Quality,
     QUALITY_ARRAY,
     QUALITY_MULTIPLIERS,
+    RARITIES,
     Rarity,
     RARITY_POINTS,
     ROD_UPGRADE_COSTS,
@@ -13,10 +25,8 @@ import {
     SIZE_PREFIXES,
     VALUE_EMOTES,
 } from "./constants";
-import { fishTable } from "./fishTable";
+import { fishByRarity } from "./fishTable";
 import { getRarityWeights } from "./rarities";
-import { EmoteManager } from "@/emotes";
-import logger from "@/logger";
 
 export {
     endLegendaryEventById,
@@ -90,35 +100,10 @@ export const getFish: GetFishFunc = (args = {}) => {
 };
 
 export function randomFish(rodLevel?: number): CatchDetails {
-    // Use centralized rarity weights
     const weights = getRarityWeights(rodLevel);
-    // Calculate total weight
-    const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
-    let random = Math.random() * totalWeight;
-
-    // Group fish by rarity
-    const fishByRarity = fishTable.reduce(
-        (acc, fish) => {
-            if (!acc[fish.rarity]) acc[fish.rarity] = [];
-            acc[fish.rarity].push(fish);
-            return acc;
-        },
-        {} as Record<Rarity, CatchDetails[]>,
-    );
-
-    // Select rarity first
-    for (const [rarity, weight] of Object.entries(weights)) {
-        random -= weight;
-        if (random <= 0) {
-            // Then randomly select a fish of that rarity
-            const fishesOfRarity = fishByRarity[rarity as Rarity];
-            return pickRandom(fishesOfRarity);
-        }
-    }
-
-    // Fallback to a random common fish
-    const commonFish = fishByRarity.Common;
-    return pickRandom(commonFish);
+    const rarityPool = RARITIES.map(rarity => ({ item: rarity, weight: weights[rarity] }));
+    const rarity = pickWeightedRandom(rarityPool);
+    return pickRandom(fishByRarity[rarity.item]);
 }
 
 export function getSizePrefix(multiplier: number): string {

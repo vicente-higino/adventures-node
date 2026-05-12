@@ -2,8 +2,8 @@ import { VALUE_EMOTES_LIST } from "@/emotes";
 import { EmoteName } from "@/emotes/emotesData";
 import type { FishQuality as Quality, Rarity } from "@prisma/client";
 
-export { Quality, Rarity };
-
+export type { Quality, Rarity };
+export const RARITIES: Rarity[] = ["Common", "Epic", "Exotic", "Fine", "Legendary", "Mythic", "Rare", "Trash", "Uncommon"];
 // Define points per rarity tier
 export const RARITY_POINTS: Record<Rarity, number> = {
     Legendary: 5000,

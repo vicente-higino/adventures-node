@@ -1,6 +1,5 @@
 import { z } from "zod";
 import "dotenv/config";
-import logger from "@/logger";
 
 const envSchema = z.object({
     TWITCH_CLIENT_ID: z.string({ required_error: "Missing environment variable: TWITCH_CLIENT_ID" }),
@@ -16,15 +15,16 @@ const envSchema = z.object({
     CH_MIGRATIONS_HOST: z.string({ required_error: "Missing environment variable: CH_MIGRATIONS_HOST" }),
     CH_MIGRATIONS_USER: z.string({ required_error: "Missing environment variable: CH_MIGRATIONS_USER" }),
     CH_MIGRATIONS_PASSWORD: z.string({ required_error: "Missing environment variable: CH_MIGRATIONS_PASSWORD" }),
+    LOG_LEVEL: z.enum(['info', 'debug']).default('info'),
 });
 export type Env = z.infer<typeof envSchema>;
 // Parse and validate environment variables
 const env = envSchema.safeParse(process.env);
 
 if (!env.success) {
-    logger.error("❌ Environment validation error:");
+    console.error("❌ Environment validation error:");
     env.error.issues.forEach(issue => {
-        logger.error(`- ${issue.message}`);
+        console.error(`- ${issue.message}`);
     });
     process.exit(1); // Stop the app if required vars are missing
 }

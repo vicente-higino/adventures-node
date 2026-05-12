@@ -30,7 +30,6 @@ export const startEventCommand = createAdminBotCommand(
     { ignoreCase: true, aliases: ["se"] },
 );
 
-
 export const startLegendaryEventCommand = createBotCommand(
     "startlegendaryevent",
     async (params, ctx) => {
@@ -40,7 +39,7 @@ export const startLegendaryEventCommand = createBotCommand(
                 const redeem = await consumeRedeemable({ userId, channelProviderId: broadcasterId, redeemableCode: "legendary_event_ticket" });
                 if (redeem) {
                     const legendaryWeight = Math.round(boxMullerTransform(25, 10, 20));
-                    const msg = `@${userDisplayName} has started a Legendary Fishing Event!`
+                    const msg = `@${userDisplayName} has started a Legendary Fishing Event!`;
                     if (!manualLegendaryEventTask(legendaryWeight, 90 * 60 * 1000, msg)) {
                         await grantRedeemable({ userId, channelProviderId: broadcasterId, redeemableCode: "legendary_event_ticket" });
                         say(`@${userDisplayName}, A Legendary Fishing Event is already active. Please wait until it ends.`);
@@ -49,7 +48,7 @@ export const startLegendaryEventCommand = createBotCommand(
                     say(`@${userDisplayName}, you dont have a ticket to start the legendary event.`);
                 }
             }
-        })
+        });
     },
     { ignoreCase: true, aliases: ["sle"] },
 );
