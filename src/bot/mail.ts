@@ -88,7 +88,7 @@ export class ChatMail {
                 return null;
             }
             const mail = await prisma.chatMail.create({ data: { channelId, senderId, recipientId, content: msg } });
-            mails.add(recipientId);
+            setTimeout(() => mails.add(recipientId), senderId === recipientId ? 1000 : 0) // add delay to avoid sending right after the mail cmd if the mail its for themself
             return mail;
         }
         return null;
