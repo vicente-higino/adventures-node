@@ -5,7 +5,7 @@ import logger from "@/logger";
 export const inventoryCommand = createBotCommand(
     "inventory",
     async (params, ctx) => {
-        const { broadcasterId, userDisplayName, userId, say } = ctx;
+        const { broadcasterId, broadcasterName, userDisplayName, userId, say } = ctx;
         const inv = await prisma.userRedeemable.findMany({
             where: {
                 userId,
@@ -18,7 +18,7 @@ export const inventoryCommand = createBotCommand(
                 redeemable: true
             }
         });
-        logger.debug({ ...inv })
+        logger.trace({ ...inv }, "%s Invetory on channel %s", userDisplayName, broadcasterName);
         if (!inv || inv.length === 0) {
             say(`@${userDisplayName} Inventory is empty...`);
             return;
