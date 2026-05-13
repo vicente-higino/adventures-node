@@ -55,11 +55,11 @@ function formatFishDisplay(fish: FishWithRecords) {
     const sizeStr = formatSize(parseFloat(fish.size));
     const caughtAgo = dayjs(fish.createdAt).fromNow();
     const caughtDateUTC = dayjs.utc(fish.createdAt).calendar(null, {
-        sameDay: "[Today at] hh:mm UTC", // The same day ( Today at 2:30 AM )
-        nextDay: "[Tomorrow at] hh:mm UTC", // The next day ( Tomorrow at 2:30 AM )
-        nextWeek: "dddd [at] hh:mm UTC", // The next week ( Sunday at 2:30 AM )
-        lastDay: "[Yesterday at] hh:mm UTC", // The day before ( Yesterday at 2:30 AM )
-        lastWeek: "[Last] dddd [at] hh:mm UTC", // Last week ( Last Monday at 2:30 AM )
+        sameDay: "[Today at] HH:mm UTC", // The same day ( Today at 2:30 AM )
+        nextDay: "[Tomorrow at] HH:mm UTC", // The next day ( Tomorrow at 2:30 AM )
+        nextWeek: "dddd [at] HH:mm UTC", // The next week ( Sunday at 2:30 AM )
+        lastDay: "[Yesterday at] HH:mm UTC", // The day before ( Yesterday at 2:30 AM )
+        lastWeek: "[Last] dddd [at] HH:mm UTC", // Last week ( Last Monday at 2:30 AM )
         sameElse: "DD/MM/YYYY", // Everything else ( 17/10/2011 )
     });
     const quality = getQualityStars(fish.quality);
