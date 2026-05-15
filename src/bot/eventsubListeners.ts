@@ -11,6 +11,9 @@ import { getBotPrefix } from ".";
 const eventsubListeners = new Set<string>();
 
 export async function createEventsubListeners(users: string[]) {
+    const subs = await apiClient.eventSub.getSubscriptions();
+    for (const sub of subs.data) logger.debug({ id: sub.id, type: sub.type, status: sub.status, condition: sub.condition }, "EventSub Subscription");
+
     await apiClient.eventSub.deleteBrokenSubscriptions();
     const userIds = await apiClient.users.getUsersByNames(users);
     for (const user of userIds) {
