@@ -356,7 +356,9 @@ async function handleTrashReward({
     channelProviderId: string;
     rodLevel: number;
 }) {
-    if (rarity !== Rarity.Trash || Math.random() >= 0.25) {
+    const chance = 0.25 * Math.pow(1.125, rodLevel);
+    const rand = Math.random();
+    if (rarity !== Rarity.Trash || rand >= chance) {
         return 0;
     }
 
@@ -371,7 +373,7 @@ async function handleTrashReward({
         {
             type: "redeemable",
             code: "legendary_event_ticket",
-            message: `You uncovered a Legendary Event Ticket buried in the trash! Use ${getBotPrefix()}startLegendaryEvent to start it!`,
+            message: `You found a Legendary Event Ticket hidden in the trash! Use "${getBotPrefix()}sle" to start it!`,
             weight: 1,
         },
     ] as const;
@@ -379,6 +381,7 @@ async function handleTrashReward({
     const reward = pickWeightedRandom(rewards);
     const mult = Math.pow(1.25, rodLevel);
     const chestBonus = Math.floor(boxMullerTransform(1000 * mult, 500, 250));
+    logger.debug({ chance, rand, reward: reward.type, mult, chestBonus }, "Treasure Info");
     setTimeout(async () => {
         sendActionToChannel(channelLogin, `@${userDisplayName} Hold on... something's glimmering in the trash! ${PAUSE_EMOTES(channelLogin)}`);
 
