@@ -247,6 +247,7 @@ export async function fishForUser({
         // Add to FishDex and check if it's a new entry
         let fishDexMessage = "";
         let fishDexCompletionMessage = "";
+        let completionBonus = 0;
         const { created } = await findOrCreateFishDexEntry(prisma, channelProviderId, userProviderId, fish.name, fish.rarity);
         if (created) {
             // This is a new entry (just created)
@@ -259,15 +260,15 @@ export async function fishForUser({
                 const hasCompletion = await hasFishDexCompletion(prisma, channelProviderId, userProviderId, fish.rarity);
                 if (!hasCompletion) {
                     // Create completion record and award bonus only if this is the first time
-                    const bonus = FISHDEX_COMPLETION_BONUS[fish.rarity] ?? 0;
-                    await createFishDexCompletion(prisma, channelProviderId, userProviderId, fish.rarity, bonus);
-                    if (bonus > 0) {
-                        await increaseBalance(prisma, balance.id, bonus);
+                    completionBonus = FISHDEX_COMPLETION_BONUS[fish.rarity] ?? 0;
+                    await createFishDexCompletion(prisma, channelProviderId, userProviderId, fish.rarity, completionBonus);
+                    if (completionBonus > 0) {
+                        await increaseBalance(prisma, balance.id, completionBonus);
                     }
                     if (fish.rarity === Rarity.Trash) {
-                        fishDexCompletionMessage += `$(newline)/me @${userDisplayName} completed the Trash FishDex and earned ${bonus} silver! EarthDay Thanks for cleaning up the ocean and helping nature! ${CONGRATULATIONS_TRASH_FISH_DEX_EMOTES(channelLogin)}`;
+                        fishDexCompletionMessage += `$(newline)/me @${userDisplayName} completed the Trash FishDex and earned ${completionBonus} silver! EarthDay Thanks for cleaning up the ocean and helping nature! ${CONGRATULATIONS_TRASH_FISH_DEX_EMOTES(channelLogin)}`;
                     } else {
-                        fishDexCompletionMessage += `$(newline)/me @${userDisplayName} has completed the FishDex for [${fish.rarity}] rarity and earned a bonus of ${bonus} silver! ${CONGRATULATIONS_EMOTES(channelLogin)}`;
+                        fishDexCompletionMessage += `$(newline)/me @${userDisplayName} has completed the FishDex for [${fish.rarity}] rarity and earned a bonus of ${completionBonus} silver! ${CONGRATULATIONS_EMOTES(channelLogin)}`;
                     }
                 }
             }
@@ -280,7 +281,7 @@ export async function fishForUser({
             promises.push(prisma.fishStats.update({ where: { id: fishStats.id }, data: { hasNotifiedUpgrade: true } }));
             notifyUpgradeMessage = `$(newline)/me @${userDisplayName} You have unlocked the ${checkUpgrade.nextRodName}! Use "${getBotPrefix()}rod buy" to upgrade! ${CONGRATULATIONS_EMOTES(channelLogin)}`;
         } else if (checkUpgrade.canUpgrade && fishStats.hasNotifiedUpgrade && !stats.hasNotifiedEnoughSilver) {
-            const totalBalance = balance.value + fish.sellValue + bonus + treasureBonus;
+            const totalBalance = balance.value + fish.sellValue + bonus + treasureBonus + completionBonus;
             const check = checkIfUserHasAvailableFundsToReNotify(totalBalance, stats);
             if (check) {
                 promises.push(prisma.fishStats.update({ where: { id: fishStats.id }, data: { hasNotifiedEnoughSilver: true } }));
