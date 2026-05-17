@@ -37,6 +37,7 @@ import { cancelRPSCommand, rpsCommand } from "./rps";
 import { mailCommand, cancelMailCommand } from "./mail";
 import { rodCommand } from "./rod";
 import { inventoryCommand } from "./inventory";
+import { adventureUpgradeCommand } from "./adventureUpgrade";
 
 export const commands: BotCommand[] = [
     fishCommand,
@@ -85,5 +86,6 @@ export const commands: BotCommand[] = [
     cancelMailCommand,
     rodCommand,
     startLegendaryEventCommand,
-    inventoryCommand
+    inventoryCommand,
+    adventureUpgradeCommand,
 ];

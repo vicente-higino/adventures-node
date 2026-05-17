@@ -392,3 +392,44 @@ export async function handleAdventureJoin(params: {
     }
     return `@${userDisplayName} already joined the adventure with ${player.buyin} silver.`;
 }
+
+
+export async function upgradeAdventure(params: {
+    channelLogin: string;
+    channelProviderId: string;
+    userProviderId: string;
+    userLogin: string;
+    userDisplayName: string;
+}): Promise<string> {
+    const { channelProviderId, userProviderId, userDisplayName } = params;
+    const adv = await prisma.adventure.findFirst({
+        where: {
+            channelProviderId,
+            name: {
+                not: "DONE"
+            }
+        },
+        orderBy: { createdAt: "desc" },
+    });
+    if (!adv) {
+        return `@${userDisplayName} there's no adventure to upgrade. Start one first!`;
+    }
+    if (adv.payoutRate === 2) {
+        return `@${userDisplayName}, the adventure already is 2x.`;
+    }
+    const redeem = await consumeRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: 'adventure_2x' });
+    if (redeem) {
+        await prisma.adventure.update({
+            where: {
+                id: adv.id
+            },
+            data: {
+                payoutRate: 2
+            }
+        });
+        return `/me @${userDisplayName} has upgraded the adventure to a 2x payout!`;
+    } else {
+        return `@${userDisplayName}, you don't own a 2x adventure ticket to upgrade this adventure!`;
+    }
+
+}   
