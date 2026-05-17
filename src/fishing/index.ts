@@ -74,12 +74,13 @@ export const getFish: GetFishFunc = (args = {}) => {
     const weightMin = weight * 0.005; // 0.5% of the weight
     const actualWeight = rarity !== "Trash" ? roundToDecimalPlaces(boxMullerTransform(weightMean, weightStdDev, weightMin), 6) : weight;
 
-    const prefix = getSizePrefix(multiplier);
-    const sellMultiplier = getSellMultiplier(multiplier);
-    const actualSellValue = rarity !== "Trash" ? roundToDecimalPlaces(sellValue * sellMultiplier, 0) : 1;
-
     const quality = rarity !== "Trash" ? getQuality(rodLevel) : "Normal";
     const qualityMultiplier = getQualityMultiplier(quality);
+
+    const prefix = getSizePrefix(multiplier);
+    const sellMultiplier = getSellMultiplier(multiplier);
+    const actualSellValue = rarity !== "Trash" ? roundToDecimalPlaces(sellValue * sellMultiplier * qualityMultiplier, 0) : 1;
+
     return {
         name: fish.name,
         rarity: fish.rarity,
@@ -94,7 +95,7 @@ export const getFish: GetFishFunc = (args = {}) => {
         weight: actualWeight,
         formatedWeight: formatWeight(actualWeight, unitSystem),
         sellMultiplier: sellMultiplier,
-        sellValue: roundToDecimalPlaces(actualSellValue * qualityMultiplier, 0),
+        sellValue: roundToDecimalPlaces(actualSellValue, 0),
         emote: emote ? emote(channel) : "",
     };
 };
