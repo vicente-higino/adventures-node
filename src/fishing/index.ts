@@ -232,3 +232,53 @@ export function checkIfUserHasAvailableFundsToReNotify(
     }
     return balance >= upgradeCheck.cost; // User can afford the next upgrade
 }
+
+/**
+ * Calculate the probability of each quality tier from cumulative chances
+ * To reach QUALITY_ARRAY[i], you need q = i+1
+ * This means: pass checks 0 to i, then either fail check i+1 (if it exists) or stop
+ * @param qualityChance Cumulative chances array from a rod level
+ * @returns Record of quality -> percentage chance
+ */
+export function calculateQualityOdds(qualityChance: number[]): Record<Quality, number> {
+    const odds: Partial<Record<Quality, number>> = {};
+
+    for (let i = 0; i < QUALITY_ARRAY.length; i++) {
+        const quality = QUALITY_ARRAY[i];
+
+        if (i >= qualityChance.length) {
+            // Quality tier beyond what this rod can reach
+            odds[quality] = 0;
+        } else {
+            // Prob = (product of checks 0 to i) × (1 - check[i+1])
+            // If check[i+1] doesn't exist, treat it as 0, so (1 - 0) = 1
+            let prob = 1;
+            for (let j = 0; j <= i; j++) {
+                prob *= qualityChance[j];
+            }
+            // Apply the failure rate of the next check (or 1 if no next check)
+            if (i + 1 < qualityChance.length) {
+                prob *= 1 - qualityChance[i + 1];
+            }
+            odds[quality] = prob * 100;
+        }
+    }
+
+    return odds as Record<Quality, number>;
+}
+
+/**
+ * Format quality odds for display
+ * @param qualityChance Cumulative chances array from a rod level
+ * @returns Formatted string for chat display
+ */
+export function formatQualityOddsDisplay(qualityChance: number[]): string {
+    const odds = calculateQualityOdds(qualityChance);
+    return Object.entries(odds)
+        .map(([quality, chance]) => {
+            const stars = getQualityStars(quality as Quality);
+            const displayQuality = stars || quality;
+            return `${displayQuality}: ${roundToDecimalPlaces(chance, 2).toFixed(2)}%`;
+        })
+        .join(", ");
+}
