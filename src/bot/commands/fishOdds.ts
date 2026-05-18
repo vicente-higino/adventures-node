@@ -4,6 +4,10 @@ import { formatRarityWeightDisplay, getRarityWeights } from "@/fishing/rarities"
 import { prisma } from "@/prisma";
 import { getUserByUsername } from "@/twitch/api";
 import { getRod } from "@/fishing";
+import logger from "@/logger";
+
+const rodLevelToNameMap = new Map(fishingRodLevels.map(rod => [rod.level, rod.name]));
+const rodEmoteToNameMap = new Map(fishingRodLevels.map(rod => [`(${rod.name.replaceAll(" ", "_").toLowerCase()})`, rod]));
 
 export const fishOddsCommand = createBotCommand(
     "fishingodds",
@@ -11,12 +15,21 @@ export const fishOddsCommand = createBotCommand(
         let { msg, say, userId, broadcasterId, userDisplayName } = ctx;
         const param = params.shift()?.toLowerCase().replaceAll("@", "");
         if (param) {
-            const rod = fishingRodLevels.find(rod => rod.name.toLowerCase().includes(param));
+            let rod = fishingRodLevels.find(rod => rod.name.toLowerCase().includes(param));
             if (rod) {
                 const weights = getRarityWeights(rod.level);
                 say(`${rod.name} odds: ${formatRarityWeightDisplay(weights)}`);
                 return;
             }
+            logger.debug(`No rod found matching "${param}". Checking for emote match...`);
+            logger.debug(`Available emotes: ${[...rodEmoteToNameMap.keys()].join(", ")}`);
+            rod = rodEmoteToNameMap.get(param);
+            if (rod) {
+                const weights = getRarityWeights(rod.level);
+                say(`${rod.name} odds: ${formatRarityWeightDisplay(weights)}`);
+                return;
+            }
+            logger.debug(`No rod found matching "${param}". Checking for user...`);
             const user = await getUserByUsername(prisma, param);
             if (user) {
                 userId = user.id;
