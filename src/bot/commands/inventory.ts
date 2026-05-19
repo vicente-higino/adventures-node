@@ -1,6 +1,20 @@
 import { prisma } from "@/prisma";
+import { RedeemableType } from "@prisma/client";
 import { createBotCommand } from "../botCommandWithKeywords";
 import logger from "@/logger";
+import { getBotPrefix } from "../createBot";
+import { assertNever } from "@/utils/misc";
+
+function getCommand(type: RedeemableType) {
+    switch (type) {
+        case "START_ADVENTURE_MULTIPLIER":
+            return `(${getBotPrefix()}adv2x)`;
+        case "START_LEGENDARY_EVENT":
+            return `(${getBotPrefix()}sle)`;
+        default:
+            assertNever(type);
+    }
+}
 
 export const inventoryCommand = createBotCommand(
     "inventory",
@@ -24,7 +38,7 @@ export const inventoryCommand = createBotCommand(
             return;
         }
         const items = inv.map(({ quantity, redeemable }) => {
-            return `[${quantity}] - ${redeemable.name}`;
+            return `[${quantity}] - ${redeemable.name} ${getCommand(redeemable.type)}`;
         });
         say(`@${userDisplayName} Inventory:$(newline)${items.join(" | ")}`);
     },
