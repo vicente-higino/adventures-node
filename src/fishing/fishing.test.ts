@@ -251,8 +251,8 @@ describe("Fishing Module", () => {
                 };
 
                 for (let i = 0; i < TRIALS; i++) {
-                    const fish = getFish({ rodLevel: rod.level });
-                    empiricalCounts[fish.quality]++;
+                    const q = fishingModule.getQuality(rod.level);
+                    empiricalCounts[q]++;
                 }
 
                 // Calculate empirical percentages

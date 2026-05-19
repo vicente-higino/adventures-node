@@ -241,27 +241,35 @@ export function checkIfUserHasAvailableFundsToReNotify(
  * @returns Record of quality -> percentage chance
  */
 export function calculateQualityOdds(qualityChance: number[]): Record<Quality, number> {
-    const odds: Partial<Record<Quality, number>> = {};
+    const probs: Partial<Record<Quality, number>> = {};
 
     for (let i = 0; i < QUALITY_ARRAY.length; i++) {
         const quality = QUALITY_ARRAY[i];
 
         if (i >= qualityChance.length) {
-            // Quality tier beyond what this rod can reach
-            odds[quality] = 0;
+            probs[quality] = 0;
         } else {
-            // Prob = (product of checks 0 to i) × (1 - check[i+1])
-            // If check[i+1] doesn't exist, treat it as 0, so (1 - 0) = 1
             let prob = 1;
             for (let j = 0; j <= i; j++) {
                 prob *= qualityChance[j];
             }
-            // Apply the failure rate of the next check (or 1 if no next check)
             if (i + 1 < qualityChance.length) {
                 prob *= 1 - qualityChance[i + 1];
             }
-            odds[quality] = prob * 100;
+            probs[quality] = prob; // keep as fraction
         }
+    }
+
+    // Normalize proportions so they sum to 100% without skewing a single tier
+    const total = Object.values(probs).reduce((s, v) => s + (v || 0), 0);
+    const odds: Partial<Record<Quality, number>> = {};
+    if (total <= 0) {
+        for (const q of QUALITY_ARRAY) odds[q] = 0;
+        return odds as Record<Quality, number>;
+    }
+
+    for (const q of QUALITY_ARRAY) {
+        odds[q] = ((probs[q] || 0) / total) * 100;
     }
 
     return odds as Record<Quality, number>;
