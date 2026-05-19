@@ -1,6 +1,5 @@
-import { checkIfChannelIsForcedSend, getBotConfig, isChannelLive } from "@/bot";
+import { checkIfChannelIsForcedSend, getBotConfig, isChannelLive, sendActionToChannel, sendMessageToChannel } from "@/bot";
 import { prisma } from "@/prisma";
-import { sendActionToChannel, sendMessageToChannel } from "@/utils/misc";
 import { handleAdventureEnd } from "../handleAdventure";
 import { getStreamByUserId } from "@/twitch/api";
 import logger from "@/logger";

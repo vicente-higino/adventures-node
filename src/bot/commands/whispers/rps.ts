@@ -1,9 +1,8 @@
+import { sendMessageToChannel } from "@/bot/messages";
 import { submitMove } from "@/bot/rps";
 import { createWhisperCommand } from "@/bot/whispers";
 import { CONGRATULATIONS_EMOTES } from "@/emotes";
-import { prisma } from "@/prisma";
-import { getUserById } from "@/twitch/api";
-import { pickRandom, sendMessageToChannel, sendMessageToChannelId } from "@/utils/misc";
+import { pickRandom } from "@/utils/misc";
 import { type RpsMove } from "@prisma/client";
 import { z } from "zod";
 

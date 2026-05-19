@@ -1,5 +1,4 @@
 import { startSevenTVEventApi } from "@/7tv/eventApi";
-import { getBotConfig } from "@/bot";
 import { Emote, EmoteFetcher, FetchOnly } from "@/common/emotes";
 import clickhouse from "@/db/clickhouse";
 import logger from "@/logger";
@@ -8,6 +7,8 @@ import { getUserByUsername } from "@/twitch/api";
 import { EmoteProvider, Prisma } from "@prisma/client";
 import { Bot, MessageEvent } from "@twurple/easy-bot";
 import cron from "node-cron";
+import { getBotConfig } from "./createBot";
+import { EmoteManager } from "@/emotes";
 // Tracks emote usage per channel
 export class EmoteTracker {
     private emoteFetcher = new EmoteFetcher();
@@ -36,6 +37,7 @@ export class EmoteTracker {
         });
         this.listenToChat();
         this.startRefreshAllEmotesCronjobTask();
+        EmoteManager.setEmoteTracker(this);
         startSevenTVEventApi();
     }
 

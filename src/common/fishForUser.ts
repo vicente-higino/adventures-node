@@ -1,4 +1,4 @@
-import { getBotPrefix } from "@/bot";
+import { getBotPrefix, sendActionToChannel } from "@/bot";
 import {
     createFishDexCompletion,
     findOrCreateBalance,
@@ -22,7 +22,7 @@ import { fishingFacts } from "@/fishing/facts";
 import { fishTable } from "@/fishing/fishTable";
 import logger from "@/logger";
 import { dbClient } from "@/prisma";
-import { assertNever, boxMullerTransform, delay, pickRandom, pickWeightedRandom, sendActionToChannel } from "@/utils/misc";
+import { assertNever, boxMullerTransform, delay, pickRandom, pickWeightedRandom } from "@/utils/misc";
 import { formatTimeToWithSeconds } from "@/utils/time";
 import { Prisma, Rarity } from "@prisma/client";
 import dayjs from "dayjs";

@@ -1,10 +1,14 @@
-import { emoteTracker } from "@/bot";
 import { pickRandom } from "@/utils/misc";
 import { CATEGORY_EMOTES, CATEGORY_EMOTES_RECORD, Emote, EmoteCategory, EmoteName } from "./emotesData";
+import { EmoteTracker } from "@/bot/emoteTracker";
 
 export class EmoteManager {
     private static readonly emoteCategoriesCache = new Map<EmoteCategory, Emote[]>();
+    private static emoteTracker: EmoteTracker | null = null;
 
+    public static setEmoteTracker(emoteTracker: EmoteTracker) {
+        EmoteManager.emoteTracker = emoteTracker;
+    }
     private static getEmotesForCategory(category: EmoteCategory): (Emote | Emote[])[] {
         if (!this.emoteCategoriesCache.has(category)) {
             return CATEGORY_EMOTES[category] || [];
@@ -19,10 +23,10 @@ export class EmoteManager {
         const emote = pickRandom(emotes);
         if (emote instanceof Array) {
             if (!channel) return emote;
-            return emote.filter(e => emoteTracker?.channelHasEmote(channel, e.name) || e.provider == "native");
+            return emote.filter(e => EmoteManager.emoteTracker?.channelHasEmote(channel, e.name) || e.provider == "native");
         }
         if (!channel || emote.provider == "native") return emote;
-        return emoteTracker?.channelHasEmote(channel, emote.name) ? emote : null;
+        return EmoteManager.emoteTracker?.channelHasEmote(channel, emote.name) ? emote : null;
     }
 
     /**
@@ -41,7 +45,7 @@ export class EmoteManager {
     public static getEmote(name: EmoteName, channel?: string): string {
         const emote = Emote(name);
         if (channel && emote.provider !== "native") {
-            const hasEmote = emoteTracker?.channelHasEmote(channel, name);
+            const hasEmote = EmoteManager.emoteTracker?.channelHasEmote(channel, name);
             if (hasEmote) return emote.name;
             else return "";
         }

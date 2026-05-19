@@ -30,17 +30,17 @@ export interface CatchDetails {
     emote?: (channel?: string) => string;
 }
 export const VALUE_EMOTES: { threshold: number; emote: EmoteName }[] = [
-    { threshold: 10, emote: VALUE_EMOTES_LIST.WAJAJA.name }, //  < 10
-    { threshold: 50, emote: VALUE_EMOTES_LIST.pogg.name }, //  < 50
-    { threshold: 100, emote: VALUE_EMOTES_LIST.poggSpin.name }, //  < 100
-    { threshold: 140, emote: VALUE_EMOTES_LIST.YIPPIE.name }, //  < 140
-    { threshold: 300, emote: VALUE_EMOTES_LIST.POGGIES.name }, //  < 300
-    { threshold: 600, emote: VALUE_EMOTES_LIST.POGGERS.name }, //  < 600
-    { threshold: 800, emote: VALUE_EMOTES_LIST.Pog.name }, //  < 800
-    { threshold: 1000, emote: VALUE_EMOTES_LIST.HOLY.name }, //  < 1000
-    { threshold: 5000, emote: VALUE_EMOTES_LIST.Cereal.name }, //  < 2500
-    { threshold: 15000, emote: VALUE_EMOTES_LIST.MUGA.name }, //  < 5000
-    { threshold: Infinity, emote: VALUE_EMOTES_LIST.OOOO.name }, // >= 5000
+    { threshold: 10, emote: VALUE_EMOTES_LIST?.WAJAJA?.name ?? "WAJAJA" }, //  < 10
+    { threshold: 50, emote: VALUE_EMOTES_LIST?.pogg?.name ?? "pogg" }, //  < 50
+    { threshold: 100, emote: VALUE_EMOTES_LIST?.poggSpin?.name ?? "poggSpin" }, //  < 100
+    { threshold: 140, emote: VALUE_EMOTES_LIST?.YIPPIE?.name ?? "YIPPIE" }, //  < 140
+    { threshold: 300, emote: VALUE_EMOTES_LIST?.POGGIES?.name ?? "POGGIES" }, //  < 300
+    { threshold: 600, emote: VALUE_EMOTES_LIST?.POGGERS?.name ?? "POGGERS" }, //  < 600
+    { threshold: 800, emote: VALUE_EMOTES_LIST?.Pog?.name ?? "Pog" }, //  < 800
+    { threshold: 1000, emote: VALUE_EMOTES_LIST?.HOLY?.name ?? "HOLY" }, //  < 1000
+    { threshold: 5000, emote: VALUE_EMOTES_LIST?.Cereal?.name ?? "Cereal" }, //  < 2500
+    { threshold: 15000, emote: VALUE_EMOTES_LIST?.MUGA?.name ?? "MUGA" }, //  < 5000
+    { threshold: Infinity, emote: VALUE_EMOTES_LIST?.OOOO?.name ?? "OOOO" }, // >= 5000
 ];
 type PercentageMap = Record<Rarity, number>;
 type WeightMap = Record<Rarity, number>;

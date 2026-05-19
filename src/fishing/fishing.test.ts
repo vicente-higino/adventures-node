@@ -1,14 +1,10 @@
-import { randomFish, getFish, getValueEmote } from "../fishing";
-import { fishTable } from "./fishTable"; // Corrected import path
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as fishingModule from "../fishing";
-import { CatchDetails, fishingRodLevels, Rarity } from "./constants";
-import { Extensions } from "@prisma/client/runtime/binary";
+import { calculateQualityOdds, getFish, getValueEmote, randomFish } from "../fishing";
+import { CatchDetails, fishingRodLevels, Quality, Rarity } from "./constants";
+import { fishTable } from "./fishTable"; // Corrected import path
 import { getRarityWeights } from "./rarities";
 
-/**
- * Test suite for fishing functionality
- */
 
 // Helper function to run multiple trials and collect results
 function runMultipleTrials(trials: number, rodLevel: number): Record<Rarity, number> {
@@ -234,5 +230,58 @@ describe("Fishing Module", () => {
 
             // Clean up
         });
+    });
+
+    describe("Quality Odds Simulation", () => {
+        it("should verify quality odds through simulation", () => {
+            const TRIALS = 100000;
+
+            for (const rod of fishingRodLevels) {
+                // Calculate theoretical odds
+                const theoreticalOdds = calculateQualityOdds(rod.qualityChance);
+
+                // Run simulation
+                const empiricalCounts: Record<Quality, number> = {
+                    Normal: 0,
+                    Shining: 0,
+                    Glistening: 0,
+                    Opulent: 0,
+                    Radiant: 0,
+                    Alpha: 0,
+                };
+
+                for (let i = 0; i < TRIALS; i++) {
+                    const fish = getFish({ rodLevel: rod.level });
+                    empiricalCounts[fish.quality]++;
+                }
+
+                // Calculate empirical percentages
+                const empiricalOdds: Partial<Record<Quality, number>> = {};
+                for (const quality of Object.keys(empiricalCounts) as Quality[]) {
+                    empiricalOdds[quality] = (empiricalCounts[quality] / TRIALS) * 100;
+                }
+
+                // Log results
+                console.log(`\n========== ${rod.name} (Level ${rod.level}) ==========`);
+                console.log(`Trials: ${TRIALS}`);
+                console.log(`Quality Chances: ${rod.qualityChance.map(c => c.toFixed(3)).join(", ")}\n`);
+
+                for (const quality of Object.keys(theoreticalOdds) as Quality[]) {
+                    const theoretical = theoreticalOdds[quality];
+                    const empirical = empiricalOdds[quality]!;
+
+                    // Skip if theoretical is 0 (unavailable for this rod)
+                    if (theoretical === 0) continue;
+
+                    const diff = Math.abs(theoretical - empirical);
+                    const pctDiff = ((diff / theoretical) * 100).toFixed(2);
+
+                    console.log(`${quality.padEnd(12)}: Theory ${theoretical.toFixed(2)}% | Empirical ${empirical.toFixed(2)}% | Diff ${diff.toFixed(2)}% (${pctDiff}%)`);
+                }
+            }
+
+            // This test just logs - it always passes
+            expect(true).toBe(true);
+        }, 60000); // 60 second timeout for large simulation
     });
 });

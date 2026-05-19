@@ -1,10 +1,10 @@
+import { processWarning } from "@/common/helpers/schedule";
 import boss from "@/db/boss";
 import logger from "@/logger";
-import { sendActionToChannel, sendMessageToChannel, sendMessageToChannelId } from "@/utils/misc";
 import { ms } from "ms";
-import { cancelRPSMatch } from "./rps";
-import { processWarning } from "@/common/helpers/schedule";
 import { isChannelLive } from "./liveChannels";
+import { cancelRPSMatch } from "./rps";
+import { sendActionToChannel, sendMessageToChannel } from "@/bot";
 
 export async function startPgBoss() {
     await boss.start();

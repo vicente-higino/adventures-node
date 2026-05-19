@@ -1,11 +1,10 @@
 import logger from "@/logger";
 import { prisma } from "@/prisma";
 import { getUserById, getUserByUsername } from "@/twitch/api";
-import { sendActionToChannel } from "@/utils/misc";
 import { Bot } from "@twurple/easy-bot";
 import { format } from "ms";
 import cron from "node-cron";
-import { getBotConfig, isChannelLive } from "./index";
+import { getBotConfig, isChannelLive, sendActionToChannel } from "./index";
 
 export class ChatMail {
     private channelMails: Map<string, Set<string>> = new Map();
