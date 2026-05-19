@@ -2,7 +2,7 @@ import { prisma } from "@/prisma";
 import { RedeemableType } from "@prisma/client";
 import { createBotCommand } from "../botCommandWithKeywords";
 import logger from "@/logger";
-import { getBotPrefix } from "../createBot";
+import { getBotPrefix } from "@/bot";
 import { assertNever } from "@/utils/misc";
 
 function getCommand(type: RedeemableType) {

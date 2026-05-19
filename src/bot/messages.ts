@@ -2,7 +2,7 @@ import logger from "@/logger";
 import { prisma } from "@/prisma";
 import { getUserById, getUserByUsername, sendChatMessageToChannel } from "@/twitch/api";
 import { splitOnSpaces } from "@/utils/misc";
-import { GetBot, getBotConfig } from "./createBot";
+import { GetBot, getBotConfig } from "@/bot";
 import { isChannelLive } from "./liveChannels";
 
 export function sendMessageToChannel(channel: string, message: string) {
