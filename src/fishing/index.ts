@@ -275,9 +275,10 @@ export function calculateQualityOdds(qualityChance: number[]): Record<Quality, n
 export function formatQualityOddsDisplay(qualityChance: number[]): string {
     const odds = calculateQualityOdds(qualityChance);
     return Object.entries(odds)
+        .filter(([_, chance]) => chance > 0)
         .map(([quality, chance]) => {
             const stars = getQualityStars(quality as Quality);
-            const displayQuality = stars || quality;
+            const displayQuality = stars || "☆";
             return `${displayQuality}: ${roundToDecimalPlaces(chance, 2).toFixed(2)}%`;
         })
         .join(", ");

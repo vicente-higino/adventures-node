@@ -16,14 +16,14 @@ export const fishingQualityOddsCommand = createBotCommand(
         if (param) {
             let rod = fishingRodLevels.find(rod => rod.name.toLowerCase().includes(param));
             if (rod) {
-                say(`${rod.name} quality odds: ${formatQualityOddsDisplay(rod.qualityChance)}`);
+                say(`${rod.name} ★ odds: ${formatQualityOddsDisplay(rod.qualityChance)}`);
                 return;
             }
             logger.debug(`No rod found matching "${param}". Checking for emote match...`);
             logger.debug(`Available emotes: ${[...rodEmoteToNameMap.keys()].join(", ")}`);
             rod = rodEmoteToNameMap.get(param);
             if (rod) {
-                say(`${rod.name} quality odds: ${formatQualityOddsDisplay(rod.qualityChance)}`);
+                say(`${rod.name} ★ odds: ${formatQualityOddsDisplay(rod.qualityChance)}`);
                 return;
             }
             logger.debug(`No rod found matching "${param}". Checking for user...`);
@@ -39,12 +39,12 @@ export const fishingQualityOddsCommand = createBotCommand(
         const fishStats = await prisma.fishStats.findUnique({ where: { channelProviderId_userId: { channelProviderId: broadcasterId, userId } } });
         if (!fishStats) {
             const defaultRod = getRod(0);
-            say(`Fishing quality odds: ${formatQualityOddsDisplay(defaultRod.qualityChance)}`);
+            say(`Fishing ★ odds: ${formatQualityOddsDisplay(defaultRod.qualityChance)}`);
             return;
         }
         let rodLevel = fishStats.activeRodLevel;
         const rod = getRod(rodLevel);
-        say(`@${userDisplayName} ${rod.name} quality odds: ${formatQualityOddsDisplay(rod.qualityChance)}`);
+        say(`@${userDisplayName} ${rod.name} ★ odds: ${formatQualityOddsDisplay(rod.qualityChance)}`);
     },
     { ignoreCase: true, aliases: ["fishqualityodds", "fqo"] },
 );
