@@ -4,7 +4,7 @@ import { fishTable } from "@/fishing/fishTable";
 import { z } from "zod";
 import { getUserByUsername } from "@/twitch/api";
 import { findOrCreateFishStats } from "@/db";
-import type { Rarity } from "@prisma/client";
+import { Rarity } from "@prisma/client";
 
 const RARITY_ORDER: Rarity[] = ["Legendary", "Mythic", "Exotic", "Epic", "Rare", "Fine", "Uncommon", "Common", "Trash"];
 
@@ -92,15 +92,16 @@ export const fishDexCommand = createBotCommand(
         // Total fish caught by the user (counts, includes duplicates) — use prisma count like fishCountSummary
         const fishStats = await findOrCreateFishStats(prisma, broadcasterName, broadcasterId, targetUserId, targetName, targetDisplayName);
         const fishCountsByRarity = [
-            { count: fishStats.legendaryFishCount },
-            { count: fishStats.epicFishCount },
-            { count: fishStats.rareFishCount },
-            { count: fishStats.fineFishCount },
-            { count: fishStats.uncommonFishCount },
-            { count: fishStats.commonFishCount },
-            { count: fishStats.trashFishCount },
+            { rarity: Rarity.Legendary, count: fishStats.legendaryFishCount },
+            { rarity: Rarity.Mythic, count: fishStats.mythicFishCount },
+            { rarity: Rarity.Exotic, count: fishStats.exoticFishCount },
+            { rarity: Rarity.Epic, count: fishStats.epicFishCount },
+            { rarity: Rarity.Rare, count: fishStats.rareFishCount },
+            { rarity: Rarity.Fine, count: fishStats.fineFishCount },
+            { rarity: Rarity.Uncommon, count: fishStats.uncommonFishCount },
+            { rarity: Rarity.Common, count: fishStats.commonFishCount },
+            { rarity: Rarity.Trash, count: fishStats.trashFishCount },
         ];
-
         const totalCount = fishCountsByRarity.reduce((acc, curr) => acc + curr.count, 0);
 
         say(`@${targetDisplayName} FishDex: ${summary} | Total: ${totalCount} Fish Caught`);
