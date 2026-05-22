@@ -185,7 +185,7 @@ export const fishingRodLevels: FishingRodLevel[] = [
         weightModifier: createWeightModifiersFromPercentages(RARITY_WEIGHTS_DEFAULT, {
             Legendary: 0.1,
             Mythic: 0.5,
-            Exotic: 2,
+            Exotic: 1,
             Epic: 0.5,
             Rare: 1,
             Fine: 4,
@@ -200,7 +200,7 @@ export const fishingRodLevels: FishingRodLevel[] = [
         weightModifier: createWeightModifiersFromPercentages(RARITY_WEIGHTS_DEFAULT, {
             Legendary: 0.3,
             Mythic: 0.8,
-            Exotic: 3,
+            Exotic: 1.6,
             Epic: 2,
             Rare: 5,
             Fine: 10,
@@ -215,7 +215,7 @@ export const fishingRodLevels: FishingRodLevel[] = [
         weightModifier: createWeightModifiersFromPercentages(RARITY_WEIGHTS_DEFAULT, {
             Legendary: 0.5,
             Mythic: 1.5,
-            Exotic: 4,
+            Exotic: 3,
             Epic: 3,
             Rare: 8,
             Fine: 10,
@@ -230,7 +230,7 @@ export const fishingRodLevels: FishingRodLevel[] = [
         weightModifier: createWeightModifiersFromPercentages(RARITY_WEIGHTS_DEFAULT, {
             Legendary: 0.9,
             Mythic: 2,
-            Exotic: 5,
+            Exotic: 4,
             Epic: 4,
             Rare: 10,
             Fine: 5,
