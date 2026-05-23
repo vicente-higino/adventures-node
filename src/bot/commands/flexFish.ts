@@ -41,11 +41,11 @@ function getRecords(fish: FishWithRecords): string {
     if (fish.LightestRecord.length) records.push("Lightest");
     if (fish.SmallestRecord.length) records.push("Smallest");
     if (records.length === 0) return "";
-    if (records.length === 1) return `🏆 ${records[0]} record holder,`;
-    if (records.length === 2) return `🏆 ${records[0]} & ${records[1]} record holder,`;
+    if (records.length === 1) return `${records[0]} record holder.`;
+    if (records.length === 2) return `${records[0]} & ${records[1]} record holder.`;
     // For 3 or 4 records, Oxford comma style
     const last = records.pop();
-    return `🏆 ${records.join(", ")} & ${last} record holder,`;
+    return `${records.join(", ")} & ${last} record holder.`;
 }
 
 // Formats a fish object for display in chat
@@ -64,8 +64,9 @@ function formatFishDisplay(fish: FishWithRecords) {
     });
     const quality = getQualityStars(fish.quality);
     const records = getRecords(fish);
+    const action = fish.rarity === "Legendary" ? "/me " : "";
     const emote = fish.emote ? EmoteManager.getEmote(fish.emote as any) : "";
-    return `[${fish.rarity}] ${fish.prefix} ${fish.name} ${quality} ${emote} #${fish.fishId} ${sizeStr} ${weightStr}, ${records} worth ${fish.value} silver - caught ${caughtAgo} (${caughtDateUTC})`;
+    return `$(newline)${action}[${fish.rarity}] ${fish.prefix} ${fish.name} ${quality} ${emote} #${fish.fishId} ${sizeStr} ${weightStr}. ${records} Sold for ${fish.value} silver! Caught ${caughtAgo} (${caughtDateUTC})`;
 }
 
 export const flexFishCommand = createBotCommand(
@@ -75,7 +76,7 @@ export const flexFishCommand = createBotCommand(
         const [first] = params;
 
         let fish;
-        let flexLabel = `${userDisplayName} most valuable fish`;
+        let flexLabel = `@${userDisplayName} most valuable fish`;
 
         if (first) {
             // Check if it's a fish ID (starts with #)
@@ -87,29 +88,29 @@ export const flexFishCommand = createBotCommand(
                 const fishId = first.replace("#", "");
                 fish = await prisma.fish.findFirst({ where: { fishId, userId, channelProviderId: broadcasterId }, include: fishRecordsInclude });
                 if (!fish) {
-                    say(`${userDisplayName}, you don't own a fish with id ${fishId}.`);
+                    say(`@${userDisplayName}, you don't own a fish with id ${fishId}.`);
                     return;
                 }
-                flexLabel = `${userDisplayName} fish #${fishId}`;
+                flexLabel = `@${userDisplayName} fish #${fishId}`;
             } else {
                 // It's a username - look up that player's most valuable fish
                 const targetUser = await getUserByUsername(prisma, first);
                 if (!targetUser) {
-                    say(`${userDisplayName}, user "${first}" not found.`);
+                    say(`@${userDisplayName}, user "${first}" not found.`);
                     return;
                 }
                 fish = await getUserMostValuableFish(targetUser.id, broadcasterId);
                 if (!fish) {
-                    say(`${userDisplayName}, ${targetUser.displayName} doesn't have any fish to flex! They need to go fishing first.`);
+                    say(`@${userDisplayName}, ${targetUser.displayName} doesn't have any fish to flex! They need to go fishing first.`);
                     return;
                 }
-                flexLabel = `${targetUser.displayName} most valuable fish`;
+                flexLabel = `@${targetUser.displayName} most valuable fish`;
             }
         } else {
             // Fetch the current user's most valuable fish
             fish = await getUserMostValuableFish(userId, broadcasterId);
             if (!fish) {
-                say(`${userDisplayName}, you don't have any fish to flex! Go fishing first.`);
+                say(`@${userDisplayName}, you don't have any fish to flex! Go fishing first.`);
                 return;
             }
         }
