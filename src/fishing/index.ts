@@ -131,7 +131,7 @@ export function getSellMultiplier(sizeMultiplier: number): number {
 export function getValueEmote(sellValue: number, multiplier?: number, quality?: Quality, channel?: string): string {
     const qualityMult = quality ? getQualityMultiplier(quality) : 1;
     const sizeMult = multiplier ?? 1;
-    const combinedMult = Math.min(qualityMult + sizeMult - 1, 1);
+    const combinedMult = Math.max(qualityMult + sizeMult - 1, 1);
     logger.trace(`Calculating value emote: sellValue=${sellValue}, qualityMult=${qualityMult}, sizeMult=${sizeMult}, combinedMult=${combinedMult}`);
     for (const { threshold, emote } of VALUE_EMOTES) {
         const adjustedThreshold = threshold * combinedMult;
