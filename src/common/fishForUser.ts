@@ -292,7 +292,7 @@ export async function fishForUser({
         await Promise.all(promises);
 
         const totalValueMessage = bonus > 0 ? `${fish.sellValue} + ${bonus} (Bonus) = ${fish.sellValue + bonus}` : `${fish.sellValue}`;
-        const valueEmote = bonus > 0 ? getValueEmote(fish.sellValue + bonus, channelLogin) : fish.rarityEmote;
+        const valueEmote = bonus > 0 ? getValueEmote(fish.sellValue + bonus, fish.multiplier, fish.quality, channelLogin) : fish.rarityEmote;
         const useAction = fish.rarity == Rarity.Legendary ? "/me " : "";
         const rod = getRod(fishStats.activeRodLevel);
         const rodName = `(${rod.name.replaceAll(" ", "_")})`;
@@ -391,7 +391,7 @@ async function handleTrashReward({
         if (reward.type === "silver") {
             sendActionToChannel(
                 channelLogin,
-                `@${userDisplayName} 💰 While sifting through the trash, you discovered a hidden treasure chest containing ${chestBonus} silver! ${getValueEmote(chestBonus, channelLogin)}`,
+                `@${userDisplayName} 💰 While sifting through the trash, you discovered a hidden treasure chest containing ${chestBonus} silver! ${getValueEmote(chestBonus, 1, "Normal", channelLogin)}`,
             );
             return;
         }
