@@ -3,6 +3,7 @@ import clickhouse from "@/db/clickhouse";
 import { prisma } from "@/prisma";
 import { getUserByUsername } from "@/twitch/api";
 import { parseProviders } from "@/utils/params";
+import { buildEmoteQuery } from "@/utils/buildEmoteQuery";
 import { EmoteProvider } from "@prisma/client";
 import { format, parse } from "ms";
 import { z } from "zod";
@@ -22,8 +23,10 @@ const ProvidersSchema = z.string().optional();
 
 const RankParamsSchema = z.tuple([CountSchema, DurationSchema, ProvidersSchema, SortSchema, ChannelSchema]);
 
+const DEFAULT_TIMERANGE = "1y";
+
 // Helper to parse duration strings like "24h", "1w", "30m", "7d"
-function getStartDate(duration: string = "24h"): Date {
+function getStartDate(duration: string = DEFAULT_TIMERANGE): Date {
     return new Date(new Date().getTime() - parse(duration));
 }
 
@@ -40,9 +43,9 @@ export const emoteRankCommand = createBotCommand(
         let sort: "asc" | "desc" | undefined;
         let providers: string | undefined;
         try {
-            const parsed = RankParamsSchema.parse([params[0] ?? TOP_EMOTES_COUNT, params[1] ?? "24h", params[2], params[3] ?? "desc", params[4]]);
+            const parsed = RankParamsSchema.parse([params[0] ?? TOP_EMOTES_COUNT, params[1] ?? DEFAULT_TIMERANGE, params[2], params[3] ?? "desc", params[4]]);
             if (parsed[0]) count = parsed[0];
-            range = format(parse(parsed[1] ?? "24h"), { long: true });
+            range = format(parse(parsed[1] ?? DEFAULT_TIMERANGE), { long: true });
             providers = parsed[2];
             sort = parsed[3];
             channel = parsed[4];
@@ -61,22 +64,35 @@ export const emoteRankCommand = createBotCommand(
         // Parse providers filter
         let filterProviders = providers ? parseProviders(providers.split(",")) : null;
 
-        const query = await clickhouse.query({
-            query: `SELECT emoteName, any(provider) AS provider, sum(count) AS count FROM emotes_daily 
-                WHERE channelProviderId={channelProviderId: String}
-                ${filterProviders && filterProviders?.length > 0 ? "AND provider IN {filterProviders: Array(Enum8('Twitch' = 1, 'BTTV' = 2, 'FFZ' = 3, 'SevenTV' = 4))}" : ""}
-                AND day >= {from: DateTime64} 
-                GROUP BY emoteName ORDER BY count DESC`,
-            format: "JSON",
-            query_params: { channelProviderId: broadcasterId, from: startDate, filterProviders },
+        const { sql } = buildEmoteQuery({
+            groupBy: "name",
+            userIds: [],
+            userScope: "all",
+            channelEmotes: [],
+            onlyCurrentEmoteSet: false,
         });
-        const queryResult = await query.json<{ emoteId: string; emoteName: string; provider: EmoteProvider; count: number }>();
+
+        const query = await clickhouse.query({
+            query: sql,
+            format: "JSON",
+            query_params: {
+                channelProviderId: broadcasterId,
+                from: startDate,
+                to: new Date(),
+                take: count,
+                skip: 0,
+                userIds: [],
+                filterProviders: filterProviders ?? Object.values(EmoteProvider),
+                emotesFilter: []
+            },
+        });
+        const queryResult = await query.json<{ emoteId: string; emoteName: string; provider: EmoteProvider; total: number }>();
         if (!queryResult?.rows) {
             say("No emotes have been found for this range.");
             return;
         }
         let usage = queryResult.data
-            .map(e => ({ name: e.emoteName, count: e.count, provider: e.provider }))
+            .map(e => ({ name: e.emoteName, count: e.total, provider: e.provider }))
             .sort((a, b) => (sort === "asc" ? a.count - b.count : b.count - a.count));
 
         // Add missing emotes from channelEmotes (Map) with count 0
@@ -126,7 +142,7 @@ export const emoteCountCommand = createBotCommand(
         let emoteName: string | undefined;
         let channel: string | undefined;
         try {
-            [emoteName, range, channel] = EmoteParamsSchema.parse([params[0], format(parse(params[1] ?? "24h"), { long: true }), params[2]]);
+            [emoteName, range, channel] = EmoteParamsSchema.parse([params[0], format(parse(params[1] ?? DEFAULT_TIMERANGE), { long: true }), params[2]]);
         } catch (e) {
             say(`Usage: ${getBotPrefix()}emotecount <emote> [duration]`);
             return;
@@ -138,20 +154,33 @@ export const emoteCountCommand = createBotCommand(
         }
 
         const startDate = getStartDate(range);
-        const query = await clickhouse.query({
-            query: `
-                SELECT emoteName, sum(count) AS count FROM emotes_daily 
-                WHERE channelProviderId={channelProviderId: String}
-                AND emoteName = {emoteName: String}
-                AND day >= {from: DateTime64} 
-                GROUP BY emoteName ORDER BY count DESC LIMIT 1`,
-            format: "JSON",
-            query_params: { channelProviderId: broadcasterId, from: startDate, emoteName },
+
+        const { sql } = buildEmoteQuery({
+            groupBy: "name",
+            userIds: [],
+            userScope: "all",
+            channelEmotes: [emoteName],
+            onlyCurrentEmoteSet: false,
         });
-        const queryResult = await query.json<{ emoteName: string; count: number }>();
+
+        const query = await clickhouse.query({
+            query: sql,
+            format: "JSON",
+            query_params: {
+                channelProviderId: broadcasterId,
+                from: startDate,
+                to: new Date(),
+                take: 1,
+                skip: 0,
+                userIds: [],
+                filterProviders: Object.values(EmoteProvider),
+                emotesFilter: [emoteName],
+            },
+        });
+        const queryResult = await query.json<{ emoteName: string; total: number }>();
         let count = 0;
         if (queryResult.data.length > 0) {
-            count = queryResult.data[0].count;
+            count = queryResult.data[0].total;
         }
         say(`Last ${range}: ${emoteName} (${count})`);
     },
@@ -169,7 +198,7 @@ export const myEmoteRankCommand = createBotCommand(
         let range: string | undefined;
         let sort: "asc" | "desc" | undefined;
         try {
-            [range, sort] = ParamsSchema.parse([format(parse(params[0] ?? "24h"), { long: true }), params[1] ?? "desc", undefined]);
+            [range, sort] = ParamsSchema.parse([format(parse(params[0] ?? DEFAULT_TIMERANGE), { long: true }), params[1] ?? "desc", undefined]);
         } catch (e) {
             say(`Usage: ${getBotPrefix()}myemoterank [duration] [asc|desc]`);
             return;
@@ -177,22 +206,35 @@ export const myEmoteRankCommand = createBotCommand(
 
         const startDate = getStartDate(range);
 
-        const query = await clickhouse.query({
-            query: `SELECT emoteName, sum(count) AS count FROM emotes_daily_user 
-                WHERE channelProviderId={channelProviderId: String}
-                AND userId = {userId: String}
-                AND day >= {from: DateTime64} 
-                GROUP BY emoteName ORDER BY count DESC`,
-            format: "JSON",
-            query_params: { channelProviderId: broadcasterId, from: startDate, userId },
+        const { sql } = buildEmoteQuery({
+            groupBy: "name",
+            userIds: [userId],
+            userScope: "include",
+            channelEmotes: [],
+            onlyCurrentEmoteSet: false,
         });
-        const queryResult = await query.json<{ emoteId: string; emoteName: string; provider: EmoteProvider; count: number }>();
+
+        const query = await clickhouse.query({
+            query: sql,
+            format: "JSON",
+            query_params: {
+                channelProviderId: broadcasterId,
+                from: startDate,
+                to: new Date(),
+                take: TOP_EMOTES_COUNT,
+                skip: 0,
+                userIds: [userId],
+                filterProviders: Object.values(EmoteProvider),
+                emotesFilter: []
+            },
+        });
+        const queryResult = await query.json<{ emoteName: string; provider: EmoteProvider; total: number }>();
         if (!queryResult?.rows) {
             say("You haven't used any emotes in this range.");
             return;
         }
         const usage = queryResult.data
-            .map(e => ({ name: e.emoteName, count: e.count }))
+            .map(e => ({ name: e.emoteName, count: e.total }))
             .filter(e => e.count > 0)
             .sort((a, b) => (sort === "asc" ? a.count - b.count : b.count - a.count))
             .slice(0, TOP_EMOTES_COUNT);
@@ -219,28 +261,40 @@ export const myEmoteCountCommand = createBotCommand(
         let emoteName: string | undefined;
         let range: string | undefined;
         try {
-            [emoteName, range] = EmoteParamsSchema.parse([params[0], format(parse(params[1] ?? "24h"), { long: true })]);
+            [emoteName, range] = EmoteParamsSchema.parse([params[0], format(parse(params[1] ?? DEFAULT_TIMERANGE), { long: true })]);
         } catch (e) {
             say(`Usage: ${getBotPrefix()}myemotecount <emote> [duration]`);
             return;
         }
 
         const startDate = getStartDate(range);
-        const query = await clickhouse.query({
-            query: `
-                SELECT emoteName, sum(count) AS count FROM emotes_daily_user 
-                WHERE channelProviderId={channelProviderId: String}
-                AND emoteName = {emoteName: String}
-                AND userId = {userId: String}
-                AND day >= {from: DateTime64} 
-                GROUP BY emoteName ORDER BY count DESC LIMIT 1`,
-            format: "JSON",
-            query_params: { channelProviderId: broadcasterId, from: startDate, emoteName, userId },
+
+        const { sql } = buildEmoteQuery({
+            groupBy: "name",
+            userIds: [userId],
+            userScope: "include",
+            channelEmotes: [emoteName],
+            onlyCurrentEmoteSet: false,
         });
-        const queryResult = await query.json<{ emoteName: string; count: number }>();
+
+        const query = await clickhouse.query({
+            query: sql,
+            format: "JSON",
+            query_params: {
+                channelProviderId: broadcasterId,
+                from: startDate,
+                to: new Date(),
+                take: 1,
+                skip: 0,
+                userIds: [userId],
+                filterProviders: Object.values(EmoteProvider),
+                emotesFilter: [emoteName],
+            },
+        });
+        const queryResult = await query.json<{ emoteName: string; total: number }>();
         let count = 0;
         if (queryResult.data.length > 0) {
-            count = queryResult.data[0].count;
+            count = queryResult.data[0].total;
         }
         say(`@${userDisplayName} Last ${range}: ${emoteName} (${count})`);
     },
