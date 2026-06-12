@@ -37,7 +37,7 @@ export {
 } from "./legendaryEvents";
 
 // Example usage in getSize function:
-type GetFishFunc = (args?: { getRandomFish?: () => CatchDetails; unitSystem?: UnitSystem; channel?: string; rodLevel?: number }) => {
+type GetFishFunc = (args?: { getRandomFish?: () => CatchDetails; unitSystem?: UnitSystem; channel?: string; rodLevel?: number; forceRarity?: Rarity }) => {
     name: string;
     rarity: Rarity;
     rarityEmote: string;
@@ -56,9 +56,9 @@ type GetFishFunc = (args?: { getRandomFish?: () => CatchDetails; unitSystem?: Un
 };
 
 export const getFish: GetFishFunc = (args = {}) => {
-    const { getRandomFish = randomFish, unitSystem = "metric", channel, rodLevel = 0 } = args;
+    const { getRandomFish = randomFish, unitSystem = "metric", channel, rodLevel = 0, forceRarity } = args;
 
-    const fish = getRandomFish(rodLevel);
+    const fish = forceRarity ? randomFishByRarity(forceRarity) : getRandomFish(rodLevel);
     const { rarity, size, weight, sellValue, emote } = fish;
 
     // Size calculation
@@ -105,6 +105,19 @@ export function randomFish(rodLevel?: number): CatchDetails {
     const rarityPool = RARITIES.map(rarity => ({ item: rarity, weight: weights[rarity] }));
     const rarity = pickWeightedRandom(rarityPool);
     return pickRandom(fishByRarity[rarity.item]);
+}
+
+/**
+ * Gets a random fish of a specific rarity
+ * @param rarity The target rarity
+ * @returns A random fish of that rarity
+ */
+export function randomFishByRarity(rarity: Rarity): CatchDetails {
+    const fishList = fishByRarity[rarity];
+    if (!fishList || fishList.length === 0) {
+        throw new Error(`No fish available for rarity: ${rarity}`);
+    }
+    return pickRandom(fishList);
 }
 
 export function getSizePrefix(multiplier: number): string {

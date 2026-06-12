@@ -17,7 +17,7 @@ import {
     PAUSE_EMOTES,
     QUOTES_EMOTES,
 } from "@/emotes";
-import { checkIfUpgradeAvailable, checkIfUserHasAvailableFundsToReNotify, getFish, getQualityRecordBonus, getRod, getValueEmote } from "@/fishing";
+import { checkIfUpgradeAvailable, checkIfUserHasAvailableFundsToReNotify, getFish, getQualityRecordBonus, getRod, getValueEmote, randomFishByRarity } from "@/fishing";
 import { fishingFacts } from "@/fishing/facts";
 import { fishTable } from "@/fishing/fishTable";
 import logger from "@/logger";
@@ -30,6 +30,21 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { friendlyCooldownMessages, motivationalQuotes, wrongPlaces } from "./phrases";
 import { grantRedeemable } from "./redeemables";
 dayjs.extend(relativeTime);
+
+// Rarity progression for the "fish gets eaten" gimmick
+const RARITY_PROGRESSION: Rarity[] = ["Trash", "Common", "Uncommon", "Fine", "Rare", "Epic", "Exotic", "Mythic", "Legendary"];
+
+/**
+ * Gets the next rarity level in the progression
+ * Returns the same rarity if already at Legendary
+ */
+function getNextRarity(currentRarity: Rarity): Rarity {
+    const currentIndex = RARITY_PROGRESSION.indexOf(currentRarity);
+    if (currentIndex === -1 || currentIndex === RARITY_PROGRESSION.length - 1) {
+        return currentRarity; // Return same if not found or already at max
+    }
+    return RARITY_PROGRESSION[currentIndex + 1];
+}
 
 interface FishForUserParams {
     prisma: dbClient;
@@ -95,8 +110,20 @@ export async function fishForUser({
         }
 
         const unitSystem = balance.user.unitSystem ?? "metric";
-        const fish = getFish({ unitSystem, channel: channelLogin, rodLevel: fishStats.activeRodLevel });
+        let fish = getFish({ unitSystem, channel: channelLogin, rodLevel: fishStats.activeRodLevel });
         let bonus = 0;
+        // Check if fish gets eaten (upgraded to next rarity)
+        let eatenMessage = "";
+        const eatenChance = 0.005 * Math.pow(1.5, fishStats.activeRodLevel);
+        if (Math.random() < eatenChance && fish.rarity !== Rarity.Legendary && fish.rarity !== Rarity.Trash) {
+            const nextRarity = getNextRarity(fish.rarity);
+            // Get a new fish of the upgraded rarity
+            const oldFish = fish;
+            fish = getFish({ unitSystem: balance.user.unitSystem ?? "metric", channel: channelLogin, forceRarity: nextRarity });
+            const eatenBonus = getQualityRecordBonus(oldFish.rarity) * 3;
+            bonus += eatenBonus;
+            eatenMessage = `/me A wild [${nextRarity}] ${fish.name} erupted from the depths and devoured your [${oldFish.rarity}] ${oldFish.name}! In the chaos, it took your bait and became yours instead!$(newline)`;
+        }
         let treasureBonus = await handleTrashReward({
             rarity: fish.rarity,
             userProviderId,
@@ -105,7 +132,6 @@ export async function fishForUser({
             channelProviderId,
             rodLevel: fishStats.activeRodLevel,
         });
-
         const [createdFish, channelFishCount] = await prisma.$transaction(async tx => {
             const channelFishCount = await prisma.channelFishCount.upsert({
                 where: { channelProviderId },
@@ -130,6 +156,8 @@ export async function fishForUser({
             });
             return [createdFish, channelFishCount];
         });
+
+
         const existingRecord = await prisma.fishRecord.findUnique({
             where: { channelProviderId_fishName_quality: { channelProviderId, fishName: fish.name, quality: fish.quality } },
             include: { largestFish: true, smallestFish: true, heaviestFish: true, lightestFish: true },
@@ -296,7 +324,7 @@ export async function fishForUser({
         const useAction = fish.rarity == Rarity.Legendary ? "/me " : "";
         const rod = getRod(fishStats.activeRodLevel);
         const rodName = `(${rod.name.replaceAll(" ", "_")})`;
-        const resText = `${useAction}@${userDisplayName} ${rodName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.formatedQuality} ${fish.emote} #${channelFishCount.total} ${fish.formatedSize} ${fish.formatedWeight}!
+        const resText = `${eatenMessage} ${useAction}@${userDisplayName} ${rodName} Caught a [${fish.rarity}] ${fish.prefix} ${fish.name} ${fish.formatedQuality} ${fish.emote} #${channelFishCount.total} ${fish.formatedSize} ${fish.formatedWeight}!
                     It sold for ${totalValueMessage} silver! ${recordMessage} ${fishDexMessage} ${valueEmote} ${fishDexCompletionMessage} ${notifyUpgradeMessage}`;
         return resText;
     } catch (error) {
