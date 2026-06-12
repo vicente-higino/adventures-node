@@ -122,7 +122,7 @@ export async function fishForUser({
             fish = getFish({ unitSystem: balance.user.unitSystem ?? "metric", channel: channelLogin, forceRarity: nextRarity });
             const eatenBonus = getQualityRecordBonus(oldFish.rarity) * 3;
             bonus += eatenBonus;
-            eatenMessage = `/me A wild [${nextRarity}] ${fish.name} erupted from the depths and devoured your [${oldFish.rarity}] ${oldFish.name}! In the chaos, it took your bait and became yours instead!$(newline)`;
+            eatenMessage = `/me @${userDisplayName} A wild [${nextRarity}] ${fish.name} erupted from the depths and devoured your [${oldFish.rarity}] ${oldFish.name}! In the chaos, it took your bait and became yours instead!$(newline)`;
         }
         let treasureBonus = await handleTrashReward({
             rarity: fish.rarity,
