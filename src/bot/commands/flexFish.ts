@@ -86,12 +86,12 @@ export const flexFishCommand = createBotCommand(
             if (idParsed.success) {
                 // It's a specific fish ID - look up from current user
                 const fishId = first.replace("#", "");
-                fish = await prisma.fish.findFirst({ where: { fishId, userId, channelProviderId: broadcasterId }, include: fishRecordsInclude });
+                fish = await prisma.fish.findFirst({ where: { fishId, channelProviderId: broadcasterId }, include: { ...fishRecordsInclude, user: true } });
                 if (!fish) {
-                    say(`@${userDisplayName}, you don't own a fish with id ${fishId}.`);
+                    say(`@${userDisplayName}, fish with id ${fishId} not found.`);
                     return;
                 }
-                flexLabel = `@${userDisplayName} fish #${fishId}`;
+                flexLabel = `@${fish.user.displayName} fish #${fishId}`;
             } else {
                 // It's a username - look up that player's most valuable fish
                 const targetUser = await getUserByUsername(prisma, first);
