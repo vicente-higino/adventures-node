@@ -10,21 +10,21 @@ type SubmitMoveResult =
     | { status: "canceled"; msg: string; channel: string }
     | { status: "pending" }
     | {
-        status: "resolved";
-        channelId: string;
-        channel: string;
-        round: number;
-        moveA: RpsMove;
-        moveB: RpsMove;
-        playerA: string;
-        playerB: string;
-        scoreA: number;
-        scoreB: number;
-        matchEnd: boolean;
-        winner: string | null;
-        wager: number;
-        winStreak: number;
-    };
+          status: "resolved";
+          channelId: string;
+          channel: string;
+          round: number;
+          moveA: RpsMove;
+          moveB: RpsMove;
+          playerA: string;
+          playerB: string;
+          scoreA: number;
+          scoreB: number;
+          matchEnd: boolean;
+          winner: string | null;
+          wager: number;
+          winStreak: number;
+      };
 
 function resolveMove(a: RpsMove, b: RpsMove) {
     if (a === b) return "DRAW";

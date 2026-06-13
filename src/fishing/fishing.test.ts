@@ -5,7 +5,6 @@ import { CatchDetails, fishingRodLevels, Quality, Rarity } from "./constants";
 import { fishTable } from "./fishTable"; // Corrected import path
 import { getRarityWeights } from "./rarities";
 
-
 // Helper function to run multiple trials and collect results
 function runMultipleTrials(trials: number, rodLevel: number): Record<Rarity, number> {
     const results: Record<Rarity, number> = { Legendary: 0, Mythic: 0, Exotic: 0, Epic: 0, Rare: 0, Fine: 0, Uncommon: 0, Common: 0, Trash: 0 };
@@ -241,14 +240,7 @@ describe("Fishing Module", () => {
                 const theoreticalOdds = calculateQualityOdds(rod.qualityChance);
 
                 // Run simulation
-                const empiricalCounts: Record<Quality, number> = {
-                    Normal: 0,
-                    Shining: 0,
-                    Glistening: 0,
-                    Opulent: 0,
-                    Radiant: 0,
-                    Alpha: 0,
-                };
+                const empiricalCounts: Record<Quality, number> = { Normal: 0, Shining: 0, Glistening: 0, Opulent: 0, Radiant: 0, Alpha: 0 };
 
                 for (let i = 0; i < TRIALS; i++) {
                     const q = fishingModule.getQuality(rod.level);
@@ -276,7 +268,9 @@ describe("Fishing Module", () => {
                     const diff = Math.abs(theoretical - empirical);
                     const pctDiff = ((diff / theoretical) * 100).toFixed(2);
 
-                    console.log(`${quality.padEnd(12)}: Theory ${theoretical.toFixed(2)}% | Empirical ${empirical.toFixed(2)}% | Diff ${diff.toFixed(2)}% (${pctDiff}%)`);
+                    console.log(
+                        `${quality.padEnd(12)}: Theory ${theoretical.toFixed(2)}% | Empirical ${empirical.toFixed(2)}% | Diff ${diff.toFixed(2)}% (${pctDiff}%)`,
+                    );
                 }
             }
 

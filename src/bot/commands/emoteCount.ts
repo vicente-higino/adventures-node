@@ -43,7 +43,13 @@ export const emoteRankCommand = createBotCommand(
         let sort: "asc" | "desc" | undefined;
         let providers: string | undefined;
         try {
-            const parsed = RankParamsSchema.parse([params[0] ?? TOP_EMOTES_COUNT, params[1] ?? DEFAULT_TIMERANGE, params[2], params[3] ?? "desc", params[4]]);
+            const parsed = RankParamsSchema.parse([
+                params[0] ?? TOP_EMOTES_COUNT,
+                params[1] ?? DEFAULT_TIMERANGE,
+                params[2],
+                params[3] ?? "desc",
+                params[4],
+            ]);
             if (parsed[0]) count = parsed[0];
             range = format(parse(parsed[1] ?? DEFAULT_TIMERANGE), { long: true });
             providers = parsed[2];
@@ -64,13 +70,7 @@ export const emoteRankCommand = createBotCommand(
         // Parse providers filter
         let filterProviders = providers ? parseProviders(providers.split(",")) : null;
 
-        const { sql } = buildEmoteQuery({
-            groupBy: "name",
-            userIds: [],
-            userScope: "all",
-            channelEmotes: [],
-            onlyCurrentEmoteSet: false,
-        });
+        const { sql } = buildEmoteQuery({ groupBy: "name", userIds: [], userScope: "all", channelEmotes: [], onlyCurrentEmoteSet: false });
 
         const query = await clickhouse.query({
             query: sql,
@@ -83,7 +83,7 @@ export const emoteRankCommand = createBotCommand(
                 skip: 0,
                 userIds: [],
                 filterProviders: filterProviders ?? Object.values(EmoteProvider),
-                emotesFilter: []
+                emotesFilter: [],
             },
         });
         const queryResult = await query.json<{ emoteId: string; emoteName: string; provider: EmoteProvider; total: number }>();
@@ -142,7 +142,11 @@ export const emoteCountCommand = createBotCommand(
         let emoteName: string | undefined;
         let channel: string | undefined;
         try {
-            [emoteName, range, channel] = EmoteParamsSchema.parse([params[0], format(parse(params[1] ?? DEFAULT_TIMERANGE), { long: true }), params[2]]);
+            [emoteName, range, channel] = EmoteParamsSchema.parse([
+                params[0],
+                format(parse(params[1] ?? DEFAULT_TIMERANGE), { long: true }),
+                params[2],
+            ]);
         } catch (e) {
             say(`Usage: ${getBotPrefix()}emotecount <emote> [duration]`);
             return;
@@ -155,13 +159,7 @@ export const emoteCountCommand = createBotCommand(
 
         const startDate = getStartDate(range);
 
-        const { sql } = buildEmoteQuery({
-            groupBy: "name",
-            userIds: [],
-            userScope: "all",
-            channelEmotes: [emoteName],
-            onlyCurrentEmoteSet: false,
-        });
+        const { sql } = buildEmoteQuery({ groupBy: "name", userIds: [], userScope: "all", channelEmotes: [emoteName], onlyCurrentEmoteSet: false });
 
         const query = await clickhouse.query({
             query: sql,
@@ -206,13 +204,7 @@ export const myEmoteRankCommand = createBotCommand(
 
         const startDate = getStartDate(range);
 
-        const { sql } = buildEmoteQuery({
-            groupBy: "name",
-            userIds: [userId],
-            userScope: "include",
-            channelEmotes: [],
-            onlyCurrentEmoteSet: false,
-        });
+        const { sql } = buildEmoteQuery({ groupBy: "name", userIds: [userId], userScope: "include", channelEmotes: [], onlyCurrentEmoteSet: false });
 
         const query = await clickhouse.query({
             query: sql,
@@ -225,7 +217,7 @@ export const myEmoteRankCommand = createBotCommand(
                 skip: 0,
                 userIds: [userId],
                 filterProviders: Object.values(EmoteProvider),
-                emotesFilter: []
+                emotesFilter: [],
             },
         });
         const queryResult = await query.json<{ emoteName: string; provider: EmoteProvider; total: number }>();

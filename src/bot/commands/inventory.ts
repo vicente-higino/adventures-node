@@ -21,16 +21,8 @@ export const inventoryCommand = createBotCommand(
     async (params, ctx) => {
         const { broadcasterId, broadcasterName, userDisplayName, userId, say } = ctx;
         const inv = await prisma.userRedeemable.findMany({
-            where: {
-                userId,
-                channelProviderId: broadcasterId,
-                quantity: {
-                    gt: 0
-                }
-            },
-            include: {
-                redeemable: true
-            }
+            where: { userId, channelProviderId: broadcasterId, quantity: { gt: 0 } },
+            include: { redeemable: true },
         });
         logger.trace({ ...inv }, "%s Invetory on channel %s", userDisplayName, broadcasterName);
         if (!inv || inv.length === 0) {

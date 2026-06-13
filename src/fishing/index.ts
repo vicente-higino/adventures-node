@@ -37,7 +37,13 @@ export {
 } from "./legendaryEvents";
 
 // Example usage in getSize function:
-type GetFishFunc = (args?: { getRandomFish?: () => CatchDetails; unitSystem?: UnitSystem; channel?: string; rodLevel?: number; forceRarity?: Rarity }) => {
+type GetFishFunc = (args?: {
+    getRandomFish?: () => CatchDetails;
+    unitSystem?: UnitSystem;
+    channel?: string;
+    rodLevel?: number;
+    forceRarity?: Rarity;
+}) => {
     name: string;
     rarity: Rarity;
     rarityEmote: string;

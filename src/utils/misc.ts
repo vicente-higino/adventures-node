@@ -264,7 +264,6 @@ export function limitAdvMessage(base: string, advMsg: string): string {
     return advMsg;
 }
 
-
 export function calculateWinStreakBonus(streak: number, streakWager: number): number {
     if (streak <= 2) return 0;
     const baseBonus = Math.min((streak - 2) * 100, 1000);

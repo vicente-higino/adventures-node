@@ -17,7 +17,15 @@ import {
     PAUSE_EMOTES,
     QUOTES_EMOTES,
 } from "@/emotes";
-import { checkIfUpgradeAvailable, checkIfUserHasAvailableFundsToReNotify, getFish, getQualityRecordBonus, getRod, getValueEmote, randomFishByRarity } from "@/fishing";
+import {
+    checkIfUpgradeAvailable,
+    checkIfUserHasAvailableFundsToReNotify,
+    getFish,
+    getQualityRecordBonus,
+    getRod,
+    getValueEmote,
+    randomFishByRarity,
+} from "@/fishing";
 import { fishingFacts } from "@/fishing/facts";
 import { fishTable } from "@/fishing/fishTable";
 import logger from "@/logger";
@@ -119,11 +127,16 @@ export async function fishForUser({
             const nextRarity = getNextRarity(fish.rarity);
             // Get a new fish of the upgraded rarity
             const oldFish = fish;
-            fish = getFish({ unitSystem: balance.user.unitSystem ?? "metric", channel: channelLogin, rodLevel: fishStats.activeRodLevel, forceRarity: nextRarity });
+            fish = getFish({
+                unitSystem: balance.user.unitSystem ?? "metric",
+                channel: channelLogin,
+                rodLevel: fishStats.activeRodLevel,
+                forceRarity: nextRarity,
+            });
             const eatenBonus = oldFish.sellValue;
             bonus += eatenBonus;
             const size = `${oldFish.prefix}`;
-            const quality = ` ${oldFish.formatedQuality}`;
+            const quality = oldFish.quality !== "Normal" ? ` ${oldFish.formatedQuality}` : "";
             eatenMessage = `/me @${userDisplayName} A wild [${nextRarity}] ${fish.name} devoured your [${oldFish.rarity}] ${size} ${oldFish.name}${quality}! It took your bait and became yours instead! (+${eatenBonus} silver) $(newline)`;
         }
         let treasureBonus = await handleTrashReward({
@@ -158,7 +171,6 @@ export async function fishForUser({
             });
             return [createdFish, channelFishCount];
         });
-
 
         const existingRecord = await prisma.fishRecord.findUnique({
             where: { channelProviderId_fishName_quality: { channelProviderId, fishName: fish.name, quality: fish.quality } },
