@@ -119,10 +119,12 @@ export async function fishForUser({
             const nextRarity = getNextRarity(fish.rarity);
             // Get a new fish of the upgraded rarity
             const oldFish = fish;
-            fish = getFish({ unitSystem: balance.user.unitSystem ?? "metric", channel: channelLogin, forceRarity: nextRarity });
-            const eatenBonus = getQualityRecordBonus(oldFish.rarity) * 3;
+            fish = getFish({ unitSystem: balance.user.unitSystem ?? "metric", channel: channelLogin, rodLevel: fishStats.activeRodLevel, forceRarity: nextRarity });
+            const eatenBonus = oldFish.sellValue;
             bonus += eatenBonus;
-            eatenMessage = `/me @${userDisplayName} A wild [${nextRarity}] ${fish.name} erupted from the depths and devoured your [${oldFish.rarity}] ${oldFish.name}! In the chaos, it took your bait and became yours instead!$(newline)`;
+            const size = `${oldFish.prefix}`;
+            const quality = ` ${oldFish.formatedQuality}`;
+            eatenMessage = `/me @${userDisplayName} A wild [${nextRarity}] ${fish.name} devoured your [${oldFish.rarity}] ${size} ${oldFish.name}${quality}! It took your bait and became yours instead! (+${eatenBonus} silver) $(newline)`;
         }
         let treasureBonus = await handleTrashReward({
             rarity: fish.rarity,
@@ -183,7 +185,7 @@ export async function fishForUser({
             });
             promises.push(newRecord);
             recordMessage = "This is the first of its kind!";
-            bonus = getQualityRecordBonus(fish.rarity) * 4;
+            bonus += getQualityRecordBonus(fish.rarity) * 4;
         } else {
             const record: string[] = [];
             const updates: { largestFishId?: number; smallestFishId?: number; heaviestFishId?: number; lightestFishId?: number } = {};
