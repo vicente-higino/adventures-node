@@ -215,25 +215,25 @@ export async function fishForUser({
             if (size > parseFloat(existingRecord.largestFish.size)) {
                 updates.largestFishId = createdFish.id;
                 const { multiplier, humanizedDuration } = calculateMultiplierAndDuration(existingRecord.largestFish.createdAt);
-                record.push(`size (held for ${humanizedDuration}, ${multiplier}x bonus)`);
+                record.push(`size (held for ${humanizedDuration})`);
                 bonus += getQualityRecordBonus(fish.rarity) * multiplier;
             }
             if (size < parseFloat(existingRecord.smallestFish.size)) {
                 updates.smallestFishId = createdFish.id;
                 const { multiplier, humanizedDuration } = calculateMultiplierAndDuration(existingRecord.smallestFish.createdAt);
-                record.push(`smallest (held for ${humanizedDuration}, ${multiplier}x bonus)`);
+                record.push(`smallest (held for ${humanizedDuration})`);
                 bonus += getQualityRecordBonus(fish.rarity) * multiplier;
             }
             if (weight > parseFloat(existingRecord.heaviestFish.weight)) {
                 updates.heaviestFishId = createdFish.id;
                 const { multiplier, humanizedDuration } = calculateMultiplierAndDuration(existingRecord.heaviestFish.createdAt);
-                record.push(`weight (held for ${humanizedDuration}, ${multiplier}x bonus)`);
+                record.push(`weight (held for ${humanizedDuration})`);
                 bonus += getQualityRecordBonus(fish.rarity) * multiplier;
             }
             if (weight < parseFloat(existingRecord.lightestFish.weight)) {
                 updates.lightestFishId = createdFish.id;
                 const { multiplier, humanizedDuration } = calculateMultiplierAndDuration(existingRecord.lightestFish.createdAt);
-                record.push(`lightest (held for ${humanizedDuration}, ${multiplier}x bonus)`);
+                record.push(`lightest (held for ${humanizedDuration})`);
                 bonus += getQualityRecordBonus(fish.rarity) * multiplier;
             }
             if (Object.keys(updates).length > 0) {
@@ -333,7 +333,7 @@ export async function fishForUser({
 
         await Promise.all(promises);
 
-        const totalValueMessage = bonus > 0 ? `${fish.sellValue} + ${bonus} (Bonus) = ${fish.sellValue + bonus}` : `${fish.sellValue}`;
+        const totalValueMessage = `${fish.sellValue + bonus}`;
         const valueEmote = bonus > 0 ? getValueEmote(fish.sellValue + bonus, fish.multiplier, fish.quality, channelLogin) : fish.rarityEmote;
         const useAction = fish.rarity == Rarity.Legendary ? "/me " : "";
         const rod = getRod(fishStats.activeRodLevel);
