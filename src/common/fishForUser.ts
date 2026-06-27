@@ -381,7 +381,7 @@ const FISHDEX_COMPLETION_BONUS: Record<Rarity, number> = {
     Trash: 50_000,
     Exotic: 100_000,
     Mythic: 500_000,
-    Legendary: 5_000_000,
+    Legendary: 1_500_000,
 };
 
 async function handleTrashReward({
