@@ -9,13 +9,19 @@ export const redeemables = [
         type: "START_LEGENDARY_EVENT",
         config: { durationMinutes: 90 },
     },
-
     {
         code: "adventure_2x",
         name: "2x Adventure Ticket",
         description: "Your next adventure will reward 2x payouts.",
         type: "START_ADVENTURE_MULTIPLIER",
         config: { multiplier: 2 },
+    },
+    {
+        code: "legendary_bait",
+        name: "Legendary Bait",
+        description: "Your next fish will be a legendary fish.",
+        type: "LEGENDARY_BAIT",
+        config: {},
     },
 ] as const;
 

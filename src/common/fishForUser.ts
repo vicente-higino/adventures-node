@@ -36,7 +36,7 @@ import { Prisma, Rarity } from "@prisma/client";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { friendlyCooldownMessages, motivationalQuotes, wrongPlaces } from "./phrases";
-import { grantRedeemable } from "./redeemables";
+import { consumeRedeemable, grantRedeemable } from "./redeemables";
 dayjs.extend(relativeTime);
 
 // Rarity progression for the "fish gets eaten" gimmick
@@ -99,9 +99,10 @@ export async function fishForUser({
         }
 
         const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);
-
+        const legendaryBaitInventory = await consumeRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: "legendary_bait" });
+        const forceRarity = legendaryBaitInventory ? Rarity.Legendary : undefined;
         // 1% chance to get caught
-        if (fishStats.totalSilverWorth > 0 && Math.random() < 0.01 && balance.value >= 50) {
+        if (fishStats.totalSilverWorth > 0 && Math.random() < 0.01 && balance.value >= 100 && forceRarity) {
             const fine = Math.min(100, Math.floor(boxMullerTransform(50, 25, 25)));
             const place = pickRandom(wrongPlaces);
             if (!balance) {
@@ -116,9 +117,8 @@ export async function fishForUser({
             await Promise.all([increaseBalance(prisma, balance.id, -fine), updateFishFinesInFishStats, updateCaughtTimestamp]);
             return `@${userDisplayName} ${EmoteManager.getEmote("POLICE", channelLogin)} You got caught fishing in ${place} and were fined ${fine} silver! ${FISH_FINE_EMOTES(channelLogin)}`;
         }
-
         const unitSystem = balance.user.unitSystem ?? "metric";
-        let fish = getFish({ unitSystem, channel: channelLogin, rodLevel: fishStats.activeRodLevel });
+        let fish = getFish({ unitSystem, channel: channelLogin, rodLevel: fishStats.activeRodLevel, forceRarity});
         let bonus = 0;
         // Check if fish gets eaten (upgraded to next rarity)
         let eatenMessage = "";
@@ -406,17 +406,23 @@ async function handleTrashReward({
     }
 
     const rewards = [
-        { type: "silver", weight: 6 },
+        { type: "silver", weight: 5 },
         {
             type: "redeemable",
             code: "adventure_2x",
             message: "You found a mysterious Adventure ticket hidden in the trash! Your next adventure will reward 2x payouts!",
-            weight: 1,
+            weight: 3,
         },
         {
             type: "redeemable",
             code: "legendary_event_ticket",
             message: `You found a Legendary Event Ticket hidden in the trash! Use "${getBotPrefix()}sle" to start it!`,
+            weight: 2,
+        },
+        {
+            type: "redeemable",
+            code: "legendary_bait",
+            message: `You found a Legendary bait hidden in the trash! You next fish will be a legendary!`,
             weight: 1,
         },
     ] as const;

@@ -402,6 +402,7 @@ model ChatMail {
 enum RedeemableType {
     START_ADVENTURE_MULTIPLIER
     START_LEGENDARY_EVENT
+    LEGENDARY_BAIT
 }
 
 model Redeemable {

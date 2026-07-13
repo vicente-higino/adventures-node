@@ -11,6 +11,8 @@ function getCommand(type: RedeemableType) {
             return `(${getBotPrefix()}adv2x)`;
         case "START_LEGENDARY_EVENT":
             return `(${getBotPrefix()}sle)`;
+        case "LEGENDARY_BAIT":
+            return `(Free legendary fish)`;
         default:
             assertNever(type);
     }
