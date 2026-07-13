@@ -102,7 +102,7 @@ export async function fishForUser({
         const legendaryBaitInventory = await consumeRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: "legendary_bait" });
         const forceRarity = legendaryBaitInventory ? Rarity.Legendary : undefined;
         // 1% chance to get caught
-        if (fishStats.totalSilverWorth > 0 && Math.random() < 0.01 && balance.value >= 100 && forceRarity) {
+        if (fishStats.totalSilverWorth > 0 && Math.random() < 0.01 && balance.value >= 100 && forceRarity === undefined) {
             const fine = Math.min(100, Math.floor(boxMullerTransform(50, 25, 25)));
             const place = pickRandom(wrongPlaces);
             if (!balance) {
