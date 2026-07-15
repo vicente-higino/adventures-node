@@ -58,11 +58,12 @@ export async function grantRedeemable({ userId, channelProviderId, redeemableCod
 
 type ConsumeRedeemableOptions = { userId: string; channelProviderId: string; redeemableCode: RedeemableCode };
 
-export async function consumeRedeemable({ userId, channelProviderId, redeemableCode }: ConsumeRedeemableOptions) {
+export async function consumeRedeemable({ userId, channelProviderId, redeemableCode }: ConsumeRedeemableOptions): Promise<boolean> {
     const redeemable = await prisma.redeemable.findUnique({ where: { code: redeemableCode } });
 
     if (!redeemable) {
-        throw new Error(`Redeemable "${redeemableCode}" not found`);
+        logger.error(`Redeemable "${redeemableCode}" not found`);
+        return false;
     }
     logger.debug({ userId, channelProviderId, redeemableCode }, "Consuming Redeemable");
     const inventory = await prisma.userRedeemable.findUnique({
@@ -72,9 +73,9 @@ export async function consumeRedeemable({ userId, channelProviderId, redeemableC
 
     if (!inventory || inventory.quantity <= 0) {
         logger.debug({ userId, channelProviderId, redeemableCode }, "Not Consuming Redeemable");
-        return null;
+        return false;
     }
     await prisma.userRedeemable.update({ where: { id: inventory.id }, data: { quantity: { decrement: 1 } } });
 
-    return inventory.redeemable;
+    return true;
 }
