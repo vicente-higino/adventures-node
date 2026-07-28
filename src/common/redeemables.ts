@@ -16,14 +16,15 @@ export const redeemables = [
         type: "START_ADVENTURE_MULTIPLIER",
         config: { multiplier: 2 },
     },
-    {
-        code: "legendary_bait",
-        name: "Legendary Bait",
-        description: "Your next fish will be a legendary fish.",
-        type: "LEGENDARY_BAIT",
-        config: {},
-    },
+    { code: "legendary_bait", name: "Legendary Bait", description: "Your next fish will be a legendary fish.", type: "LEGENDARY_BAIT", config: {} },
 ] as const;
+
+export type RedeemableCode = (typeof redeemables)[number]["code"];
+export const redeemableCodes: readonly RedeemableCode[] = redeemables.map(redeemable => redeemable.code);
+
+export function isRedeemableCode(value: string): value is RedeemableCode {
+    return (redeemableCodes as readonly string[]).includes(value);
+}
 
 export async function syncRedeemables() {
     for (const redeemable of redeemables) {
@@ -37,8 +38,12 @@ export async function syncRedeemables() {
         });
     }
 }
-type RedeemableCode = (typeof redeemables)[number]["code"];
-type GrantRedeemableOptions = { userId: string; channelProviderId: string; redeemableCode: RedeemableCode; quantity?: number };
+interface GrantRedeemableOptions {
+    userId: string;
+    channelProviderId: string;
+    redeemableCode: RedeemableCode;
+    quantity?: number;
+}
 
 export async function grantRedeemable({ userId, channelProviderId, redeemableCode, quantity = 1 }: GrantRedeemableOptions) {
     const redeemable = await prisma.redeemable.findUnique({ where: { code: redeemableCode } });
@@ -56,7 +61,11 @@ export async function grantRedeemable({ userId, channelProviderId, redeemableCod
     });
 }
 
-type ConsumeRedeemableOptions = { userId: string; channelProviderId: string; redeemableCode: RedeemableCode };
+interface ConsumeRedeemableOptions {
+    userId: string;
+    channelProviderId: string;
+    redeemableCode: RedeemableCode;
+}
 
 export async function consumeRedeemable({ userId, channelProviderId, redeemableCode }: ConsumeRedeemableOptions): Promise<boolean> {
     const redeemable = await prisma.redeemable.findUnique({ where: { code: redeemableCode } });

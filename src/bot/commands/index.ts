@@ -18,6 +18,7 @@ import { forceEndAdventureCommand } from "./forceEndAdventure";
 import { reloadCommand } from "./reload";
 import { startEventCommand, startLegendaryEventCommand } from "./startEvent";
 import { giveSilverCommand } from "./giveSilver";
+import { giveRedeemableCommand } from "./giveRedeemable";
 import { statsCommand } from "./stats";
 import { leaderboardCommand } from "./leaderboard";
 import { showAllEmotesCommand } from "./showAllEmotes";
@@ -66,6 +67,7 @@ export const commands: BotCommand[] = [
     reloadCommand,
     startEventCommand,
     giveSilverCommand,
+    giveRedeemableCommand,
     statsCommand,
     leaderboardCommand,
     showAllEmotesCommand,
