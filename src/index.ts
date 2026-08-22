@@ -62,8 +62,13 @@ createBot()
 
 app.use(honoLogger(customLogger));
 app.use("*", loggingMiddleware);
-// Add validation middleware before routes
-app.use("*", timeout(9500, new HTTPException(408, { message: "oopsie Something went wrong. Please try again in a few seconds." })));
+const requestTimeoutResponse = new HTTPException(408, { message: "oopsie Something went wrong. Please try again in a few seconds." });
+const standardRequestTimeout = timeout(9_500, requestTimeoutResponse);
+const adventureRequestTimeout = timeout(90_000, requestTimeoutResponse);
+app.use("*", (c, next) => {
+    const isAdventureMutation = c.req.path === "/api/adventures/end" || c.req.path.startsWith("/api/adventures/join/");
+    return (isAdventureMutation ? adventureRequestTimeout : standardRequestTimeout)(c, next);
+});
 
 authenticatedRoute.use(honoLogger(customLogger));
 authenticatedRoute.use("*", loggingMiddleware);

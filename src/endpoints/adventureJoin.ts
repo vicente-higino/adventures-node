@@ -1,35 +1,17 @@
 import { OpenAPIRoute } from "chanfana";
 import { HonoEnv, FossaHeaders } from "@/types";
 import { Context } from "hono";
-import { adventureCommandSyntax, AdventureJoinParamsSchema, handleAdventureJoin } from "@/common/handleAdventure";
+import { adventureCommandSyntax, AdventureJoinParamsSchema, generatePayoutRate, handleAdventureJoin } from "@/common/handleAdventure";
+import { z } from "zod";
 
-/**
- * Generates a payout rate for the adventure, with 1.3x being most common
- * and max of 2.0x
- *
- * @returns A number between 1.3 and 2.0 representing the payout multiplier
- */
-export function generatePayoutRate(): number {
-    // Random chance to get higher multipliers
-    const rand = Math.random();
-    if (rand > 0.975) {
-        // 2.5% chance for max payout (2.0x)
-        return 2.0;
-    } else if (rand > 0.925) {
-        // 5% chance for high payout (1.7-1.9x)
-        return 1.7 + Math.random() * 0.2;
-    } else if (rand > 0.65) {
-        // 27.5% chance for medium payout (1.5-1.6x)
-        return 1.5 + Math.random() * 0.1;
-    } else {
-        // 65% chance for standard payout (1.3-1.4x)
-        return 1.3 + Math.random() * 0.1;
-    }
-}
+export { generatePayoutRate };
 
 // Store timers per adventure to allow clearing if adventure ends early
 export class AdventureJoin extends OpenAPIRoute {
-    schema = { request: { headers: FossaHeaders, params: AdventureJoinParamsSchema }, responses: {} };
+    schema = {
+        request: { headers: FossaHeaders, params: AdventureJoinParamsSchema, query: z.object({ approach: z.string().optional() }) },
+        responses: {},
+    };
     handleValidationError() {
         return new Response(adventureCommandSyntax(), { status: 400 });
     }
@@ -41,8 +23,19 @@ export class AdventureJoin extends OpenAPIRoute {
         const userLogin = data.headers["x-fossabot-message-userlogin"];
         const userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
         const amountParam = data.params.amount.trim();
+        const approachParam = data.query.approach?.trim();
+        const requestId = data.headers["x-fossabot-message-id"];
 
-        const result = await handleAdventureJoin({ channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName, amountParam });
+        const result = await handleAdventureJoin({
+            channelLogin,
+            channelProviderId,
+            userProviderId,
+            userLogin,
+            userDisplayName,
+            amountParam,
+            approachParam,
+            requestId,
+        });
         return c.text(result);
     }
 }

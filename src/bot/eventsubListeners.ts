@@ -25,9 +25,11 @@ export async function createEventsubListeners(users: string[]) {
             logger.info(`${e.broadcasterDisplayName} just went live!`);
             logger.info(liveChannels.listLive(), "Live channels");
         });
-        listener.onStreamOffline(user, e => {
+        listener.onStreamOffline(user, async e => {
             liveChannels.setStatus(e.broadcasterId, e.broadcasterName, false);
-            restartAdventureWarnings(user.id);
+            await restartAdventureWarnings(user.id).catch(error =>
+                logger.error({ error, channelProviderId: user.id }, "Failed to restart adventure warnings after stream ended"),
+            );
             logger.info(`${e.broadcasterDisplayName} just went offline`);
             logger.info(liveChannels.listLive(), "Live channels");
         });

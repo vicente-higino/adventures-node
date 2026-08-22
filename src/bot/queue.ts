@@ -1,4 +1,4 @@
-import { processWarning } from "@/common/helpers/schedule";
+import { processWarning, reconcileAdventureWarnings } from "@/common/helpers/schedule";
 import boss from "@/db/boss";
 import logger from "@/logger";
 import { ms } from "ms";
@@ -11,13 +11,14 @@ export async function startPgBoss() {
     await initializeReminderQueue();
     await initializeRPS_CancelQueue();
     await initializeAdventureScheduleQueue();
+    await reconcileAdventureWarnings();
 }
 
 async function initializeReminderQueue() {
     await boss.createQueue("reminder", { retentionSeconds: 3600 * 24 * 365 * 10 }); // Retain jobs for 10 years
     const stats = await boss.getQueueStats("reminder");
     logger.debug(stats, `Reminder queue stats`);
-    boss.work("reminder", { includeMetadata: true, pollingIntervalSeconds: 1 }, async ([job]) => {
+    await boss.work("reminder", { includeMetadata: true, pollingIntervalSeconds: 1 }, async ([job]) => {
         logger.debug(job, "Processing reminder job");
         const { userId, userName, userDisplayName, channelId, channelName, message } = job.data as any;
         logger.info(`Sending reminder to ${userDisplayName} (${userName}) in channel ${channelName}: ${message}`);
@@ -30,7 +31,7 @@ async function initializeRPS_CancelQueue() {
     await boss.createQueue("rps-cancel");
     const stats = await boss.getQueueStats("rps-cancel");
     logger.debug(stats, `rps-cancel queue stats`);
-    boss.work("rps-cancel", async ([job]) => {
+    await boss.work("rps-cancel", async ([job]) => {
         logger.debug(job, "Processing rps-cancel job");
         const { matchId } = job.data as any;
         const res = await cancelRPSMatch(matchId, "timeout");
@@ -50,9 +51,9 @@ async function initializeAdventureScheduleQueue() {
     await boss.createQueue("adv-schedule", { retentionSeconds: 3600 }); // Retain jobs for 1 hour
     const stats = await boss.getQueueStats("adv-schedule");
     logger.debug(stats, `adv-schedule queue stats`);
-    boss.work<{ advId: number; message: string }>("adv-schedule", async ([job]) => {
+    await boss.work<{ advId: number; message: string; generation?: number }>("adv-schedule", async ([job]) => {
         logger.debug(job, "Processing adv-schedule job");
-        const { advId, message } = job.data;
-        processWarning(advId, message);
+        const { advId, message, generation } = job.data;
+        await processWarning(advId, message, generation);
     });
 }

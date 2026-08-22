@@ -89,7 +89,7 @@ export const fishDexCommand = createBotCommand(
             return `${rarity}: ${caught}/${total}`;
         }).join(" | ");
 
-        // Total fish caught by the user (counts, includes duplicates) — use prisma count like fishCountSummary
+        // Total fish caught by the user (counts, includes duplicates),  use prisma count like fishCountSummary
         const fishStats = await findOrCreateFishStats(prisma, broadcasterName, broadcasterId, targetUserId, targetName, targetDisplayName);
         const fishCountsByRarity = [
             { rarity: Rarity.Legendary, count: fishStats.legendaryFishCount },

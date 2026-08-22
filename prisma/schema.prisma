@@ -13,25 +13,28 @@ enum UnitSystem {
 }
 
 model User {
-    id                 Int                 @id() @default(autoincrement())
-    providerId         String              @unique
-    login              String              @unique
-    displayName        String              @unique
-    createdAt          DateTime            @default(now())
-    updatedAt          DateTime            @updatedAt
-    balances           Balance[]
-    Player             Player[]
-    Fish               Fish[]
-    UserStats          UserStats[]
-    FishStats          FishStats[]
-    DuelChallenger     Duel[]              @relation("Challenger")
-    DuelChallenged     Duel[]              @relation("Challenged")
-    unitSystem         UnitSystem          @default(metric)
-    FishDexEntry       FishDexEntry[]
-    FishDexCompletion  FishDexCompletion[]
-    ChatMailsSender    ChatMail[]          @relation("Sender")
-    ChatMailsRecipient ChatMail[]          @relation("Recipient")
-    userRedeemables    UserRedeemable[]
+    id                     Int                     @id() @default(autoincrement())
+    providerId             String                  @unique
+    login                  String                  @unique
+    displayName            String                  @unique
+    createdAt              DateTime                @default(now())
+    updatedAt              DateTime                @updatedAt
+    balances               Balance[]
+    Player                 Player[]
+    Fish                   Fish[]
+    UserStats              UserStats[]
+    FishStats              FishStats[]
+    DuelChallenger         Duel[]                  @relation("Challenger")
+    DuelChallenged         Duel[]                  @relation("Challenged")
+    unitSystem             UnitSystem              @default(metric)
+    FishDexEntry           FishDexEntry[]
+    FishDexCompletion      FishDexCompletion[]
+    ChatMailsSender        ChatMail[]              @relation("Sender")
+    ChatMailsRecipient     ChatMail[]              @relation("Recipient")
+    userRedeemables        UserRedeemable[]
+    createdAdventures      Adventure[]             @relation("AdventureCreatedBy")
+    adventureProfiles      AdventureProfile[]
+    adventurePlayerResults AdventurePlayerResult[]
 }
 
 model Balance {
@@ -48,27 +51,202 @@ model Balance {
 }
 
 model Player {
-    id          Int       @id() @default(autoincrement())
-    user        User      @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
-    userId      String
-    buyin       BigInt    @default(0)
-    adventure   Adventure @relation(fields: [adventureId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    adventureId Int
-    createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
+    id              Int                    @id() @default(autoincrement())
+    user            User                   @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
+    userId          String
+    buyin           BigInt                 @default(0)
+    adventure       Adventure              @relation(fields: [adventureId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    adventureId     Int
+    approachCode    String?
+    checkCode       String?
+    loadoutSnapshot Json?
+    createdAt       DateTime               @default(now())
+    updatedAt       DateTime               @updatedAt
+    result          AdventurePlayerResult?
+
+    @@unique([adventureId, userId])
+    @@index([userId, createdAt])
+}
+
+enum AdventureStatus {
+    OPEN
+    RESOLVING
+    RESOLVED
+    CANCELLED
 }
 
 model Adventure {
-    id                Int      @id @default(autoincrement())
+    id                Int                         @id @default(autoincrement())
     name              String
     channel           String
     channelProviderId String
-    createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
+    createdByUser     User?                       @relation("AdventureCreatedBy", fields: [createdByUserId], references: [providerId], onDelete: SetNull, onUpdate: Cascade)
+    createdByUserId   String?
+    status            AdventureStatus             @default(OPEN)
+    scenarioId        String?
+    theme             String?
+    scenarioContext   Json?
+    resolutionSeed    String?
+    rulesVersion      Int                         @default(1)
+    contentVersion    Int                         @default(1)
+    scheduleGeneration Int                       @default(0)
+    schedulePaused    Boolean                     @default(false)
+    eligibleAt        DateTime?
+    endsAt            DateTime?
+    resolvingAt       DateTime?
+    resolvedAt        DateTime?
+    cancelledAt       DateTime?
+    finalChatResult   Json?
+    createdAt         DateTime                    @default(now())
+    updatedAt         DateTime                    @updatedAt
     players           Player[]
-    payoutRate        Float    @default(1.3)
+    results           AdventurePlayerResult[]
+    grantedConditions AdventureProfileCondition[]
+    joinRequests      AdventureJoinRequest[]
+    payoutRate        Float                       @default(1.3)
 
     @@index([channelProviderId])
+    @@index([channelProviderId, status, createdAt])
+    @@index([scenarioId])
+}
+
+model AdventureJoinRequest {
+    id                String     @id
+    channelProviderId String
+    userId            String
+    response          String?
+    adventure         Adventure? @relation(fields: [adventureId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+    adventureId       Int?
+    createdAt         DateTime   @default(now())
+
+    @@index([createdAt])
+}
+
+enum AdventureItemType {
+    EQUIPMENT
+    CONSUMABLE
+    MATERIAL
+    COLLECTIBLE
+}
+
+enum AdventureItemRarity {
+    COMMON
+    UNCOMMON
+    RARE
+    EPIC
+    LEGENDARY
+}
+
+enum AdventureResultOutcome {
+    SUCCESS
+    FAILURE
+}
+
+model AdventureProfile {
+    id                Int                         @id @default(autoincrement())
+    channelProviderId String
+    channel           String
+    user              User                        @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
+    userId            String
+    classCode         String?
+    xp                BigInt                      @default(0)
+    createdAt         DateTime                    @default(now())
+    updatedAt         DateTime                    @updatedAt
+    inventoryItems    AdventureInventoryItem[]
+    conditions        AdventureProfileCondition[]
+
+    @@unique([channelProviderId, userId])
+    @@index([userId])
+}
+
+model AdventureItem {
+    id          Int                      @id @default(autoincrement())
+    code        String                   @unique
+    name        String
+    description String
+    type        AdventureItemType
+    rarity      AdventureItemRarity      @default(COMMON)
+    theme       String?
+    checkCode   String?
+    modifier    Int                      @default(0)
+    config      Json                     @default("{}")
+    active      Boolean                  @default(true)
+    createdAt   DateTime                 @default(now())
+    updatedAt   DateTime                 @updatedAt
+    inventories AdventureInventoryItem[]
+
+    @@index([type, active])
+    @@index([theme, checkCode])
+}
+
+model AdventureInventoryItem {
+    id           Int              @id @default(autoincrement())
+    profile      AdventureProfile @relation(fields: [profileId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    profileId    Int
+    item         AdventureItem    @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+    itemId       Int
+    quantity     Int              @default(0)
+    equippedSlot String?
+    metadata     Json             @default("{}")
+    createdAt    DateTime         @default(now())
+    updatedAt    DateTime         @updatedAt
+
+    @@unique([profileId, itemId])
+    @@unique([profileId, equippedSlot])
+    @@index([itemId])
+}
+
+model AdventureProfileCondition {
+    id                  Int              @id @default(autoincrement())
+    profile             AdventureProfile @relation(fields: [profileId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    profileId           Int
+    code                String
+    name                String
+    modifier            Int
+    checkCodes          String[]         @default([])
+    themeCodes          String[]         @default([])
+    remainingAdventures Int              @default(1)
+    sourceAdventure     Adventure?       @relation(fields: [sourceAdventureId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+    sourceAdventureId   Int?
+    expiresAt           DateTime?
+    createdAt           DateTime         @default(now())
+    updatedAt           DateTime         @updatedAt
+
+    @@unique([profileId, code])
+    @@index([sourceAdventureId])
+}
+
+model AdventurePlayerResult {
+    id                Int                    @id @default(autoincrement())
+    adventure         Adventure              @relation(fields: [adventureId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    adventureId       Int
+    player            Player                 @relation(fields: [playerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    playerId          Int                    @unique
+    user              User                   @relation(fields: [userId], references: [providerId], onDelete: Cascade, onUpdate: Cascade)
+    userId            String
+    approachCode      String
+    checkCode         String
+    roll              Int
+    dc                Int
+    rawModifier       Int
+    effectiveModifier Int
+    modifierBreakdown Json
+    chancePercent     Int
+    outcome           AdventureResultOutcome
+    criticalCode      String?
+    buyin             BigInt
+    payoutRate        Float
+    payout            BigInt                 @default(0)
+    streakBonus       BigInt                 @default(0)
+    xpAwarded         BigInt                 @default(0)
+    lootSnapshot      Json?
+    statusSnapshot    Json?
+    narrative         String
+    createdAt         DateTime               @default(now())
+
+    @@unique([adventureId, userId])
+    @@index([userId, createdAt])
+    @@index([adventureId, outcome])
 }
 
 enum Rarity {
@@ -152,7 +330,7 @@ model UserStats {
     duelWinStreak  Int @default(0)
     duelLoseStreak Int @default(0)
 
-    streakWager Int @default(0) // Sum of wagers during current win/lose streak
+    streakWager BigInt @default(0) // Sum of wagers during current win/lose streak
 
     // RPS specific stats
     rpsPlayed     Int    @default(0)

@@ -18,12 +18,14 @@ export const prisma = new PrismaClient({ adapter }).$extends({
             duelsWonAmount: bigintToNumber<Prisma.UserStatsGetPayload<{}>, "duelsWonAmount">("duelsWonAmount"),
             rpsWagered: bigintToNumber<Prisma.UserStatsGetPayload<{}>, "rpsWagered">("rpsWagered"),
             rpsWonAmount: bigintToNumber<Prisma.UserStatsGetPayload<{}>, "rpsWonAmount">("rpsWonAmount"),
+            streakWager: bigintToNumber<Prisma.UserStatsGetPayload<{}>, "streakWager">("streakWager"),
         },
     },
 });
 export type ExtendedPrismaClient = typeof prisma;
-type ExtendedPrismaClientTransaction = typeof prisma.$transaction;
 export type dbClient = ExtendedPrismaClient;
+export type dbTransactionClient = Omit<ExtendedPrismaClient, "$connect" | "$disconnect" | "$extends" | "$transaction">;
+export type dbOperationClient = dbClient | dbTransactionClient;
 
 type BigIntKeys<T> = { [K in keyof T]: T[K] extends bigint ? K : never }[keyof T];
 

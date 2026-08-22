@@ -6,14 +6,13 @@ import { GetBot, getBotConfig } from "@/bot";
 import { isChannelLive } from "./liveChannels";
 
 export function sendMessageToChannel(channel: string, message: string) {
-    // Placeholder function to send a message to a channel
-    // Replace with actual implementation
+    void sendMessageToChannelStrict(channel, message).catch(err => logger.error(err, `Error sending message to ${channel}:`));
+}
+export async function sendMessageToChannelStrict(channel: string, message: string) {
     logger.info(`Sending message to ${channel}: ${message}`);
-    GetBot()
-        ?.say(channel, message)
-        .catch(err => {
-            logger.error(err, `Error sending message to ${channel}:`);
-        });
+    const bot = GetBot();
+    if (!bot) throw new Error("Bot is not connected.");
+    await bot.say(channel, message);
 }
 export async function sendMessageToChannelId(channelId: string, message: string) {
     const broadcaster = await getUserById(prisma, channelId);
@@ -33,32 +32,29 @@ export async function sendMessageToChannelWithAPI(channel: string, message: stri
     // Replace with actual implementation
     const broadcaster = await getUserByUsername(prisma, channel);
     if (!broadcaster) {
-        logger.error(`User not found: ${channel}`);
-        return;
+        throw new Error(`User not found: ${channel}`);
     }
     const texts = splitOnSpaces(message, max_length);
-    texts.map(msg => sendChatMessageToChannel(broadcaster.id, getBotConfig().userId, msg));
+    await Promise.all(texts.map(msg => sendChatMessageToChannel(broadcaster.id, getBotConfig().userId, msg)));
 }
 export async function sendActionToChannelWithAPI(channel: string, message: string, max_length = 490) {
     // Placeholder function to send a message to a channel
     // Replace with actual implementation
     const broadcaster = await getUserByUsername(prisma, channel);
     if (!broadcaster) {
-        logger.error(`User not found: ${channel}`);
-        return;
+        throw new Error(`User not found: ${channel}`);
     }
     const texts = splitOnSpaces(message, max_length);
-    texts.map(async msg => await sendChatMessageToChannel(broadcaster.id, getBotConfig().userId, `/me ${msg}`));
+    await Promise.all(texts.map(msg => sendChatMessageToChannel(broadcaster.id, getBotConfig().userId, `/me ${msg}`)));
 }
 export function sendActionToChannel(channel: string, message: string) {
-    // Placeholder function to send a message to a channel
-    // Replace with actual implementation
+    void sendActionToChannelStrict(channel, message).catch(err => logger.error(err, `Error sending message to ${channel}:`));
+}
+export async function sendActionToChannelStrict(channel: string, message: string) {
     logger.info(`Sending message to ${channel}: ${message}`);
-    GetBot()
-        ?.action(channel, message)
-        .catch(err => {
-            logger.error(err, `Error sending message to ${channel}:`);
-        });
+    const bot = GetBot();
+    if (!bot) throw new Error("Bot is not connected.");
+    await bot.action(channel, message);
 }
 
 export function sendMessageToAllChannel(message: string, onlyOffline = true) {

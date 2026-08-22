@@ -24,6 +24,7 @@ export const FossaHeaders = z.object({
         return Buffer.from(name, "latin1").toString("utf8");
     }),
     "x-fossabot-message-userproviderid": z.string(),
+    "x-fossabot-message-id": z.string().optional(),
     "x-fossabot-customapitoken": z.string(),
 });
 
@@ -43,6 +44,7 @@ export interface Bindings {
     TWITCH_CLIENT_ID: string;
     TWITCH_CLIENT_SECRET: string;
     COOLDOWN_ADVENTURE_IN_HOURS: number;
+    ADVENTURE_RPG_ENABLED: boolean;
     COOLDOWN_FISHING_IN_HOURS: number;
 }
 

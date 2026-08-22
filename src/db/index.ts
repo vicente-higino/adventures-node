@@ -1,5 +1,5 @@
 import logger from "@/logger";
-import { dbClient } from "@/prisma";
+import { dbClient, dbOperationClient } from "@/prisma";
 import { FishDexEntry, FishStats, Rarity } from "@prisma/client";
 
 export async function findOrCreateBalance(
@@ -41,12 +41,17 @@ export async function setBalance(db: dbClient, id: number, newValue: number) {
     const balance = await db.balance.update({ where: { id }, data: { value: newValue } });
     return balance;
 }
-export async function increaseBalanceWithChannelID(db: dbClient, channelProviderId: string, userProviderId: string, amountToIncrease: number) {
+export async function increaseBalanceWithChannelID(
+    db: dbOperationClient,
+    channelProviderId: string,
+    userProviderId: string,
+    amountToIncrease: number,
+) {
     let balance = await db.balance.findUniqueOrThrow({ where: { channelProviderId_userId: { channelProviderId, userId: userProviderId } } });
     balance = await increaseBalance(db, balance.id, amountToIncrease);
     return balance;
 }
-export async function increaseBalance(db: dbClient, id: number, amountToIncrease: number) {
+export async function increaseBalance(db: dbOperationClient, id: number, amountToIncrease: number) {
     if (amountToIncrease < 0) {
         // Delegate to decreaseBalance for negative amounts
         return decreaseBalance(db, id, amountToIncrease);
@@ -60,7 +65,7 @@ export async function increaseBalance(db: dbClient, id: number, amountToIncrease
     return updated;
 }
 
-export async function decreaseBalance(db: dbClient, id: number, amountToDecrease: number) {
+export async function decreaseBalance(db: dbOperationClient, id: number, amountToDecrease: number) {
     // Get the current balance
     const current = await db.balance.findUniqueOrThrow({ where: { id } });
 
@@ -84,7 +89,7 @@ export async function decreaseBalance(db: dbClient, id: number, amountToDecrease
     return updated;
 }
 
-export async function findOrCreateUserStats(db: dbClient, channelLogin: string, channelProviderId: string, userProviderId: string) {
+export async function findOrCreateUserStats(db: dbOperationClient, channelLogin: string, channelProviderId: string, userProviderId: string) {
     let userStats = await db.userStats.findUnique({ where: { channelProviderId_userId: { channelProviderId, userId: userProviderId } } });
     if (!userStats) {
         userStats = await db.userStats.create({
@@ -96,7 +101,7 @@ export async function findOrCreateUserStats(db: dbClient, channelLogin: string, 
 }
 
 export async function updateUserAdventureStats(
-    db: dbClient,
+    db: dbOperationClient,
     channel: string,
     channelProviderId: string,
     userProviderId: string,
@@ -301,7 +306,7 @@ export async function findOrCreateFishStats(
  * Increments totalWinnings and increases balance.
  */
 export async function addBonusToUserStats(
-    db: dbClient,
+    db: dbOperationClient,
     channelLogin: string,
     channelProviderId: string,
     userProviderId: string,

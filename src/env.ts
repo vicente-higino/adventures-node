@@ -11,6 +11,10 @@ const envSchema = z.object({
     DATABASE_URL: z.string({ required_error: "Missing environment variable: DATABASE_URL" }),
     COOLDOWN_FISHING_IN_HOURS: z.coerce.number({ required_error: "Missing environment variable: COOLDOWN_FISHING_IN_HOURS" }),
     COOLDOWN_ADVENTURE_IN_HOURS: z.coerce.number({ required_error: "Missing environment variable: COOLDOWN_ADVENTURE_IN_HOURS" }),
+    ADVENTURE_RPG_ENABLED: z
+        .enum(["true", "false"])
+        .default("false")
+        .transform(value => value === "true"),
     COOLDOWN_DUEL_IN_HOURS: z.coerce.number({ required_error: "Missing environment variable: COOLDOWN_DUEL_IN_HOURS" }),
     CH_MIGRATIONS_HOST: z.string({ required_error: "Missing environment variable: CH_MIGRATIONS_HOST" }),
     CH_MIGRATIONS_USER: z.string({ required_error: "Missing environment variable: CH_MIGRATIONS_USER" }),

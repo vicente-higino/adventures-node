@@ -1,4 +1,5 @@
 import { syncRedeemables } from "@/common/redeemables";
+import { syncAdventureItems } from "@/common/adventureProfiles";
 import env from "@/env";
 import logger from "@/logger";
 import { getChannelsModForUser } from "@/twitch/api";
@@ -79,7 +80,7 @@ export const createBot = async (forceRecreate?: boolean): Promise<boolean> => {
     }
     await fetchLiveChannels(botConfig.channels);
     await createEventsubListeners(botConfig.channels);
-    await syncRedeemables();
+    await Promise.all([syncRedeemables(), syncAdventureItems()]);
     const tokenFile = `./secrets/tokens.${botConfig.userId}.json`;
     bot?.chat.quit();
     try {
@@ -97,21 +98,21 @@ export const createBot = async (forceRecreate?: boolean): Promise<boolean> => {
         });
         bot.say = async (channel: string, message: string) => {
             if (getBotConfig().modChannels.includes(channel)) {
-                sendMessageToChannelWithAPI(channel, message);
+                await sendMessageToChannelWithAPI(channel, message);
             } else {
                 const msgs = splitOnSpaces(message, 500);
                 for (const msg of msgs) {
-                    bot?.chat.say(channel, msg);
+                    await bot?.chat.say(channel, msg);
                 }
             }
         };
         bot.action = async (channel: string, message: string) => {
             if (getBotConfig().modChannels.includes(channel)) {
-                sendActionToChannelWithAPI(channel, message);
+                await sendActionToChannelWithAPI(channel, message);
             } else {
                 const msgs = splitOnSpaces(message, 500);
                 for (const msg of msgs) {
-                    bot?.chat.action(channel, msg);
+                    await bot?.chat.action(channel, msg);
                 }
             }
         };

@@ -1,6 +1,7 @@
 import { runGroupAdventure } from "@/adventures";
+import { payoutAwareChanceCap } from "@/adventures/rpg";
 import { getBotConfig } from "@/bot";
-import { addBonusToUserStats, findOrCreateBalance, increaseBalanceWithChannelID, setBalance, updateUserAdventureStats } from "@/db";
+import { addBonusToUserStats, findOrCreateBalance, increaseBalanceWithChannelID, updateUserAdventureStats } from "@/db";
 import { ADVENTURE_COOLDOWN_EMOTES, ADVENTURE_GAMBA_EMOTE } from "@/emotes";
 import env from "@/env";
 import logger from "@/logger";
@@ -16,11 +17,15 @@ import {
 } from "@/utils/misc";
 import { formatTimeToWithSeconds } from "@/utils/time";
 import { Mutex } from "async-mutex";
-import dayjs from "dayjs";
 import Decimal from "decimal.js";
 import z from "zod";
 import { cancelScheduleAdventureWarnings, scheduleAdventureWarnings } from "./helpers/schedule";
-import { consumeRedeemable } from "./redeemables";
+import { handleRpgAdventureEnd } from "./handleRpgAdventureEnd";
+import { formatAdventureApproaches, parseStoredAdventureScenario, resolveAdventureApproach, selectNewAdventureScenario } from "./adventureScenario";
+import { getAdventureProfileSnapshot } from "./adventureProfiles";
+import { randomUUID } from "node:crypto";
+import { Prisma } from "@prisma/client";
+import { withTransactionRetry } from "./helpers/transactionRetry";
 
 // Replace single mutex with a map of mutexes per channel
 const advEndMutexMap: Map<string, Mutex> = new Map();
@@ -40,6 +45,11 @@ export function getAdvJoinMutex(channelProviderId: string): Mutex {
 }
 
 const coolDownMinutes = (env: any) => 60 * env.COOLDOWN_ADVENTURE_IN_HOURS;
+const MAX_SAFE_ADVENTURE_BUYIN = Math.floor((Number.MAX_SAFE_INTEGER - 1_000) / 2);
+
+function boundedAdventureBuyin(requested: number, available: number): number {
+    return Math.max(0, Math.min(requested, available, MAX_SAFE_ADVENTURE_BUYIN));
+}
 
 export function generatePayoutRate(): number {
     const rand = Math.random();
@@ -54,11 +64,96 @@ export function generatePayoutRate(): number {
     }
 }
 
-interface ResultArrItem {
-    displayName: string;
-    profit: number;
-    streakBonus: number;
-    streak: number;
+function savedAdventureMessages(value: unknown): string[] | undefined {
+    return Array.isArray(value) && value.length > 0 && value.every(message => typeof message === "string") ? value : undefined;
+}
+
+async function handleLegacyAdventureEndAtomic(params: { channelLogin: string; channelProviderId: string; adventureId: number }): Promise<string> {
+    const { channelLogin, channelProviderId, adventureId } = params;
+    const result = await withTransactionRetry(
+        () =>
+            prisma.$transaction(
+                async tx => {
+                    const claimed = await tx.adventure.updateMany({
+                        where: { id: adventureId, channelProviderId, status: "OPEN" },
+                        data: { status: "RESOLVING", resolvingAt: new Date() },
+                    });
+                    if (claimed.count === 0) {
+                        const existing = await tx.adventure.findUnique({
+                            where: { id: adventureId },
+                            select: { finalChatResult: true, status: true },
+                        });
+                        const saved = savedAdventureMessages(existing?.finalChatResult);
+                        return saved
+                            ? { message: saved.join("$(newline)"), resolved: true }
+                            : {
+                                  message:
+                                      existing?.status === "RESOLVING"
+                                          ? "The adventure is already being resolved."
+                                          : "The adventure has already ended.",
+                                  resolved: false,
+                              };
+                    }
+
+                    const adventure = await tx.adventure.findUniqueOrThrow({
+                        where: { id: adventureId },
+                        include: { players: { include: { user: true } } },
+                    });
+                    const adventureResult = runGroupAdventure(adventure.players.map(player => player.user.displayName));
+                    const resultsByName = new Map(adventureResult.results.map(playerResult => [playerResult.player, playerResult]));
+                    const winnerMessages: string[] = [];
+                    const recoveryMessages: string[] = [];
+
+                    for (const player of adventure.players) {
+                        const didWin = resultsByName.get(player.user.displayName)?.outcome === "win";
+                        const buyin = Number(player.buyin);
+                        const grossPayout = didWin ? new Decimal(player.buyin.toString()).mul(adventure.payoutRate).ceil().toNumber() : 0;
+                        const stats = await updateUserAdventureStats(tx, channelLogin, channelProviderId, player.userId, {
+                            wagerAmount: buyin,
+                            winAmount: grossPayout,
+                            didWin,
+                        });
+                        const streakBonus = didWin
+                            ? calculateWinStreakBonus(stats.newStreak, stats.streakWager)
+                            : calculateLoseStreakBonus(stats.newStreak, stats.streakWager);
+
+                        if (grossPayout > 0) await increaseBalanceWithChannelID(tx, channelProviderId, player.userId, grossPayout);
+                        if (streakBonus > 0) await addBonusToUserStats(tx, channelLogin, channelProviderId, player.userId, streakBonus);
+
+                        if (didWin) {
+                            const bonus = streakBonus > 0 ? `, +${formatSilver(streakBonus)} bonus, ${stats.newStreak}-win streak` : "";
+                            winnerMessages.push(`@${player.user.displayName} (+${formatSilver(grossPayout - buyin)} silver${bonus})`);
+                        } else if (streakBonus > 0) {
+                            recoveryMessages.push(
+                                `@${player.user.displayName} (+${formatSilver(streakBonus)} silver bonus, ${stats.newStreak}-lose streak)`,
+                            );
+                        }
+                    }
+
+                    const formattedPayoutRate = adventure.payoutRate.toFixed(2);
+                    const recovery = recoveryMessages.length > 0 ? ` Recovery bonuses: ${recoveryMessages.join(", ")}.` : "";
+                    const base = winnerMessages.length
+                        ? ` The adventure ended with a ${formattedPayoutRate}x payout rate! Survivors are: ${winnerMessages.join(", ")}.${recovery}`
+                        : ` The adventure ended! No survivors. All players lost their silver.${recovery}`;
+                    const message = limitMessageLength(`${limitAdvMessage(base, adventureResult.message)}${base}`);
+
+                    await tx.adventure.update({
+                        where: { id: adventure.id },
+                        data: { name: "DONE", status: "RESOLVED", resolvedAt: new Date(), finalChatResult: [message] },
+                    });
+                    return { message, resolved: true };
+                },
+                { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 5_000, timeout: 20_000 },
+            ),
+        { retryUniqueConflicts: true },
+    );
+
+    if (result.resolved) {
+        await cancelScheduleAdventureWarnings(adventureId).catch(error =>
+            logger.error({ error, adventureId }, "Failed to cancel warnings for resolved legacy adventure"),
+        );
+    }
+    return result.message;
 }
 
 export async function handleAdventureEnd(params: {
@@ -67,13 +162,26 @@ export async function handleAdventureEnd(params: {
     userProviderId: string;
     userLogin: string;
     userDisplayName: string;
+    throwOnError?: boolean;
 }): Promise<string> {
-    const { channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName } = params;
+    const { channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName, throwOnError = false } = params;
     const adv = await prisma.adventure.findFirst({
-        where: { channelProviderId: channelProviderId, name: { not: "DONE" } },
+        where: { channelProviderId: channelProviderId, name: { not: "DONE" }, status: { in: ["OPEN", "RESOLVING"] } },
         orderBy: { createdAt: "desc" },
     });
     if (!adv) {
+        const recentResult = await prisma.adventure.findFirst({
+            where: {
+                channelProviderId,
+                status: "RESOLVED",
+                resolvedAt: { gte: new Date(Date.now() - 2 * 60 * 1000) },
+                finalChatResult: { not: Prisma.JsonNull },
+            },
+            orderBy: { resolvedAt: "desc" },
+            select: { finalChatResult: true },
+        });
+        const saved = savedAdventureMessages(recentResult?.finalChatResult);
+        if (saved) return saved.join("$(newline)");
         return "No adventure found, try starting one first.";
     }
     const timeLimit = 1000 * 60 * 10;
@@ -90,152 +198,19 @@ export async function handleAdventureEnd(params: {
     return await channelMutex.runExclusive(async () => {
         try {
             const checkAdv = await prisma.adventure.findFirst({
-                where: { channelProviderId: channelProviderId, name: { not: "DONE" } },
+                where: { channelProviderId: channelProviderId, name: { not: "DONE" }, status: { in: ["OPEN", "RESOLVING"] } },
                 orderBy: { createdAt: "desc" },
             });
             if (!checkAdv) {
                 return "No adventure found, try starting one first.";
             }
-            const players = await prisma.player.findMany({
-                where: { adventureId: adv.id },
-                include: { user: { select: { displayName: true, providerId: true, balances: true } } },
-            });
-            const advResults = runGroupAdventure(players.map(p => p.user.displayName));
-
-            // Get the payout rate from the adventure or default to 1.3 if not set
-            const payoutRate = adv.payoutRate || 1.3;
-            const formattedPayoutRate = payoutRate.toFixed(2);
-
-            // Combine player data with adventure results
-            const combinedResults = players.map(player => ({
-                ...player,
-                result: advResults.results.find(r => r.player === player.user.displayName),
-            }));
-
-            // Filter winners and losers using the combined data
-            const winners = combinedResults.filter(p => p.result?.outcome === "win");
-            const losers = combinedResults.filter(p => p.result?.outcome === "lose");
-            cancelScheduleAdventureWarnings(adv.id);
-
-            if (winners.length > 0) {
-                let promises = [];
-                const resultArr: ResultArrItem[] = [];
-
-                // Convert winner operations to promises
-                for (const p of winners) {
-                    const buyin = new Decimal(p.buyin);
-                    const pr = new Decimal(payoutRate);
-                    const winAmount = buyin.mul(pr).ceil().toNumber();
-                    const profit = winAmount - p.buyin;
-                    logger.debug(
-                        `Calculating win for ${p.user.displayName}: buyin=${buyin.toString()}, payoutRate=${pr.toString()}, winAmount=${winAmount}, profit=${profit}`,
-                    );
-
-                    promises.push(
-                        (async () => {
-                            const stats = await updateUserAdventureStats(prisma, channelLogin, channelProviderId, p.user.providerId, {
-                                wagerAmount: p.buyin,
-                                winAmount: winAmount,
-                                didWin: true,
-                            });
-
-                            const streakBonus = calculateWinStreakBonus(stats.newStreak, stats.streakWager);
-
-                            await increaseBalanceWithChannelID(prisma, channelProviderId, p.user.providerId, winAmount);
-                            if (streakBonus > 0) {
-                                await addBonusToUserStats(prisma, channelLogin, channelProviderId, p.user.providerId, streakBonus);
-                            }
-
-                            resultArr.push({ displayName: p.user.displayName, profit: profit + streakBonus, streakBonus, streak: stats.newStreak });
-                        })(),
-                    );
-                }
-
-                const loserMessages: string[] = [];
-                promises.push(
-                    ...losers.map(async p => {
-                        const stats = await updateUserAdventureStats(prisma, channelLogin, channelProviderId, p.user.providerId, {
-                            wagerAmount: p.buyin,
-                            winAmount: 0,
-                            didWin: false,
-                        });
-
-                        const loseBonus = calculateLoseStreakBonus(stats.newStreak, stats.streakWager);
-                        if (loseBonus > 0) {
-                            await addBonusToUserStats(prisma, channelLogin, channelProviderId, p.user.providerId, loseBonus);
-                            loserMessages.push(`@${p.user.displayName} (+${formatSilver(loseBonus)} silver bonus, ${stats.newStreak}-lose streak)`);
-                        }
-                    }),
-                );
-
-                await Promise.all(promises);
-
-                promises = [];
-                resultArr.sort((a, b) => b.profit - a.profit);
-                const winnerMessages = resultArr.map(r => {
-                    const streakMsg = r.streakBonus > 0 ? `, +${formatSilver(r.streakBonus)} bonus, ${r.streak}-win streak` : "";
-                    return `@${r.displayName} (+${formatSilver(r.profit - r.streakBonus)} silver${streakMsg})`;
-                });
-                const loseStreakMsg = loserMessages.length > 0 ? `, ${loserMessages.join(", ")}` : "";
-                const joinedResults = `${winnerMessages.join(", ")}${loseStreakMsg}`;
-
-                // Process losers with lose streak bonuses
-                // await Promise.all(promises);
-                // Add adventure cleanup operations
-                promises.push(
-                    prisma.adventure.deleteMany({ where: { channelProviderId: channelProviderId, id: { not: adv.id }, name: "DONE" } }),
-                    prisma.adventure.update({ where: { id: adv.id }, data: { name: "DONE" } }),
-                );
-
-                await Promise.all(promises);
-                cancelScheduleAdventureWarnings(adv.id);
-                // Compose the message and limit advResults.message
-                const base = ` The adventure ended with a ${formattedPayoutRate}x payout rate! Survivors are: ${joinedResults}.`;
-                const advMsg = limitAdvMessage(base, advResults.message);
-                let message = `${advMsg}${base}`;
-                // Final fallback in case of edge case overflow
-                message = limitMessageLength(message);
-
-                return message;
+            if (checkAdv.rulesVersion >= 2) {
+                return await handleRpgAdventureEnd({ channelLogin, channelProviderId, adventureId: checkAdv.id });
             }
-
-            // All players lost case
-            const promises = [];
-            const loserMessages: string[] = [];
-
-            promises.push(
-                ...players.map(async p => {
-                    const stats = await updateUserAdventureStats(prisma, channelLogin, channelProviderId, p.user.providerId, {
-                        wagerAmount: p.buyin,
-                        winAmount: 0,
-                        didWin: false,
-                    });
-
-                    const loseBonus = calculateLoseStreakBonus(stats.newStreak, stats.streakWager);
-                    if (loseBonus > 0) {
-                        await addBonusToUserStats(prisma, channelLogin, channelProviderId, p.user.providerId, loseBonus);
-                        loserMessages.push(`@${p.user.displayName} (+${formatSilver(loseBonus)} silver bonus, ${stats.newStreak}-lose streak)`);
-                    }
-                }),
-            );
-
-            promises.push(
-                prisma.adventure.deleteMany({ where: { channelProviderId: channelProviderId, id: { not: adv.id }, name: "DONE" } }),
-                prisma.adventure.update({ where: { id: adv.id }, data: { name: "DONE" } }),
-            );
-
-            await Promise.all(promises);
-
-            // Compose the message and limit advResults.message
-            const loseStreakMsg = loserMessages.length > 0 ? ` ${loserMessages.join(", ")}.` : "";
-            const base = ` The adventure ended! No survivors. All players lost their silver. ${loseStreakMsg}`;
-            const advMsg = limitAdvMessage(base, advResults.message);
-            let message = `${advMsg}${base}`;
-            // Final fallback in case of edge case overflow
-            message = limitMessageLength(message);
-            return message;
+            return await handleLegacyAdventureEndAtomic({ channelLogin, channelProviderId, adventureId: checkAdv.id });
         } catch (error) {
             logger.error(error, "Error handling adventure end");
+            if (throwOnError) throw error;
             return "An error occurred while ending the adventure. Please try again later.";
         }
     });
@@ -257,8 +232,26 @@ export const AdventureJoinParamsSchema = z.object({
 });
 
 export const amountParamSchema = AdventureJoinParamsSchema.shape.amount;
-const adventureOptions = "[+/-silver(K/M/B)|%|all|to:silver|k:silver]";
+const adventureAmountOptions = "[+/-silver(K/M/B)|%|all|to:silver|k:silver]";
+const adventureOptions = `${adventureAmountOptions} [approach|raid]`;
 export const adventureCommandSyntax = (prefix: string = "!") => `Usage: ${prefix}adventure | ${prefix}adv ${adventureOptions}`;
+
+function adventureCooldownResponse(
+    adventure: { resolvedAt: Date | null; cancelledAt: Date | null; updatedAt: Date; createdAt: Date },
+    channelLogin: string,
+    userDisplayName: string,
+): string | undefined {
+    const lastEndedAt = adventure.resolvedAt ?? adventure.cancelledAt ?? adventure.updatedAt ?? adventure.createdAt;
+    const nextAvailable = new Date(lastEndedAt.getTime() + 1000 * 60 * coolDownMinutes(env));
+    if (nextAvailable.getTime() <= Date.now()) return undefined;
+    return `@${userDisplayName}, adventure is in cooldown, please wait ${formatTimeToWithSeconds(nextAvailable)} before starting a new one. ${ADVENTURE_COOLDOWN_EMOTES(
+        channelLogin,
+    )}`;
+}
+
+function transactionConflict(message: string): Error & { code: "P2034" } {
+    return Object.assign(new Error(message), { code: "P2034" as const });
+}
 
 export async function handleAdventureJoin(params: {
     channelLogin: string;
@@ -267,130 +260,282 @@ export async function handleAdventureJoin(params: {
     userLogin: string;
     userDisplayName: string;
     amountParam: string;
+    approachParam?: string;
+    requestId?: string;
     prefix?: string;
 }): Promise<string> {
-    const { channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName, amountParam, prefix } = params;
-    // Validate amountParam
-    const parseResult = amountParamSchema.safeParse(amountParam);
-    if (!parseResult.success) {
-        return adventureCommandSyntax(prefix);
-    }
-    // Prevent join if adventureEnd mutex is locked for this channel
-    const advEndMutex = getAdvEndMutex(channelProviderId);
-    if (advEndMutex.isLocked()) return `@${userDisplayName}, the adventure has ended.`;
+    const { channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName, amountParam, approachParam, requestId, prefix } = params;
+    if (!amountParamSchema.safeParse(amountParam).success) return adventureCommandSyntax(prefix);
 
-    // Use per-channel join mutex for adventure creation/join logic
-    const joinMutex = getAdvJoinMutex(channelProviderId);
+    const endMutex = getAdvEndMutex(channelProviderId);
+    if (endMutex.isLocked()) return `@${userDisplayName}, the adventure has ended.`;
 
-    const advDone = await prisma.adventure.findFirst({
-        where: { channelProviderId: channelProviderId, name: "DONE" },
-        orderBy: { createdAt: "desc" },
-    });
-
-    if (advDone) {
-        const lastEndedAt = advDone.createdAt;
-        const nextAvailable = new Date(lastEndedAt.getTime() + 1000 * 60 * coolDownMinutes(env));
-        const now = new Date();
-        const secondsLeft = Math.floor((nextAvailable.getTime() - now.getTime()) / 1000);
-
-        if (secondsLeft >= 1) {
-            const timeUntilNext = dayjs(nextAvailable);
-            return `@${userDisplayName}, adventure is in cooldown, please wait ${formatTimeToWithSeconds(timeUntilNext.toDate())} before starting a new one. 
-                    ${ADVENTURE_COOLDOWN_EMOTES(channelLogin)}`;
-        }
-    }
-    const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);
-    const adv = await prisma.adventure.findFirst({
-        where: { channelProviderId: channelProviderId, name: { not: "DONE" } },
-        orderBy: { createdAt: "desc" },
-        include: { players: { include: { user: true } } },
-    });
-
-    if (!adv) {
-        const redeem = await consumeRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: "adventure_2x" });
-        const payoutRate = redeem ? 2 : roundToDecimalPlaces(generatePayoutRate(), 2);
-        const formattedPayoutRate = payoutRate.toFixed(2);
-        const buyin = calculateAmount(amountParam, balance.value, undefined, true, payoutRate);
-        const newBuyin = Math.min(buyin, balance.value);
-        const newBalanceValue = Math.max(balance.value - newBuyin, 0);
-        if (balance.value <= 0) {
-            return `@${userDisplayName} you have no silver to join the adventure.`;
-        }
-        if (newBuyin <= 0) {
-            return `@${userDisplayName} you need at least 1 silver to start an adventure.`;
-        }
-        return await joinMutex.runExclusive(async () => {
-            const checkAdv = await prisma.adventure.findFirst({
-                where: { channelProviderId: channelProviderId, name: { not: "DONE" } },
-                orderBy: { createdAt: "desc" },
-            });
-            if (checkAdv) {
-                return handleAdventureJoin(params);
-            }
-            const [_, adventure] = await Promise.all([
-                setBalance(prisma, balance.id, newBalanceValue),
-                prisma.adventure.create({
-                    data: {
-                        name: `${userProviderId}`,
-                        channel: channelLogin,
-                        channelProviderId: channelProviderId,
-                        payoutRate: payoutRate,
-                        players: { create: { buyin: newBuyin, userId: userProviderId } },
-                    },
-                }),
-            ]);
-
-            scheduleAdventureWarnings(adventure.id);
-
-            return `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "${prefix ?? "!"}adventure | ${prefix ?? "!"}adv ${adventureOptions}" to join in!
-                    This adventure offers a ${formattedPayoutRate}x payout rate! ${ADVENTURE_GAMBA_EMOTE(channelLogin)}
-                    $(newline)@${userDisplayName} joined the adventure with ${newBuyin} silver.`;
+    return getAdvJoinMutex(channelProviderId).runExclusive(async () => {
+        const activeBeforeSnapshot = await prisma.adventure.findFirst({
+            where: { channelProviderId, status: { in: ["OPEN", "RESOLVING"] } },
+            select: { id: true, status: true },
         });
-    }
-    if (adv.players.length >= 99) {
-        return `@${userDisplayName} the adventure is full, please wait for the next one.`;
-    }
-
-    const player = adv.players.find(player => player.userId === userProviderId);
-    if (!player) {
-        const buyin = calculateAmount(amountParam, balance.value, undefined, true, adv.payoutRate);
-        const newBuyin = Math.min(buyin, balance.value);
-        const newBalanceValue = Math.max(balance.value - newBuyin, 0);
-        if (balance.value <= 0) {
-            return `@${userDisplayName} you have no silver to join the adventure.`;
-        }
-        if (newBuyin <= 0) {
-            return `@${userDisplayName} you need at least 1 silver to join the adventure.`;
+        if (activeBeforeSnapshot?.status === "RESOLVING") return `@${userDisplayName}, the adventure is being resolved.`;
+        if (!activeBeforeSnapshot) {
+            const lastAdventure = await prisma.adventure.findFirst({
+                where: { channelProviderId, status: { in: ["RESOLVED", "CANCELLED"] } },
+                orderBy: { updatedAt: "desc" },
+            });
+            const cooldown = lastAdventure && adventureCooldownResponse(lastAdventure, channelLogin, userDisplayName);
+            if (cooldown) return cooldown;
         }
 
-        await Promise.all([
-            setBalance(prisma, balance.id, newBalanceValue),
-            prisma.player.create({ data: { buyin: newBuyin, userId: userProviderId, adventureId: adv.id } }),
-        ]);
+        await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);
+        const loadoutSnapshot = await getAdventureProfileSnapshot({ channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName });
+        const rpgEnabled = env.ADVENTURE_RPG_ENABLED;
+        const raidRequested = approachParam?.trim().toLowerCase() === "raid";
+        const newScenario = selectNewAdventureScenario(raidRequested);
 
-        const formattedPayoutRate = adv.payoutRate.toFixed(2);
-        return `@${userDisplayName} joined the adventure with ${newBuyin} silver. Current payout rate: ${formattedPayoutRate}x`;
-    }
+        const outcome = await withTransactionRetry(
+            () =>
+                prisma.$transaction(
+                    async tx => {
+                        const idempotencyKey = requestId ? `${channelProviderId}:${requestId}` : undefined;
+                        let joinRequestCreated = false;
+                        if (idempotencyKey) {
+                            const previousRequest = await tx.adventureJoinRequest.findUnique({ where: { id: idempotencyKey } });
+                            if (previousRequest) {
+                                if (previousRequest.userId !== userProviderId)
+                                    throw new Error("Adventure request ID was reused by a different user.");
+                                return {
+                                    message: previousRequest.response ?? `@${userDisplayName}, that adventure request was already processed.`,
+                                    adventureIdToSchedule: previousRequest.adventureId ?? undefined,
+                                };
+                            }
+                            await tx.adventureJoinRequest.create({ data: { id: idempotencyKey, channelProviderId, userId: userProviderId } });
+                            joinRequestCreated = true;
+                        }
+                        const respond = async <T extends { message: string; adventureIdToSchedule?: number }>(response: T): Promise<T> => {
+                            if (joinRequestCreated && idempotencyKey) {
+                                await tx.adventureJoinRequest.update({
+                                    where: { id: idempotencyKey },
+                                    data: { response: response.message, adventureId: response.adventureIdToSchedule },
+                                });
+                            }
+                            return response;
+                        };
+                        const activeAdventure = await tx.adventure.findFirst({
+                            where: { channelProviderId, status: { in: ["OPEN", "RESOLVING"] } },
+                            orderBy: { createdAt: "desc" },
+                            include: { players: true },
+                        });
+                        if (activeAdventure?.status === "RESOLVING") {
+                            return respond({ message: `@${userDisplayName}, the adventure is being resolved.` });
+                        }
+                        const adventure = activeAdventure;
 
-    const totalAvailable = balance.value + player.buyin;
-    const requestedBuyin = calculateAmount(amountParam, totalAvailable, player.buyin, true, adv.payoutRate);
+                        if (!adventure) {
+                            const lastAdventure = await tx.adventure.findFirst({
+                                where: { channelProviderId, status: { in: ["RESOLVED", "CANCELLED"] } },
+                                orderBy: { updatedAt: "desc" },
+                            });
+                            const cooldown = lastAdventure && adventureCooldownResponse(lastAdventure, channelLogin, userDisplayName);
+                            if (cooldown) return respond({ message: cooldown });
+                        }
 
-    if (requestedBuyin < 1) {
-        return `@${userDisplayName} you must keep at least 1 silver in the adventure.`;
-    }
+                        const balance = await tx.balance.findUniqueOrThrow({
+                            where: { channelProviderId_userId: { channelProviderId, userId: userProviderId } },
+                        });
+                        const balanceValue = Math.min(balance.value, MAX_SAFE_ADVENTURE_BUYIN);
 
-    const updatedBuyin = Math.min(requestedBuyin, totalAvailable);
-    const newUpdatedBalance = Math.max(totalAvailable - updatedBuyin, 0);
+                        if (!adventure) {
+                            const selectedApproach = rpgEnabled
+                                ? resolveAdventureApproach(newScenario.context, raidRequested ? undefined : approachParam, loadoutSnapshot)
+                                : undefined;
+                            if (rpgEnabled && !selectedApproach) {
+                                return respond({ message: `@${userDisplayName}, choose one of: ${formatAdventureApproaches(newScenario.context)}.` });
+                            }
+                            if (balanceValue <= 0) return respond({ message: `@${userDisplayName} you have no silver to join the adventure.` });
 
-    if (updatedBuyin !== player.buyin) {
-        await Promise.all([
-            setBalance(prisma, balance.id, newUpdatedBalance),
-            prisma.player.update({ where: { id: player.id }, data: { buyin: updatedBuyin } }),
-        ]);
+                            const ticket = await tx.userRedeemable.findFirst({
+                                where: {
+                                    userId: userProviderId,
+                                    channelProviderId,
+                                    quantity: { gt: 0 },
+                                    redeemable: { code: "adventure_2x", active: true },
+                                },
+                            });
+                            const payoutRate = ticket ? 2 : roundToDecimalPlaces(generatePayoutRate(), 2);
+                            const buyin = boundedAdventureBuyin(
+                                calculateAmount(amountParam, balanceValue, undefined, true, payoutRate),
+                                balanceValue,
+                            );
+                            if (buyin <= 0) return respond({ message: `@${userDisplayName} you need at least 1 silver to start an adventure.` });
 
-        return `@${userDisplayName}, you updated your adventure silver from ${player.buyin} to ${updatedBuyin}. You have ${newUpdatedBalance} silver left.`;
-    }
-    return `@${userDisplayName} already joined the adventure with ${player.buyin} silver.`;
+                            if (ticket) {
+                                const consumed = await tx.userRedeemable.updateMany({
+                                    where: { id: ticket.id, quantity: { gt: 0 } },
+                                    data: { quantity: { decrement: 1 } },
+                                });
+                                if (consumed.count !== 1) throw transactionConflict("The adventure ticket changed during creation.");
+                            }
+                            const debited = await tx.balance.updateMany({
+                                where: { id: balance.id, value: { gte: BigInt(buyin) } },
+                                data: { value: { decrement: BigInt(buyin) } },
+                            });
+                            if (debited.count !== 1) throw transactionConflict("The balance changed during adventure creation.");
+
+                            const created = await tx.adventure.create({
+                                data: {
+                                    name: userProviderId,
+                                    createdByUserId: userProviderId,
+                                    channel: channelLogin,
+                                    channelProviderId,
+                                    payoutRate,
+                                    status: "OPEN",
+                                    rulesVersion: rpgEnabled ? 2 : 1,
+                                    ...(rpgEnabled
+                                        ? {
+                                              scenarioId: newScenario.entry.id,
+                                              theme: newScenario.entry.themeId,
+                                              scenarioContext: JSON.parse(JSON.stringify(newScenario.context)),
+                                              resolutionSeed: randomUUID(),
+                                              contentVersion: newScenario.entry.contentVersion,
+                                          }
+                                        : {}),
+                                    eligibleAt: new Date(Date.now() + 10 * 60 * 1000),
+                                    endsAt: new Date(Date.now() + 45 * 60 * 1000),
+                                    players: {
+                                        create: {
+                                            buyin,
+                                            userId: userProviderId,
+                                            ...(rpgEnabled && selectedApproach
+                                                ? {
+                                                      approachCode: selectedApproach.id,
+                                                      checkCode: selectedApproach.check,
+                                                      loadoutSnapshot: JSON.parse(JSON.stringify(loadoutSnapshot)),
+                                                  }
+                                                : {}),
+                                        },
+                                    },
+                                },
+                            });
+                            if (!rpgEnabled) {
+                                return respond({
+                                    adventureIdToSchedule: created.id,
+                                    message: `@${userDisplayName} is gathering a party! Use "${prefix ?? "!"}adv ${
+                                        adventureAmountOptions
+                                    }" to join. This adventure offers a ${payoutRate.toFixed(2)}x payout rate! ${ADVENTURE_GAMBA_EMOTE(
+                                        channelLogin,
+                                    )} $(newline)@${userDisplayName} joined with ${buyin} silver.`,
+                                });
+                            }
+                            return respond({
+                                adventureIdToSchedule: created.id,
+                                message: `@${userDisplayName} is gathering a party for ${
+                                    newScenario.context.title
+                                }! Use "${prefix ?? "!"}adv ${adventureAmountOptions}" to join. This adventure offers a ${payoutRate.toFixed(
+                                    2,
+                                )}x payout rate! ${ADVENTURE_GAMBA_EMOTE(
+                                    channelLogin,
+                                )} $(newline)@${userDisplayName} joined with ${buyin} silver.`,
+                            });
+                        }
+
+                        const scenario = parseStoredAdventureScenario(adventure.scenarioContext);
+                        const selectedApproach = scenario ? resolveAdventureApproach(scenario, approachParam, loadoutSnapshot) : undefined;
+                        if (scenario && approachParam && !selectedApproach) {
+                            return respond({ message: `@${userDisplayName}, choose one of: ${formatAdventureApproaches(scenario)}.` });
+                        }
+
+                        const player = adventure.players.find(candidate => candidate.userId === userProviderId);
+                        if (!player) {
+                            if (adventure.players.length >= 99) {
+                                return respond({ message: `@${userDisplayName} the adventure is full, please wait for the next one.` });
+                            }
+                            if (balanceValue <= 0) return respond({ message: `@${userDisplayName} you have no silver to join the adventure.` });
+                            const buyin = boundedAdventureBuyin(
+                                calculateAmount(amountParam, balanceValue, undefined, true, adventure.payoutRate),
+                                balanceValue,
+                            );
+                            if (buyin <= 0) return respond({ message: `@${userDisplayName} you need at least 1 silver to join the adventure.` });
+
+                            const debited = await tx.balance.updateMany({
+                                where: { id: balance.id, value: { gte: BigInt(buyin) } },
+                                data: { value: { decrement: BigInt(buyin) } },
+                            });
+                            if (debited.count !== 1) throw transactionConflict("The balance changed while joining the adventure.");
+                            await tx.player.create({
+                                data: {
+                                    buyin,
+                                    userId: userProviderId,
+                                    adventureId: adventure.id,
+                                    approachCode: selectedApproach?.id,
+                                    checkCode: selectedApproach?.check,
+                                    loadoutSnapshot: scenario ? JSON.parse(JSON.stringify(loadoutSnapshot)) : undefined,
+                                },
+                            });
+                            return respond({
+                                message: `@${userDisplayName} joined with ${buyin} silver${
+                                    selectedApproach ? ` using ${selectedApproach.label} [${selectedApproach.check}]` : ""
+                                }. Current payout: ${adventure.payoutRate.toFixed(2)}x (max odds ${payoutAwareChanceCap(adventure.payoutRate)}%)`,
+                            });
+                        }
+
+                        const currentBuyin = Number(player.buyin);
+                        const totalAvailable = Math.min(balanceValue + currentBuyin, MAX_SAFE_ADVENTURE_BUYIN);
+                        const requestedBuyin = calculateAmount(amountParam, totalAvailable, currentBuyin, true, adventure.payoutRate);
+                        if (requestedBuyin < 1) {
+                            return respond({ message: `@${userDisplayName} you must keep at least 1 silver in the adventure.` });
+                        }
+                        const updatedBuyin = boundedAdventureBuyin(requestedBuyin, totalAvailable);
+                        const wagerDelta = updatedBuyin - currentBuyin;
+                        const updatedBalance = Math.max(balanceValue - wagerDelta, 0);
+                        const rpgSnapshot = scenario
+                            ? {
+                                  approachCode: selectedApproach?.id ?? player.approachCode,
+                                  checkCode: selectedApproach?.check ?? player.checkCode,
+                                  loadoutSnapshot: JSON.parse(JSON.stringify(loadoutSnapshot)),
+                              }
+                            : {};
+
+                        if (updatedBuyin !== currentBuyin) {
+                            if (wagerDelta > 0) {
+                                const debited = await tx.balance.updateMany({
+                                    where: { id: balance.id, value: { gte: BigInt(wagerDelta) } },
+                                    data: { value: { decrement: BigInt(wagerDelta) } },
+                                });
+                                if (debited.count !== 1) throw transactionConflict("The balance changed while updating the adventure wager.");
+                            } else {
+                                await tx.balance.update({ where: { id: balance.id }, data: { value: { increment: BigInt(-wagerDelta) } } });
+                            }
+                            await tx.player.update({ where: { id: player.id }, data: { buyin: updatedBuyin, ...rpgSnapshot } });
+                            return respond({
+                                message: `@${userDisplayName}, you updated your adventure silver from ${currentBuyin} to ${updatedBuyin}${
+                                    selectedApproach ? ` and selected ${selectedApproach.label} [${selectedApproach.check}]` : ""
+                                }. You have ${updatedBalance} silver left.`,
+                            });
+                        }
+
+                        if (scenario && selectedApproach) {
+                            const changedApproach = player.approachCode !== selectedApproach.id || player.checkCode !== selectedApproach.check;
+                            await tx.player.update({ where: { id: player.id }, data: rpgSnapshot });
+                            return respond({
+                                message: changedApproach
+                                    ? `@${userDisplayName}, approach changed to ${selectedApproach.label} [${selectedApproach.check}]. Your wager remains ${currentBuyin} silver.`
+                                    : `@${userDisplayName} already joined with ${currentBuyin} silver using ${selectedApproach.label} [${selectedApproach.check}]. Your class and gear snapshot was refreshed.`,
+                            });
+                        }
+                        return respond({ message: `@${userDisplayName} already joined the adventure with ${currentBuyin} silver.` });
+                    },
+                    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 5_000, timeout: 10_000 },
+                ),
+            { retryUniqueConflicts: true },
+        );
+
+        const adventureIdToSchedule = "adventureIdToSchedule" in outcome ? outcome.adventureIdToSchedule : undefined;
+        if (adventureIdToSchedule) {
+            await scheduleAdventureWarnings(adventureIdToSchedule).catch(error =>
+                logger.error({ error, adventureId: adventureIdToSchedule }, "Failed to schedule adventure warnings"),
+            );
+        }
+        return outcome.message;
+    });
 }
 
 export async function upgradeAdventure(params: {
@@ -401,18 +546,38 @@ export async function upgradeAdventure(params: {
     userDisplayName: string;
 }): Promise<string> {
     const { channelProviderId, userProviderId, userDisplayName } = params;
-    const adv = await prisma.adventure.findFirst({ where: { channelProviderId, name: { not: "DONE" } }, orderBy: { createdAt: "desc" } });
-    if (!adv) {
-        return `@${userDisplayName} there's no adventure to upgrade. Start one first!`;
-    }
-    if (adv.payoutRate === 2) {
-        return `@${userDisplayName}, the adventure already is 2x.`;
-    }
-    const redeem = await consumeRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: "adventure_2x" });
-    if (redeem) {
-        await prisma.adventure.update({ where: { id: adv.id }, data: { payoutRate: 2 } });
-        return `/me @${userDisplayName} has upgraded the adventure to a 2x payout!`;
-    } else {
-        return `@${userDisplayName}, you don't own a 2x adventure ticket to upgrade this adventure!`;
-    }
+    return getAdvJoinMutex(channelProviderId).runExclusive(async () => {
+        const outcome = await withTransactionRetry(() =>
+            prisma.$transaction(
+                async tx => {
+                    const adventure = await tx.adventure.findFirst({ where: { channelProviderId, status: "OPEN" }, orderBy: { createdAt: "desc" } });
+                    if (!adventure) return "missing" as const;
+                    if (adventure.payoutRate === 2) return "already" as const;
+
+                    const ticket = await tx.userRedeemable.findFirst({
+                        where: { userId: userProviderId, channelProviderId, quantity: { gt: 0 }, redeemable: { code: "adventure_2x", active: true } },
+                    });
+                    if (!ticket) return "no-ticket" as const;
+
+                    const upgraded = await tx.adventure.updateMany({
+                        where: { id: adventure.id, status: "OPEN", payoutRate: { not: 2 } },
+                        data: { payoutRate: 2 },
+                    });
+                    if (upgraded.count !== 1) throw transactionConflict("The adventure changed during its upgrade.");
+                    const consumed = await tx.userRedeemable.updateMany({
+                        where: { id: ticket.id, quantity: { gt: 0 } },
+                        data: { quantity: { decrement: 1 } },
+                    });
+                    if (consumed.count !== 1) throw transactionConflict("The adventure ticket changed during its upgrade.");
+                    return "upgraded" as const;
+                },
+                { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 5_000, timeout: 10_000 },
+            ),
+        );
+
+        if (outcome === "missing") return `@${userDisplayName} there's no adventure to upgrade. Start one first!`;
+        if (outcome === "already") return `@${userDisplayName}, the adventure already is 2x.`;
+        if (outcome === "no-ticket") return `@${userDisplayName}, you don't own a 2x adventure ticket to upgrade this adventure!`;
+        return `/me @${userDisplayName} upgraded the adventure. This adventure offers a 2.00x payout rate! Success odds are now capped at 55%.`;
+    });
 }
