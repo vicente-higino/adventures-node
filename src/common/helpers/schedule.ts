@@ -1,11 +1,11 @@
-import { checkIfChannelIsForcedSend, getBotConfig, isChannelLive, sendActionToChannelStrict, sendMessageToChannelStrict } from "@/bot";
-import { prisma } from "@/prisma";
-import { handleAdventureEnd } from "../handleAdventure";
-import { getStreamByUserId } from "@/twitch/api";
-import logger from "@/logger";
-import { ADVENTURE_GAMBA_EMOTE, ADVENTURE_ENDING_EMOTE } from "@/emotes";
+import { checkIfChannelIsForcedSend, getBotConfig, isBotModInChannel, isChannelLive, sendActionToChannelStrict, sendMessageToChannelStrict } from "@/bot";
 import boss from "@/db/boss";
+import { ADVENTURE_ENDING_EMOTE, ADVENTURE_GAMBA_EMOTE } from "@/emotes";
+import logger from "@/logger";
+import { prisma } from "@/prisma";
+import { getStreamByUserId } from "@/twitch/api";
 import { createHash } from "node:crypto";
+import { handleAdventureEnd } from "../handleAdventure";
 
 export interface AdventureWarning {
     delay: number; // milliseconds
@@ -64,7 +64,7 @@ function createWarningsUntilEnd(millisecondsUntilEnd: number): AdventureWarning[
             beforeEnd: 2 * MINUTE_IN_MS,
             message: `${ADVENTURE_ENDING_EMOTE.Alarm.name} Ending the adventure in 2 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
         },
-        { beforeEnd: 0, message: `!adventureend` },
+        { beforeEnd: 0, message: `!advend` },
     ];
     return warnings
         .filter(warning => warning.beforeEnd === 0 || remaining >= warning.beforeEnd)
@@ -97,7 +97,7 @@ export async function processWarning(adventureId: number, message: string, gener
     }
     if (adv.status === "RESOLVED") {
         await cancelScheduleAdventureWarnings(adventureId);
-        if (message === "!adventureend") {
+        if (message === "!advend") {
             const paragraphs = persistedChatParagraphs(adv.finalChatResult);
             if (paragraphs.length === 0) throw new Error(`Resolved adventure ${adventureId} has no persisted chat result.`);
             for (const paragraph of paragraphs) await sendMessageToChannelStrict(adv.channel, paragraph);
@@ -124,7 +124,7 @@ export async function processWarning(adventureId: number, message: string, gener
         return;
     }
     if (!live || isForceSend) {
-        if (message === "!adventureend") {
+        if (message === "!advend" && isBotModInChannel(adv.channel)) {
             const result = await handleAdventureEnd({
                 channelLogin: adv.channel,
                 channelProviderId: adv.channelProviderId,

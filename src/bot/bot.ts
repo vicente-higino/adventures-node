@@ -51,6 +51,10 @@ export function getBotPrefix() {
     return botConfig.prefix;
 }
 
+export function isBotModInChannel(channel: string) {
+    return botConfig.modChannels.includes(channel.toLowerCase());
+}
+
 export const refreshingAuthProvider = new RefreshingAuthProvider({ clientId, clientSecret });
 refreshingAuthProvider.onRefresh(
     async (userId, newTokenData) => await fs.writeFile(`./secrets/tokens.${userId}.json`, JSON.stringify(newTokenData, null, 4), "utf-8"),
