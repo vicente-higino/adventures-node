@@ -36,7 +36,7 @@ import { Prisma, Rarity } from "@prisma/client";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { friendlyCooldownMessages, motivationalQuotes, wrongPlaces } from "./phrases";
-import { consumeRedeemable, grantRedeemable } from "./redeemables";
+import { ADVENTURE_TICKET_DROP_TABLE, consumeRedeemable, getAdventureTicketCode, grantRedeemable } from "./redeemables";
 dayjs.extend(relativeTime);
 
 // Rarity progression for the "fish gets eaten" gimmick
@@ -407,12 +407,7 @@ async function handleTrashReward({
 
     const rewards = [
         { type: "silver", weight: 5 },
-        {
-            type: "redeemable",
-            code: "adventure_2x",
-            message: "You found a mysterious Adventure ticket hidden in the trash! Your next adventure will reward 2x payouts!",
-            weight: 3,
-        },
+        { type: "adventure-ticket", weight: 3 },
         {
             type: "redeemable",
             code: "legendary_event_ticket",
@@ -444,8 +439,19 @@ async function handleTrashReward({
             return;
         }
 
-        await grantRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: reward.code });
+        if (reward.type === "adventure-ticket") {
+            const multiplier = pickWeightedRandom(ADVENTURE_TICKET_DROP_TABLE).multiplier;
+            await grantRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: getAdventureTicketCode(multiplier) });
+            sendActionToChannel(
+                channelLogin,
+                `@${userDisplayName} You found a ${multiplier}x Adventure Ticket hidden in the trash! Use "${getBotPrefix()}advupgrade ${multiplier}x" during an active adventure. ${CONGRATULATIONS_EMOTES(
+                    channelLogin,
+                )}`,
+            );
+            return;
+        }
 
+        await grantRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: reward.code });
         sendActionToChannel(channelLogin, `@${userDisplayName} ${reward.message} ${CONGRATULATIONS_EMOTES(channelLogin)}`);
     }, 2000);
 

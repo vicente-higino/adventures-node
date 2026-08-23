@@ -2,11 +2,12 @@ import { AdventureCheck } from "./checks";
 import { SeedPart, rollPlayerD20 } from "./random";
 
 export const ADVENTURE_DC = 11;
-export const MIN_MODIFIER = -4;
+export const MIN_MODIFIER = -7;
 export const MAX_MODIFIER = 5;
-export const MIN_SUCCESS_CHANCE = 30;
+export const MIN_SUCCESS_CHANCE = 15;
 export const MAX_SUCCESS_CHANCE = 75;
-export const MIN_PAYOUT_CHANCE_CAP = 55;
+export const MIN_PAYOUT_CHANCE_CAP = 20;
+export const MAX_TICKET_BUFF_PERCENT = 15;
 
 export type ModifierSourceKind = "class" | "item" | "status" | "consumable" | "party" | "other";
 
@@ -64,16 +65,24 @@ export function successChanceForModifier(modifier: number): number {
     return 50 + clampModifier(modifier) * 5;
 }
 
-/** Payout-aware ceiling, bounded to 55-75% for supported adventure rates. */
+/** Payout-aware ceiling, bounded to 20-75% for supported 1x-5x adventure rates. */
 export function payoutAwareChanceCap(payoutRate: number): number {
     if (!Number.isFinite(payoutRate) || payoutRate <= 0) throw new RangeError("Payout rate must be finite and greater than zero");
     return Math.max(MIN_PAYOUT_CHANCE_CAP, Math.min(MAX_SUCCESS_CHANCE, Math.floor((1 / payoutRate) * 20) * 5));
 }
 
+/** Ticket adventures start at their payout-balanced odds; buffs are added afterward. */
+export function payoutBaseSuccessChance(payoutRate: number): number {
+    return payoutRate >= 2 ? payoutAwareChanceCap(payoutRate) : 50;
+}
+
 export function successChance(modifier: number, payoutRate = 1): number {
-    const rawChance = successChanceForModifier(modifier);
-    const applicablePayoutCap = Math.max(MIN_SUCCESS_CHANCE, payoutAwareChanceCap(payoutRate));
-    return Math.max(MIN_SUCCESS_CHANCE, Math.min(rawChance, applicablePayoutCap));
+    const rawChance = payoutBaseSuccessChance(payoutRate) + clampModifier(modifier) * 5;
+    const maximumChance =
+        payoutRate >= 2
+            ? Math.min(MAX_SUCCESS_CHANCE, payoutBaseSuccessChance(payoutRate) + MAX_TICKET_BUFF_PERCENT)
+            : payoutAwareChanceCap(payoutRate);
+    return Math.max(MIN_SUCCESS_CHANCE, Math.min(rawChance, maximumChance));
 }
 
 function modifierForChance(chancePercent: number): number {
@@ -89,11 +98,15 @@ export function calculateModifierBreakdown(entries: readonly ModifierEntry[], pa
 
     const rawTotal = entries.reduce((total, entry) => total + entry.modifier, 0);
     const clampedTotal = clampModifier(rawTotal);
-    const baseChancePercent = successChanceForModifier(clampedTotal);
+    const payoutBaseChancePercent = payoutBaseSuccessChance(payoutRate);
+    const baseChancePercent = Math.max(
+        MIN_SUCCESS_CHANCE,
+        Math.min(MAX_SUCCESS_CHANCE, payoutBaseChancePercent + clampedTotal * 5),
+    );
     const payoutChanceCapPercent = payoutAwareChanceCap(payoutRate);
     const chancePercent = successChance(clampedTotal, payoutRate);
     const effectiveModifier = modifierForChance(chancePercent);
-    let remaining = effectiveModifier;
+    let remaining = clampModifier((chancePercent - payoutBaseChancePercent) / 5);
     const appliedEntries = entries.map(entry => {
         const desired = entry.modifier;
         let appliedModifier = 0;

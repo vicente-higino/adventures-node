@@ -13,6 +13,7 @@ import {
     formatAdventureCheckModifiers,
     getAdventureItemModifier,
     parseAdventureClass,
+    payoutBaseSuccessChance,
     payoutAwareChanceCap,
     renderAdventureDescription,
     renderAdventureOutcome,
@@ -63,11 +64,11 @@ describe("RPG checks and classes", () => {
 });
 
 describe("RPG probability rules", () => {
-    it("clamps modifiers and maps them to exact 30-75 percent odds", () => {
-        expect(clampModifier(-99)).toBe(-4);
+    it("clamps modifiers and maps them to exact 15-75 percent odds", () => {
+        expect(clampModifier(-99)).toBe(-7);
         expect(clampModifier(99)).toBe(5);
-        expect([-4, -3, -2, -1, 0, 1, 2, 3, 4, 5].map(successChanceForModifier)).toEqual([
-            30, 35, 40, 45, 50, 55, 60, 65, 70, 75,
+        expect([-7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5].map(successChanceForModifier)).toEqual([
+            15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75,
         ]);
     });
 
@@ -76,12 +77,26 @@ describe("RPG probability rules", () => {
         expect(payoutAwareChanceCap(1.5)).toBe(65);
         expect(payoutAwareChanceCap(1.6)).toBe(60);
         expect(payoutAwareChanceCap(1.8)).toBe(55);
-        expect(payoutAwareChanceCap(1.9)).toBe(55);
-        expect(payoutAwareChanceCap(2)).toBe(55);
-        expect(successChance(5, 2)).toBe(55);
-        expect(successChance(1, 2)).toBe(55);
-        expect(successChance(0, 2)).toBe(50);
-        expect(successChance(-2, 2)).toBe(40);
+        expect(payoutAwareChanceCap(1.9)).toBe(50);
+        expect(payoutAwareChanceCap(2)).toBe(50);
+        expect(payoutAwareChanceCap(3)).toBe(30);
+        expect(payoutAwareChanceCap(4)).toBe(25);
+        expect(payoutAwareChanceCap(5)).toBe(20);
+    });
+
+    it("adds five to fifteen percentage points to ticket base odds without reserving them", () => {
+        expect([2, 3, 4, 5].map(payoutBaseSuccessChance)).toEqual([50, 30, 25, 20]);
+        expect([0, 1, 2, 3].map(modifier => successChance(modifier, 2))).toEqual([50, 55, 60, 65]);
+        expect([0, 1, 2, 3].map(modifier => successChance(modifier, 3))).toEqual([30, 35, 40, 45]);
+        expect([0, 1, 2, 3].map(modifier => successChance(modifier, 4))).toEqual([25, 30, 35, 40]);
+        expect([0, 1, 2, 3].map(modifier => successChance(modifier, 5))).toEqual([20, 25, 30, 35]);
+        expect(successChance(5, 5)).toBe(35);
+    });
+
+    it("keeps 2x through 5x ticket gross return at or below break-even", () => {
+        for (const payoutRate of [2, 3, 4, 5]) {
+            expect((payoutAwareChanceCap(payoutRate) / 100) * payoutRate).toBeLessThanOrEqual(1);
+        }
     });
 
     it("returns a transparent clamped and payout-capped breakdown", () => {

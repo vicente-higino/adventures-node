@@ -11,7 +11,7 @@ import { parseInventoryView } from "./inventoryView";
 function getCommand(type: RedeemableType) {
     switch (type) {
         case "START_ADVENTURE_MULTIPLIER":
-            return `(${getBotPrefix()}adv2x)`;
+            return `(${getBotPrefix()}advupgrade)`;
         case "START_LEGENDARY_EVENT":
             return `(${getBotPrefix()}sle)`;
         case "LEGENDARY_BAIT":

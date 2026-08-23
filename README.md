@@ -65,9 +65,19 @@ Hono, Prisma, and Twurple.
 - Critical successes find and automatically equip loot and grant Inspired
   (+10%) for the next adventure. Critical failures grant a theme-flavoured
   -5% status for the next adventure. Only one temporary status applies.
-- Success odds are capped at 75%, with payout-aware caps down to 55% for high
-  payouts. A rare matching item plus Inspired can reach 75% on a low-payout
-  adventure, while a 2x adventure remains capped at 55%.
+- Success odds are capped at 75%. Multiplier adventures start at their balanced
+  base odds and accept up to +15% total from loot/status: 2x ranges from 50% to
+  65%, 3x from 30% to 45%, 4x from 25% to 40%, and 5x from 20% to 35%. Common,
+  uncommon, and rare matching loot add 5%, 10%, and 15%; Inspired adds 10%,
+  subject to the same +15% total limit.
+- Adventure tickets never activate automatically. During an active adventure,
+  use `!advupgrade [2x|3x|4x|5x]`; without an argument it consumes the highest
+  usable ticket owned by the caller.
+- Adventures can also roll these payouts naturally. The combined 2x-or-higher
+  chance remains 2.5%: 2x is 2.25%, 3x is 0.20%, 4x is 0.04%, and 5x is 0.01%.
+- When an Adventure Ticket drops, its weighted multiplier is 90% for 2x, 8%
+  for 3x, 1.6% for 4x, and 0.4% for 5x. These weights are also stored in each
+  redeemable's synced config.
 - `!char` shows gear, status, and record. `!inv loot` lists adventure loot;
   `!equip` and `!unequip` allow manual changes after automatic equipping.
 - Resolution uses the legacy-style narrative and survivor list, adding compact

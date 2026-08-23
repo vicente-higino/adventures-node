@@ -1,6 +1,38 @@
 import logger from "@/logger";
 import { prisma } from "@/prisma";
 
+export const ADVENTURE_TICKET_MULTIPLIERS = [2, 3, 4, 5] as const;
+export type AdventureTicketMultiplier = (typeof ADVENTURE_TICKET_MULTIPLIERS)[number];
+export const ADVENTURE_TICKET_DROP_WEIGHTS: Readonly<Record<AdventureTicketMultiplier, number>> = {
+    2: 225,
+    3: 20,
+    4: 4,
+    5: 1,
+};
+export const ADVENTURE_TICKET_DROP_TABLE = ADVENTURE_TICKET_MULTIPLIERS.map(multiplier => ({
+    multiplier,
+    weight: ADVENTURE_TICKET_DROP_WEIGHTS[multiplier],
+}));
+
+export function getAdventureTicketCode(multiplier: AdventureTicketMultiplier): `adventure_${AdventureTicketMultiplier}x` {
+    return `adventure_${multiplier}x`;
+}
+
+export function getAdventureTicketMultiplier(code: string): AdventureTicketMultiplier | undefined {
+    const match = /^adventure_([2-5])x$/.exec(code);
+    if (!match) return undefined;
+    const multiplier = Number(match[1]);
+    return ADVENTURE_TICKET_MULTIPLIERS.find(candidate => candidate === multiplier);
+}
+
+const adventureTickets = ADVENTURE_TICKET_MULTIPLIERS.map(multiplier => ({
+    code: getAdventureTicketCode(multiplier),
+    name: `${multiplier}x Adventure Ticket`,
+    description: `Use !advupgrade ${multiplier}x to upgrade an active adventure to a ${multiplier}x payout.`,
+    type: "START_ADVENTURE_MULTIPLIER" as const,
+    config: { multiplier, dropWeight: ADVENTURE_TICKET_DROP_WEIGHTS[multiplier] },
+}));
+
 export const redeemables = [
     {
         code: "legendary_event_ticket",
@@ -9,13 +41,7 @@ export const redeemables = [
         type: "START_LEGENDARY_EVENT",
         config: { durationMinutes: 90 },
     },
-    {
-        code: "adventure_2x",
-        name: "2x Adventure Ticket",
-        description: "Your next adventure will reward 2x payouts.",
-        type: "START_ADVENTURE_MULTIPLIER",
-        config: { multiplier: 2 },
-    },
+    ...adventureTickets,
     { code: "legendary_bait", name: "Legendary Bait", description: "Your next fish will be a legendary fish.", type: "LEGENDARY_BAIT", config: {} },
 ] as const;
 

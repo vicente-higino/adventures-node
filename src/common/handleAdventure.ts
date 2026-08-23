@@ -1,5 +1,5 @@
 import { runGroupAdventure } from "@/adventures";
-import { successChance } from "@/adventures/rpg";
+import { payoutAwareChanceCap, successChance } from "@/adventures/rpg";
 import { getBotConfig } from "@/bot";
 import { addBonusToUserStats, findOrCreateBalance, increaseBalanceWithChannelID, updateUserAdventureStats } from "@/db";
 import { ADVENTURE_COOLDOWN_EMOTES, ADVENTURE_GAMBA_EMOTE } from "@/emotes";
@@ -26,6 +26,7 @@ import { getAdventureProfileSnapshot, type AdventureLoadoutSnapshot } from "./ad
 import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { withTransactionRetry } from "./helpers/transactionRetry";
+import { ADVENTURE_TICKET_MULTIPLIERS, getAdventureTicketMultiplier } from "./redeemables";
 
 // Replace single mutex with a map of mutexes per channel
 const advEndMutexMap: Map<string, Mutex> = new Map();
@@ -60,7 +61,13 @@ function getCurrentAdventureOdds(snapshot: AdventureLoadoutSnapshot, theme: stri
 
 export function generatePayoutRate(): number {
     const rand = Math.random();
-    if (rand > 0.975) {
+    if (rand > 0.9999) {
+        return 5.0;
+    } else if (rand > 0.9995) {
+        return 4.0;
+    } else if (rand > 0.9975) {
+        return 3.0;
+    } else if (rand > 0.975) {
         return 2.0;
     } else if (rand > 0.925) {
         return 1.7 + Math.random() * 0.2;
@@ -106,7 +113,10 @@ async function handleLegacyAdventureEndAtomic(params: { channelLogin: string; ch
                         where: { id: adventureId },
                         include: { players: { include: { user: true } } },
                     });
-                    const adventureResult = runGroupAdventure(adventure.players.map(player => player.user.displayName));
+                    const adventureResult = runGroupAdventure(
+                        adventure.players.map(player => player.user.displayName),
+                        Math.min(50, payoutAwareChanceCap(adventure.payoutRate)),
+                    );
                     const resultsByName = new Map(adventureResult.results.map(playerResult => [playerResult.player, playerResult]));
                     const winnerMessages: string[] = [];
                     const recoveryMessages: string[] = [];
@@ -366,28 +376,13 @@ export async function handleAdventureJoin(params: {
                             const selectedApproach = rpgEnabled ? getAutomaticAdventureApproach(newScenario.context) : undefined;
                             if (balanceValue <= 0) return respond({ message: `@${userDisplayName} you have no silver to join the adventure.` });
 
-                            const ticket = await tx.userRedeemable.findFirst({
-                                where: {
-                                    userId: userProviderId,
-                                    channelProviderId,
-                                    quantity: { gt: 0 },
-                                    redeemable: { code: "adventure_2x", active: true },
-                                },
-                            });
-                            const payoutRate = ticket ? 2 : roundToDecimalPlaces(generatePayoutRate(), 2);
+                            const payoutRate = roundToDecimalPlaces(generatePayoutRate(), 2);
                             const buyin = boundedAdventureBuyin(
                                 calculateAmount(amountParam, balanceValue, undefined, true, payoutRate),
                                 balanceValue,
                             );
                             if (buyin <= 0) return respond({ message: `@${userDisplayName} you need at least 1 silver to start an adventure.` });
 
-                            if (ticket) {
-                                const consumed = await tx.userRedeemable.updateMany({
-                                    where: { id: ticket.id, quantity: { gt: 0 } },
-                                    data: { quantity: { decrement: 1 } },
-                                });
-                                if (consumed.count !== 1) throw transactionConflict("The adventure ticket changed during creation.");
-                            }
                             const debited = await tx.balance.updateMany({
                                 where: { id: balance.id, value: { gte: BigInt(buyin) } },
                                 data: { value: { decrement: BigInt(buyin) } },
@@ -432,24 +427,17 @@ export async function handleAdventureJoin(params: {
                             if (!rpgEnabled) {
                                 return respond({
                                     adventureIdToSchedule: created.id,
-                                    message: `@${userDisplayName} is gathering a party! Use "${prefix ?? "!"}adv ${
+                                    message: `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "${prefix ?? "!"}adv ${
                                         adventureAmountOptions
                                     }" to join. This adventure offers a ${payoutRate.toFixed(2)}x payout rate! ${ADVENTURE_GAMBA_EMOTE(
                                         channelLogin,
-                                    )}$(newline)@@${userDisplayName} joined with ${buyin} silver.`,
+                                    )}$(newline)@${userDisplayName} joined with ${buyin} silver.`,
                                 });
                             }
-                            const currentOdds = getCurrentAdventureOdds(
-                                loadoutSnapshot,
-                                newScenario.context.theme,
-                                payoutRate,
-                                statusModifier,
-                            );
+                            const currentOdds = getCurrentAdventureOdds(loadoutSnapshot, newScenario.context.theme, payoutRate, statusModifier);
                             return respond({
                                 adventureIdToSchedule: created.id,
-                                message: `@${userDisplayName} is gathering a party for ${
-                                    newScenario.context.title
-                                }! Use "${prefix ?? "!"}adv ${adventureAmountOptions}" to join. This adventure offers a ${payoutRate.toFixed(
+                                message: `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "${prefix ?? "!"}adv ${adventureAmountOptions}" to join. This adventure offers a ${payoutRate.toFixed(
                                     2,
                                 )}x payout rate! ${ADVENTURE_GAMBA_EMOTE(
                                     channelLogin,
@@ -561,40 +549,74 @@ export async function upgradeAdventure(params: {
     userProviderId: string;
     userLogin: string;
     userDisplayName: string;
+    multiplierParam?: string;
 }): Promise<string> {
-    const { channelProviderId, userProviderId, userDisplayName } = params;
+    const { channelProviderId, userProviderId, userDisplayName, multiplierParam } = params;
+    const normalizedMultiplier = multiplierParam?.trim().toLowerCase().replace(/x$/, "");
+    const requestedMultiplier = normalizedMultiplier
+        ? ADVENTURE_TICKET_MULTIPLIERS.find(multiplier => String(multiplier) === normalizedMultiplier)
+        : undefined;
+    if (normalizedMultiplier && !requestedMultiplier) {
+        return `@${userDisplayName}, choose a 2x, 3x, 4x, or 5x adventure ticket.`;
+    }
+
     return getAdvJoinMutex(channelProviderId).runExclusive(async () => {
         const outcome = await withTransactionRetry(() =>
             prisma.$transaction(
                 async tx => {
                     const adventure = await tx.adventure.findFirst({ where: { channelProviderId, status: "OPEN" }, orderBy: { createdAt: "desc" } });
-                    if (!adventure) return "missing" as const;
-                    if (adventure.payoutRate === 2) return "already" as const;
+                    if (!adventure) return { status: "missing" as const };
+                    if (adventure.payoutRate >= 5) return { status: "already-max" as const, multiplier: 5 };
+                    if (requestedMultiplier && adventure.payoutRate >= requestedMultiplier) {
+                        return { status: "already" as const, multiplier: requestedMultiplier };
+                    }
 
-                    const ticket = await tx.userRedeemable.findFirst({
-                        where: { userId: userProviderId, channelProviderId, quantity: { gt: 0 }, redeemable: { code: "adventure_2x", active: true } },
+                    const ownedTickets = await tx.userRedeemable.findMany({
+                        where: {
+                            userId: userProviderId,
+                            channelProviderId,
+                            quantity: { gt: 0 },
+                            redeemable: { type: "START_ADVENTURE_MULTIPLIER", active: true },
+                        },
+                        include: { redeemable: true },
                     });
-                    if (!ticket) return "no-ticket" as const;
+                    const usableTickets = ownedTickets
+                        .flatMap(ticket => {
+                            const multiplier = getAdventureTicketMultiplier(ticket.redeemable.code);
+                            return multiplier && multiplier > adventure.payoutRate ? [{ ticket, multiplier }] : [];
+                        })
+                        .sort((left, right) => right.multiplier - left.multiplier);
+                    const selected = requestedMultiplier ? usableTickets.find(ticket => ticket.multiplier === requestedMultiplier) : usableTickets[0];
+                    if (!selected) return { status: "no-ticket" as const, multiplier: requestedMultiplier };
 
                     const upgraded = await tx.adventure.updateMany({
-                        where: { id: adventure.id, status: "OPEN", payoutRate: { not: 2 } },
-                        data: { payoutRate: 2 },
+                        where: { id: adventure.id, status: "OPEN", payoutRate: { lt: selected.multiplier } },
+                        data: { payoutRate: selected.multiplier },
                     });
                     if (upgraded.count !== 1) throw transactionConflict("The adventure changed during its upgrade.");
                     const consumed = await tx.userRedeemable.updateMany({
-                        where: { id: ticket.id, quantity: { gt: 0 } },
+                        where: { id: selected.ticket.id, quantity: { gt: 0 } },
                         data: { quantity: { decrement: 1 } },
                     });
                     if (consumed.count !== 1) throw transactionConflict("The adventure ticket changed during its upgrade.");
-                    return "upgraded" as const;
+                    return { status: "upgraded" as const, multiplier: selected.multiplier };
                 },
                 { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 5_000, timeout: 10_000 },
             ),
         );
 
-        if (outcome === "missing") return `@${userDisplayName} there's no adventure to upgrade. Start one first!`;
-        if (outcome === "already") return `@${userDisplayName}, the adventure already is 2x.`;
-        if (outcome === "no-ticket") return `@${userDisplayName}, you don't own a 2x adventure ticket to upgrade this adventure!`;
-        return `/me @${userDisplayName} upgraded the adventure. This adventure offers a 2.00x payout rate!`;
+        if (outcome.status === "missing") return `@${userDisplayName} there's no adventure to upgrade. Start one first!`;
+        if (outcome.status === "already-max") return `@${userDisplayName}, the adventure is already at the maximum 5x payout.`;
+        if (outcome.status === "already") {
+            return `@${userDisplayName}, the adventure already has a ${outcome.multiplier}x or higher payout.`;
+        }
+        if (outcome.status === "no-ticket") {
+            return outcome.multiplier
+                ? `@${userDisplayName}, you don't own a ${outcome.multiplier}x adventure ticket.`
+                : `@${userDisplayName}, you don't own a usable 2x to 5x adventure ticket.`;
+        }
+        return `/me @${userDisplayName} upgraded the adventure. This adventure offers a ${outcome.multiplier.toFixed(
+            2,
+        )}x payout rate! Base success odds are ${payoutAwareChanceCap(outcome.multiplier)}%, with up to +15% from loot or status.`;
     });
 }

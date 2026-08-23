@@ -52,10 +52,13 @@ const adventures: Adventure[] = [
 function randomAdventure(adv = adventures): Adventure {
     return pickRandom(adv);
 }
-export function runGroupAdventure(players: string[]) {
+export function runGroupAdventure(players: string[], successChancePercent = 50) {
+    if (!Number.isFinite(successChancePercent) || successChancePercent < 0 || successChancePercent > 100) {
+        throw new RangeError("Adventure success chance must be between 0 and 100");
+    }
     const adventure = players.length > 11 ? randomAdventure(customAdventures) : randomAdventure();
     const results: PlayerAdventureResult[] = players.map(player => {
-        const outcome = Math.random() > 0.5 ? "win" : "lose";
+        const outcome = Math.random() * 100 < successChancePercent ? "win" : "lose";
         const message = outcome === "win" ? pickRandom(adventure.winMessages)(player) : pickRandom(adventure.loseMessages)(player);
         return { player, outcome, message };
     });
