@@ -441,7 +441,7 @@ export async function handleAdventureJoin(params: {
                                     2,
                                 )}x payout rate! ${ADVENTURE_GAMBA_EMOTE(
                                     channelLogin,
-                                )}$(newline)@${userDisplayName} joined with ${buyin} silver. Current odds: ${currentOdds}%.`,
+                                )}$(newline)@${userDisplayName} joined with ${buyin} silver. Odds: ${currentOdds}%.`,
                             });
                         }
 
@@ -480,7 +480,7 @@ export async function handleAdventureJoin(params: {
                             });
                             return respond({
                                 message: `@${userDisplayName} joined with ${buyin} silver. Current payout: ${adventure.payoutRate.toFixed(2)}x${
-                                    currentOdds === undefined ? "." : `. Current odds: ${currentOdds}%.`
+                                    currentOdds === undefined ? "." : `. Odds: ${currentOdds}%.`
                                 }`,
                             });
                         }
@@ -515,7 +515,7 @@ export async function handleAdventureJoin(params: {
                             await tx.player.update({ where: { id: player.id }, data: { buyin: updatedBuyin, ...rpgSnapshot } });
                             return respond({
                                 message: `@${userDisplayName}, you updated your adventure silver from ${currentBuyin} to ${updatedBuyin}. You have ${updatedBalance} silver left${
-                                    currentOdds === undefined ? "." : `. Current odds: ${currentOdds}%.`
+                                    currentOdds === undefined ? "." : `. Odds: ${currentOdds}%.`
                                 }`,
                             });
                         }
@@ -523,7 +523,7 @@ export async function handleAdventureJoin(params: {
                         if (scenario && selectedApproach) {
                             await tx.player.update({ where: { id: player.id }, data: rpgSnapshot });
                             return respond({
-                                message: `@${userDisplayName} already joined with ${currentBuyin} silver. Your gear was refreshed. Current odds: ${currentOdds}%.`,
+                                message: `@${userDisplayName} already joined with ${currentBuyin} silver. Odds: ${currentOdds}%.`,
                             });
                         }
                         return respond({ message: `@${userDisplayName} already joined the adventure with ${currentBuyin} silver.` });
