@@ -1,5 +1,5 @@
 import { runGroupAdventure } from "@/adventures";
-import { payoutAwareChanceCap } from "@/adventures/rpg";
+import { successChance } from "@/adventures/rpg";
 import { getBotConfig } from "@/bot";
 import { addBonusToUserStats, findOrCreateBalance, increaseBalanceWithChannelID, updateUserAdventureStats } from "@/db";
 import { ADVENTURE_COOLDOWN_EMOTES, ADVENTURE_GAMBA_EMOTE } from "@/emotes";
@@ -21,8 +21,8 @@ import Decimal from "decimal.js";
 import z from "zod";
 import { cancelScheduleAdventureWarnings, scheduleAdventureWarnings } from "./helpers/schedule";
 import { handleRpgAdventureEnd } from "./handleRpgAdventureEnd";
-import { formatAdventureApproaches, parseStoredAdventureScenario, resolveAdventureApproach, selectNewAdventureScenario } from "./adventureScenario";
-import { getAdventureProfileSnapshot } from "./adventureProfiles";
+import { getAutomaticAdventureApproach, parseStoredAdventureScenario, selectNewAdventureScenario } from "./adventureScenario";
+import { getAdventureProfileSnapshot, type AdventureLoadoutSnapshot } from "./adventureProfiles";
 import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { withTransactionRetry } from "./helpers/transactionRetry";
@@ -49,6 +49,13 @@ const MAX_SAFE_ADVENTURE_BUYIN = Math.floor((Number.MAX_SAFE_INTEGER - 1_000) / 
 
 function boundedAdventureBuyin(requested: number, available: number): number {
     return Math.max(0, Math.min(requested, available, MAX_SAFE_ADVENTURE_BUYIN));
+}
+
+function getCurrentAdventureOdds(snapshot: AdventureLoadoutSnapshot, theme: string, payoutRate: number, statusModifier: number): number {
+    const itemModifier = snapshot.equippedItems
+        .filter(item => item.modifier > 0 && (theme === "special" || item.theme === theme))
+        .reduce((strongest, item) => Math.max(strongest, item.modifier), 0);
+    return successChance(itemModifier + Math.max(-1, Math.min(2, statusModifier)), payoutRate);
 }
 
 export function generatePayoutRate(): number {
@@ -232,8 +239,8 @@ export const AdventureJoinParamsSchema = z.object({
 });
 
 export const amountParamSchema = AdventureJoinParamsSchema.shape.amount;
-const adventureAmountOptions = "[+/-silver(K/M/B)|%|all|to:silver|k:silver]";
-const adventureOptions = `${adventureAmountOptions} [approach|raid]`;
+const adventureAmountOptions = "silver";
+const adventureOptions = `[+/-silver(K/M/B)|%|all|to:silver|k:silver]`;
 export const adventureCommandSyntax = (prefix: string = "!") => `Usage: ${prefix}adventure | ${prefix}adv ${adventureOptions}`;
 
 function adventureCooldownResponse(
@@ -260,11 +267,11 @@ export async function handleAdventureJoin(params: {
     userLogin: string;
     userDisplayName: string;
     amountParam: string;
-    approachParam?: string;
+    modeParam?: string;
     requestId?: string;
     prefix?: string;
 }): Promise<string> {
-    const { channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName, amountParam, approachParam, requestId, prefix } = params;
+    const { channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName, amountParam, modeParam, requestId, prefix } = params;
     if (!amountParamSchema.safeParse(amountParam).success) return adventureCommandSyntax(prefix);
 
     const endMutex = getAdvEndMutex(channelProviderId);
@@ -287,8 +294,20 @@ export async function handleAdventureJoin(params: {
 
         await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);
         const loadoutSnapshot = await getAdventureProfileSnapshot({ channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName });
+        const profileStatus = await prisma.adventureProfile.findUnique({
+            where: { channelProviderId_userId: { channelProviderId, userId: userProviderId } },
+            select: {
+                conditions: {
+                    where: { remainingAdventures: { gt: 0 }, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
+                    orderBy: { createdAt: "asc" },
+                    take: 1,
+                    select: { modifier: true },
+                },
+            },
+        });
+        const statusModifier = profileStatus?.conditions[0]?.modifier ?? 0;
         const rpgEnabled = env.ADVENTURE_RPG_ENABLED;
-        const raidRequested = approachParam?.trim().toLowerCase() === "raid";
+        const raidRequested = modeParam?.trim().toLowerCase() === "raid";
         const newScenario = selectNewAdventureScenario(raidRequested);
 
         const outcome = await withTransactionRetry(
@@ -344,12 +363,7 @@ export async function handleAdventureJoin(params: {
                         const balanceValue = Math.min(balance.value, MAX_SAFE_ADVENTURE_BUYIN);
 
                         if (!adventure) {
-                            const selectedApproach = rpgEnabled
-                                ? resolveAdventureApproach(newScenario.context, raidRequested ? undefined : approachParam, loadoutSnapshot)
-                                : undefined;
-                            if (rpgEnabled && !selectedApproach) {
-                                return respond({ message: `@${userDisplayName}, choose one of: ${formatAdventureApproaches(newScenario.context)}.` });
-                            }
+                            const selectedApproach = rpgEnabled ? getAutomaticAdventureApproach(newScenario.context) : undefined;
                             if (balanceValue <= 0) return respond({ message: `@${userDisplayName} you have no silver to join the adventure.` });
 
                             const ticket = await tx.userRedeemable.findFirst({
@@ -422,9 +436,15 @@ export async function handleAdventureJoin(params: {
                                         adventureAmountOptions
                                     }" to join. This adventure offers a ${payoutRate.toFixed(2)}x payout rate! ${ADVENTURE_GAMBA_EMOTE(
                                         channelLogin,
-                                    )} $(newline)@${userDisplayName} joined with ${buyin} silver.`,
+                                    )}$(newline)@@${userDisplayName} joined with ${buyin} silver.`,
                                 });
                             }
+                            const currentOdds = getCurrentAdventureOdds(
+                                loadoutSnapshot,
+                                newScenario.context.theme,
+                                payoutRate,
+                                statusModifier,
+                            );
                             return respond({
                                 adventureIdToSchedule: created.id,
                                 message: `@${userDisplayName} is gathering a party for ${
@@ -433,15 +453,15 @@ export async function handleAdventureJoin(params: {
                                     2,
                                 )}x payout rate! ${ADVENTURE_GAMBA_EMOTE(
                                     channelLogin,
-                                )} $(newline)@${userDisplayName} joined with ${buyin} silver.`,
+                                )}$(newline)@${userDisplayName} joined with ${buyin} silver. Current odds: ${currentOdds}%.`,
                             });
                         }
 
                         const scenario = parseStoredAdventureScenario(adventure.scenarioContext);
-                        const selectedApproach = scenario ? resolveAdventureApproach(scenario, approachParam, loadoutSnapshot) : undefined;
-                        if (scenario && approachParam && !selectedApproach) {
-                            return respond({ message: `@${userDisplayName}, choose one of: ${formatAdventureApproaches(scenario)}.` });
-                        }
+                        const selectedApproach = scenario ? getAutomaticAdventureApproach(scenario) : undefined;
+                        const currentOdds = scenario
+                            ? getCurrentAdventureOdds(loadoutSnapshot, scenario.theme, adventure.payoutRate, statusModifier)
+                            : undefined;
 
                         const player = adventure.players.find(candidate => candidate.userId === userProviderId);
                         if (!player) {
@@ -471,9 +491,9 @@ export async function handleAdventureJoin(params: {
                                 },
                             });
                             return respond({
-                                message: `@${userDisplayName} joined with ${buyin} silver${
-                                    selectedApproach ? ` using ${selectedApproach.label} [${selectedApproach.check}]` : ""
-                                }. Current payout: ${adventure.payoutRate.toFixed(2)}x (max odds ${payoutAwareChanceCap(adventure.payoutRate)}%)`,
+                                message: `@${userDisplayName} joined with ${buyin} silver. Current payout: ${adventure.payoutRate.toFixed(2)}x${
+                                    currentOdds === undefined ? "." : `. Current odds: ${currentOdds}%.`
+                                }`,
                             });
                         }
 
@@ -506,19 +526,16 @@ export async function handleAdventureJoin(params: {
                             }
                             await tx.player.update({ where: { id: player.id }, data: { buyin: updatedBuyin, ...rpgSnapshot } });
                             return respond({
-                                message: `@${userDisplayName}, you updated your adventure silver from ${currentBuyin} to ${updatedBuyin}${
-                                    selectedApproach ? ` and selected ${selectedApproach.label} [${selectedApproach.check}]` : ""
-                                }. You have ${updatedBalance} silver left.`,
+                                message: `@${userDisplayName}, you updated your adventure silver from ${currentBuyin} to ${updatedBuyin}. You have ${updatedBalance} silver left${
+                                    currentOdds === undefined ? "." : `. Current odds: ${currentOdds}%.`
+                                }`,
                             });
                         }
 
                         if (scenario && selectedApproach) {
-                            const changedApproach = player.approachCode !== selectedApproach.id || player.checkCode !== selectedApproach.check;
                             await tx.player.update({ where: { id: player.id }, data: rpgSnapshot });
                             return respond({
-                                message: changedApproach
-                                    ? `@${userDisplayName}, approach changed to ${selectedApproach.label} [${selectedApproach.check}]. Your wager remains ${currentBuyin} silver.`
-                                    : `@${userDisplayName} already joined with ${currentBuyin} silver using ${selectedApproach.label} [${selectedApproach.check}]. Your class and gear snapshot was refreshed.`,
+                                message: `@${userDisplayName} already joined with ${currentBuyin} silver. Your gear was refreshed. Current odds: ${currentOdds}%.`,
                             });
                         }
                         return respond({ message: `@${userDisplayName} already joined the adventure with ${currentBuyin} silver.` });
@@ -578,6 +595,6 @@ export async function upgradeAdventure(params: {
         if (outcome === "missing") return `@${userDisplayName} there's no adventure to upgrade. Start one first!`;
         if (outcome === "already") return `@${userDisplayName}, the adventure already is 2x.`;
         if (outcome === "no-ticket") return `@${userDisplayName}, you don't own a 2x adventure ticket to upgrade this adventure!`;
-        return `/me @${userDisplayName} upgraded the adventure. This adventure offers a 2.00x payout rate! Success odds are now capped at 55%.`;
+        return `/me @${userDisplayName} upgraded the adventure. This adventure offers a 2.00x payout rate!`;
     });
 }

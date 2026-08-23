@@ -9,7 +9,7 @@ export { generatePayoutRate };
 // Store timers per adventure to allow clearing if adventure ends early
 export class AdventureJoin extends OpenAPIRoute {
     schema = {
-        request: { headers: FossaHeaders, params: AdventureJoinParamsSchema, query: z.object({ approach: z.string().optional() }) },
+        request: { headers: FossaHeaders, params: AdventureJoinParamsSchema, query: z.object({ raid: z.enum(["1", "true"]).optional() }) },
         responses: {},
     };
     handleValidationError() {
@@ -23,7 +23,7 @@ export class AdventureJoin extends OpenAPIRoute {
         const userLogin = data.headers["x-fossabot-message-userlogin"];
         const userDisplayName = data.headers["x-fossabot-message-userdisplayname"];
         const amountParam = data.params.amount.trim();
-        const approachParam = data.query.approach?.trim();
+        const modeParam = data.query.raid ? "raid" : undefined;
         const requestId = data.headers["x-fossabot-message-id"];
 
         const result = await handleAdventureJoin({
@@ -33,7 +33,7 @@ export class AdventureJoin extends OpenAPIRoute {
             userLogin,
             userDisplayName,
             amountParam,
-            approachParam,
+            modeParam,
             requestId,
         });
         return c.text(result);

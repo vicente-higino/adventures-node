@@ -12,7 +12,6 @@ export interface AdventureChatPlayerResult {
     profit: number;
     streakBonus: number;
     streak: number;
-    xpAwarded: number;
     lootName?: string;
     lootEquipped?: boolean;
     statusName?: string;

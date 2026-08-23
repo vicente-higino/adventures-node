@@ -1,19 +1,13 @@
 import {
-    ADVENTURE_CLASSES,
     ADVENTURE_ITEMS,
-    getAdventureClass,
     getAdventureItem,
-    isAdventureClassCode,
-    type AdventureCheck,
+    getAdventureItemModifier,
     type AdventureItemDefinition,
-    type AdventureThemeCode,
-    type ModifierEntry,
 } from "@/adventures/rpg";
 import logger from "@/logger";
 import { prisma } from "@/prisma";
 import { AdventureItemRarity, AdventureItemType, Prisma } from "@prisma/client";
 
-export const ADVENTURE_XP_PER_LEVEL = 100n;
 export const EXPECTED_ADVENTURE_ITEM_COUNT = 42;
 
 const ITEM_TYPE_BY_KIND = {
@@ -41,28 +35,16 @@ export interface AdventureProfileIdentity {
 export type AdventureProfileSnapshotIdentity = Pick<AdventureProfileIdentity, "channelLogin" | "channelProviderId" | "userProviderId"> &
     Partial<Pick<AdventureProfileIdentity, "userLogin" | "userDisplayName">>;
 
-export interface AdventureLevelProgress {
-    readonly level: number;
-    readonly xp: bigint;
-    readonly currentLevelXp: bigint;
-    readonly nextLevelXp: bigint;
-    readonly xpIntoLevel: bigint;
-    readonly xpNeededForNextLevel: bigint;
-}
-
 export interface AdventureEquipmentSnapshot {
     readonly code: string;
     readonly name: string;
     readonly slot: string;
     readonly theme: string;
-    readonly checkCode: string;
     readonly modifier: number;
 }
 
 /** A JSON-safe record saved on Player when somebody joins an adventure. */
 export interface AdventureLoadoutSnapshot {
-    readonly classCode: string | null;
-    readonly proficiencies: string[];
     readonly equippedItems: AdventureEquipmentSnapshot[];
     readonly capturedAt: string;
 }
@@ -74,39 +56,6 @@ export interface GrantAdventureItemOptions {
     metadata?: Prisma.InputJsonObject;
 }
 
-function normalizeXp(xp: bigint | number | string): bigint {
-    try {
-        const normalized = typeof xp === "bigint" ? xp : BigInt(xp);
-        return normalized < 0n ? 0n : normalized;
-    } catch {
-        return 0n;
-    }
-}
-
-function bigintLevelToNumber(level: bigint): number {
-    return level > BigInt(Number.MAX_SAFE_INTEGER) ? Number.MAX_SAFE_INTEGER : Number(level);
-}
-
-export function getAdventureLevel(xp: bigint | number | string): number {
-    return bigintLevelToNumber(normalizeXp(xp) / ADVENTURE_XP_PER_LEVEL + 1n);
-}
-
-export function getAdventureLevelProgress(xp: bigint | number | string): AdventureLevelProgress {
-    const normalizedXp = normalizeXp(xp);
-    const levelAsBigInt = normalizedXp / ADVENTURE_XP_PER_LEVEL + 1n;
-    const currentLevelXp = (levelAsBigInt - 1n) * ADVENTURE_XP_PER_LEVEL;
-    const nextLevelXp = levelAsBigInt * ADVENTURE_XP_PER_LEVEL;
-
-    return {
-        level: bigintLevelToNumber(levelAsBigInt),
-        xp: normalizedXp,
-        currentLevelXp,
-        nextLevelXp,
-        xpIntoLevel: normalizedXp - currentLevelXp,
-        xpNeededForNextLevel: nextLevelXp - normalizedXp,
-    };
-}
-
 function itemPersistenceData(item: AdventureItemDefinition) {
     return {
         name: item.name,
@@ -114,8 +63,8 @@ function itemPersistenceData(item: AdventureItemDefinition) {
         type: ITEM_TYPE_BY_KIND[item.kind],
         rarity: ITEM_RARITY_BY_DEFINITION[item.rarity],
         theme: item.theme,
-        checkCode: item.bonus.check,
-        modifier: item.bonus.modifier,
+        checkCode: null,
+        modifier: getAdventureItemModifier(item),
         config: { slot: item.slot },
         active: true,
     } satisfies Prisma.AdventureItemUpdateInput;
@@ -190,8 +139,7 @@ function toEquipmentSnapshot(inventoryItem: {
         name: definition.name,
         slot: definition.slot,
         theme: definition.theme,
-        checkCode: definition.bonus.check,
-        modifier: definition.bonus.modifier,
+        modifier: getAdventureItemModifier(definition),
     };
 }
 
@@ -216,37 +164,12 @@ export async function getAdventureProfileSnapshot(identity: AdventureProfileSnap
         },
     });
 
-    const classDefinition = profile.classCode && isAdventureClassCode(profile.classCode) ? getAdventureClass(profile.classCode) : null;
     const equipment = profile.inventoryItems.map(toEquipmentSnapshot).filter((item): item is AdventureEquipmentSnapshot => item !== null);
 
     return {
-        classCode: classDefinition?.code ?? null,
-        proficiencies: classDefinition ? [...classDefinition.proficiencies] : [],
         equippedItems: equipment,
         capturedAt: new Date().toISOString(),
     };
-}
-
-/** Converts a frozen loadout into the modifier entries used by the RPG rules engine. */
-export function getAdventureSnapshotModifiers(
-    snapshot: AdventureLoadoutSnapshot,
-    check: AdventureCheck,
-    theme: AdventureThemeCode,
-): readonly ModifierEntry[] {
-    const modifiers: ModifierEntry[] = [];
-
-    if (snapshot.classCode && snapshot.proficiencies.includes(check)) {
-        const className = isAdventureClassCode(snapshot.classCode) ? getAdventureClass(snapshot.classCode).name : snapshot.classCode;
-        modifiers.push({ code: `class.${snapshot.classCode}`, label: className, source: "class", modifier: 1 });
-    }
-
-    for (const item of snapshot.equippedItems) {
-        if (item.checkCode === check && item.theme === theme) {
-            modifiers.push({ code: `item.${item.code}`, label: item.name, source: "item", modifier: item.modifier });
-        }
-    }
-
-    return modifiers;
 }
 
 /** Grants code-owned loot to an existing channel profile. */
@@ -262,14 +185,4 @@ export async function grantAdventureItem({ profileId, itemCode, quantity = 1, me
         create: { profileId, itemId: item.id, quantity, metadata },
         include: { item: true },
     });
-}
-
-export function getAdventureClassSummary(classCode: string | null): string {
-    if (!classCode || !isAdventureClassCode(classCode)) return "Unassigned";
-    const definition = getAdventureClass(classCode);
-    return `${definition.name} (${definition.proficiencies.join("/")})`;
-}
-
-export function getAdventureClassCount(): number {
-    return ADVENTURE_CLASSES.length;
 }

@@ -11,6 +11,7 @@ import {
     createPlayerRandom,
     formatAdventureClassNames,
     formatAdventureCheckModifiers,
+    getAdventureItemModifier,
     parseAdventureClass,
     payoutAwareChanceCap,
     renderAdventureDescription,
@@ -62,20 +63,22 @@ describe("RPG checks and classes", () => {
 });
 
 describe("RPG probability rules", () => {
-    it("clamps modifiers and maps them to exact 30-70 percent odds", () => {
+    it("clamps modifiers and maps them to exact 30-75 percent odds", () => {
         expect(clampModifier(-99)).toBe(-4);
-        expect(clampModifier(99)).toBe(4);
-        expect([-4, -3, -2, -1, 0, 1, 2, 3, 4].map(successChanceForModifier)).toEqual([30, 35, 40, 45, 50, 55, 60, 65, 70]);
+        expect(clampModifier(99)).toBe(5);
+        expect([-4, -3, -2, -1, 0, 1, 2, 3, 4, 5].map(successChanceForModifier)).toEqual([
+            30, 35, 40, 45, 50, 55, 60, 65, 70, 75,
+        ]);
     });
 
     it("applies the payout-aware ceiling", () => {
-        expect(payoutAwareChanceCap(1.3)).toBe(70);
+        expect(payoutAwareChanceCap(1.3)).toBe(75);
         expect(payoutAwareChanceCap(1.5)).toBe(65);
         expect(payoutAwareChanceCap(1.6)).toBe(60);
         expect(payoutAwareChanceCap(1.8)).toBe(55);
         expect(payoutAwareChanceCap(1.9)).toBe(55);
         expect(payoutAwareChanceCap(2)).toBe(55);
-        expect(successChance(4, 2)).toBe(55);
+        expect(successChance(5, 2)).toBe(55);
         expect(successChance(1, 2)).toBe(55);
         expect(successChance(0, 2)).toBe(50);
         expect(successChance(-2, 2)).toBe(40);
@@ -93,10 +96,10 @@ describe("RPG probability rules", () => {
         );
 
         expect(breakdown.rawTotal).toBe(5);
-        expect(breakdown.clampedTotal).toBe(4);
+        expect(breakdown.clampedTotal).toBe(5);
         expect(breakdown.effectiveModifier).toBe(3);
         expect(breakdown.chancePercent).toBe(65);
-        expect(breakdown.modifierWasClamped).toBe(true);
+        expect(breakdown.modifierWasClamped).toBe(false);
         expect(breakdown.payoutWasCapped).toBe(true);
         expect(breakdown.entries.reduce((total, entry) => total + entry.appliedModifier, 0)).toBe(3);
     });
@@ -127,6 +130,12 @@ describe("seeded resolution and loot", () => {
     it("selects deterministic theme loot", () => {
         expect(selectThemeLoot("pirate", "reef-seed", "user-123")).toEqual(selectThemeLoot("pirate", "reef-seed", "user-123"));
         expect(selectThemeLoot("pirate", "reef-seed", "user-123").theme).toBe("pirate");
+    });
+
+    it("maps loot rarity to a five, ten, or fifteen point odds bonus", () => {
+        const items = ["common", "uncommon", "rare"].map(rarity => ADVENTURE_ITEMS.find(item => item.rarity === rarity)!);
+        expect(items.map(getAdventureItemModifier)).toEqual([1, 2, 3]);
+        expect(successChance(getAdventureItemModifier(items[2]) + 2, 1.3)).toBe(75);
     });
 });
 

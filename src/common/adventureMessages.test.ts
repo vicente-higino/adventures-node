@@ -14,7 +14,6 @@ function player(index: number, overrides: Partial<AdventureChatPlayerResult> = {
         profit: 30,
         streakBonus: 0,
         streak: 1,
-        xpAwarded: 10,
         ...overrides,
     };
 }

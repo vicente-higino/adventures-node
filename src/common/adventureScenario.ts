@@ -1,21 +1,5 @@
 import { adventureCatalog, AdventureApproach, AdventureCatalogEntry, selectRaidAdventure, selectRegularAdventure } from "@/adventures/catalog";
-import { AdventureCheck, isAdventureCheck } from "@/adventures/rpg";
-
-export interface AdventureLoadoutItemSnapshot {
-    code: string;
-    name: string;
-    slot: string;
-    theme: string | null;
-    checkCode: string | null;
-    modifier: number;
-}
-
-export interface AdventureLoadoutSnapshot {
-    classCode: string | null;
-    proficiencies: readonly string[];
-    equippedItems: readonly AdventureLoadoutItemSnapshot[];
-    capturedAt: string;
-}
+import { isAdventureCheck } from "@/adventures/rpg";
 
 export interface StoredAdventureScenario {
     title: string;
@@ -78,32 +62,6 @@ export function parseStoredAdventureScenario(value: unknown): StoredAdventureSce
     };
 }
 
-export function resolveAdventureApproach(
-    scenario: StoredAdventureScenario,
-    requested: string | undefined,
-    loadout: AdventureLoadoutSnapshot,
-): AdventureApproach | undefined {
-    const normalized = requested?.trim().toLowerCase();
-    if (normalized && normalized !== "auto") {
-        return scenario.approaches.find(
-            approach => approach.id.toLowerCase() === normalized || approach.check === normalized || approach.label.toLowerCase() === normalized,
-        );
-    }
-
-    const score = (check: AdventureCheck): number => {
-        const classBonus = loadout.proficiencies.includes(check) ? 1 : 0;
-        const itemBonus = loadout.equippedItems
-            .filter(
-                item =>
-                    item.checkCode === check &&
-                    (!item.theme || item.theme === "all" || scenario.theme === "special" || item.theme === scenario.theme),
-            )
-            .reduce((total, item) => total + item.modifier, 0);
-        return classBonus + itemBonus;
-    };
-    return [...scenario.approaches].sort((left, right) => score(right.check) - score(left.check))[0];
-}
-
-export function formatAdventureApproaches(scenario: StoredAdventureScenario): string {
-    return scenario.approaches.map(approach => `${approach.id} [${approach.check}]`).join(" | ");
+export function getAutomaticAdventureApproach(scenario: StoredAdventureScenario): AdventureApproach {
+    return scenario.approaches[0];
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseStoredAdventureScenario, resolveAdventureApproach, type StoredAdventureScenario } from "./adventureScenario";
+import { getAutomaticAdventureApproach, parseStoredAdventureScenario, type StoredAdventureScenario } from "./adventureScenario";
 
 const scenario: StoredAdventureScenario = {
     title: "Clockwork Vault",
@@ -21,17 +21,7 @@ describe("persisted adventure scenarios", () => {
         expect(parseStoredAdventureScenario({ ...scenario, presentationMode: "huge" })).toBeUndefined();
     });
 
-    it("accepts an explicit approach and otherwise picks the best frozen loadout", () => {
-        const loadout = {
-            classCode: "engineer",
-            proficiencies: ["technology", "endurance"],
-            equippedItems: [{ code: "wrench", name: "Wrench", slot: "tool", theme: "steampunk", checkCode: "technology", modifier: 1 }],
-            capturedAt: "2026-08-22T00:00:00.000Z",
-        };
-
-        expect(resolveAdventureApproach(scenario, "study", loadout)?.id).toBe("study");
-        expect(resolveAdventureApproach(scenario, "KNOWLEDGE", loadout)?.id).toBe("study");
-        expect(resolveAdventureApproach(scenario, undefined, loadout)?.id).toBe("repair");
-        expect(resolveAdventureApproach(scenario, "dance", loadout)).toBeUndefined();
+    it("uses one automatic internal approach regardless of old manual input", () => {
+        expect(getAutomaticAdventureApproach(scenario).id).toBe("force");
     });
 });

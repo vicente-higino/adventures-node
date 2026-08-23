@@ -1,4 +1,4 @@
-import { AdventureCheck, ModifierEntry } from "@/adventures/rpg";
+import { ModifierEntry } from "@/adventures/rpg";
 
 export interface AdventureConditionForResolution {
     id: number;
@@ -15,24 +15,16 @@ export interface AdventureConditionEvaluation {
 }
 
 /**
- * A status affects the roll only when its check and theme match, but its duration
- * advances whenever the player completes an adventure.
+ * Adventure Lite permits one temporary status. It applies to the next adventure
+ * and then advances, regardless of that adventure's internal theme/check data.
  */
-export function evaluateAdventureConditions(
-    conditions: readonly AdventureConditionForResolution[],
-    check: AdventureCheck,
-    theme: string,
-): AdventureConditionEvaluation {
-    const applicable = conditions.find(
-        condition =>
-            (condition.checkCodes.length === 0 || condition.checkCodes.includes(check)) &&
-            (condition.themeCodes.length === 0 || condition.themeCodes.includes(theme)),
-    );
+export function evaluateAdventureConditions(conditions: readonly AdventureConditionForResolution[]): AdventureConditionEvaluation {
+    const applicable = conditions[0];
 
     return {
         conditionIdsToAdvance: conditions.map(condition => condition.id),
         modifier: applicable
-            ? { code: applicable.code, label: applicable.name, source: "status", modifier: Math.max(-1, Math.min(1, applicable.modifier)) }
+            ? { code: applicable.code, label: applicable.name, source: "status", modifier: Math.max(-1, Math.min(2, applicable.modifier)) }
             : undefined,
     };
 }

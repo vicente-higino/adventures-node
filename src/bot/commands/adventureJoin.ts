@@ -14,7 +14,7 @@ export const adventureJoinCommand = createBotCommand(
             userLogin: userName,
             userDisplayName,
             amountParam,
-            approachParam: params[1],
+            modeParam: params[1],
             prefix: getBotPrefix(),
         });
         const response = result.split("$(newline)");

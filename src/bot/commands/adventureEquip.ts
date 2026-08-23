@@ -1,4 +1,4 @@
-import { ADVENTURE_CHECK_LABELS, ADVENTURE_ITEM_SLOTS, getAdventureItem, isAdventureCheck } from "@/adventures/rpg";
+import { ADVENTURE_ITEM_SLOTS, getAdventureItem, getAdventureItemModifier } from "@/adventures/rpg";
 import { getBotPrefix } from "@/bot";
 import { findAdventureProfile, findOrCreateAdventureProfile } from "@/common/adventureProfiles";
 import { prisma } from "@/prisma";
@@ -60,7 +60,7 @@ export const adventureEquipCommand = createBotCommand(
     async (params, ctx) => {
         const input = params.join(" ");
         if (!input) {
-            ctx.say(`@${ctx.userDisplayName} Usage: ${getBotPrefix()}equip <item_name>. See ${getBotPrefix()}inventory for owned gear.`);
+            ctx.say(`@${ctx.userDisplayName} Usage: ${getBotPrefix()}equip <item_name>. See ${getBotPrefix()}inv loot for owned gear.`);
             return;
         }
 
@@ -98,7 +98,7 @@ export const adventureEquipCommand = createBotCommand(
         ]);
 
         ctx.say(
-            `@${ctx.userDisplayName} Equipped ${inventory.item.name} [${definition.slot}],  ${ADVENTURE_CHECK_LABELS[definition.bonus.check]} +${definition.bonus.modifier} in ${definition.theme} adventures.`,
+            `@${ctx.userDisplayName} Equipped ${inventory.item.name} [${definition.slot}], +${getAdventureItemModifier(definition) * 5}% in ${definition.theme} adventures.`,
         );
     },
     { aliases: ["advequip"], ignoreCase: true },

@@ -7,14 +7,21 @@ const conditions: AdventureConditionForResolution[] = [
 ];
 
 describe("adventure condition lifecycle", () => {
-    it("applies only a matching status while advancing every active status", () => {
-        expect(evaluateAdventureConditions(conditions, "arcana", "fantasy")).toEqual({
+    it("applies the one active status and advances every legacy status", () => {
+        expect(evaluateAdventureConditions(conditions)).toEqual({
             conditionIdsToAdvance: [1, 2],
             modifier: { code: "fantasy.arcane-burn", label: "Arcane Burn", source: "status", modifier: -1 },
         });
     });
 
-    it("still advances statuses when none apply to the completed adventure", () => {
-        expect(evaluateAdventureConditions(conditions, "technology", "cyberpunk")).toEqual({ conditionIdsToAdvance: [1, 2], modifier: undefined });
+    it("supports a one-adventure positive status worth ten percentage points", () => {
+        expect(
+            evaluateAdventureConditions([
+                { id: 3, code: "special.inspired", name: "Inspired", modifier: 2, checkCodes: [], themeCodes: [] },
+            ]),
+        ).toEqual({
+            conditionIdsToAdvance: [3],
+            modifier: { code: "special.inspired", label: "Inspired", source: "status", modifier: 2 },
+        });
     });
 });

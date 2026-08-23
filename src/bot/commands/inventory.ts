@@ -4,7 +4,7 @@ import { createBotCommand } from "../botCommandWithKeywords";
 import logger from "@/logger";
 import { getBotPrefix } from "@/bot";
 import { assertNever } from "@/utils/misc";
-import { ADVENTURE_CHECK_LABELS, getAdventureItem, isAdventureCheck } from "@/adventures/rpg";
+import { getAdventureItem, getAdventureItemModifier } from "@/adventures/rpg";
 import { findAdventureProfile } from "@/common/adventureProfiles";
 import { parseInventoryView } from "./inventoryView";
 
@@ -63,10 +63,9 @@ export const inventoryCommand = createBotCommand(
         }
         const adventureItems = loot.slice((page - 1) * lootPageSize, page * lootPageSize).map(inventory => {
             const definition = getAdventureItem(inventory.item.code);
-            const checkCode =
-                definition?.bonus.check ?? (inventory.item.checkCode && isAdventureCheck(inventory.item.checkCode) ? inventory.item.checkCode : null);
-            const modifier = definition?.bonus.modifier ?? inventory.item.modifier;
-            const bonus = checkCode ? ` ${ADVENTURE_CHECK_LABELS[checkCode]} ${modifier >= 0 ? "+" : ""}${modifier}` : "";
+            const modifier = definition ? getAdventureItemModifier(definition) : inventory.item.modifier;
+            const theme = definition?.theme ?? inventory.item.theme;
+            const bonus = theme ? ` [${theme} +${modifier * 5}%]` : "";
             const equipped = inventory.equippedSlot ? ` [equipped: ${inventory.equippedSlot}]` : "";
             return `[${inventory.quantity}] ${inventory.item.name}${bonus}${equipped}`;
         });

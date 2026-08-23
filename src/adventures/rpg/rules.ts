@@ -3,9 +3,9 @@ import { SeedPart, rollPlayerD20 } from "./random";
 
 export const ADVENTURE_DC = 11;
 export const MIN_MODIFIER = -4;
-export const MAX_MODIFIER = 4;
+export const MAX_MODIFIER = 5;
 export const MIN_SUCCESS_CHANCE = 30;
-export const MAX_SUCCESS_CHANCE = 70;
+export const MAX_SUCCESS_CHANCE = 75;
 export const MIN_PAYOUT_CHANCE_CAP = 55;
 
 export type ModifierSourceKind = "class" | "item" | "status" | "consumable" | "party" | "other";
@@ -64,7 +64,7 @@ export function successChanceForModifier(modifier: number): number {
     return 50 + clampModifier(modifier) * 5;
 }
 
-/** Payout-aware ceiling, bounded to 55-70% for supported adventure rates. */
+/** Payout-aware ceiling, bounded to 55-75% for supported adventure rates. */
 export function payoutAwareChanceCap(payoutRate: number): number {
     if (!Number.isFinite(payoutRate) || payoutRate <= 0) throw new RangeError("Payout rate must be finite and greater than zero");
     return Math.max(MIN_PAYOUT_CHANCE_CAP, Math.min(MAX_SUCCESS_CHANCE, Math.floor((1 / payoutRate) * 20) * 5));

@@ -4,13 +4,9 @@ import { withTransactionRetry } from "@/common/helpers/transactionRetry";
 import {
     ADVENTURE_ITEMS,
     AdventureCheck,
-    AdventureClassCode,
-    AdventureThemeCode,
     CriticalRoll,
     createPlayerRandom,
     getAdventureTheme,
-    isAdventureCheck,
-    isAdventureClassCode,
     isAdventureThemeCode,
     ModifierEntry,
     pickSeeded,
@@ -36,13 +32,10 @@ interface SnapshotItem {
     name: string;
     slot: string;
     theme: string | null;
-    checkCode: string | null;
     modifier: number;
 }
 
 interface PlayerLoadoutSnapshot {
-    classCode: string | null;
-    proficiencies: string[];
     equippedItems: SnapshotItem[];
 }
 
@@ -66,27 +59,21 @@ interface CalculatedResult {
     profit: number;
     streakBonus: number;
     streak: number;
-    xpAwarded: number;
+    xpAwarded: 0;
     loot?: (typeof ADVENTURE_ITEMS)[number];
     lootAutoEquipped: boolean;
-    status?: { code: string; label: string; modifier: -1; affectedChecks: readonly AdventureCheck[]; durationAdventures: number };
+    status?: { code: string; label: string; modifier: -1 | 2; affectedChecks: readonly AdventureCheck[]; durationAdventures: number };
 }
 
-const EMPTY_LOADOUT: PlayerLoadoutSnapshot = { classCode: null, proficiencies: [], equippedItems: [] };
+const EMPTY_LOADOUT: PlayerLoadoutSnapshot = { equippedItems: [] };
 
 function asJson(value: unknown): Prisma.InputJsonValue {
     return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
 
-function parseStringArray(value: unknown): string[] {
-    return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
-}
-
 function parseLoadoutSnapshot(value: unknown): PlayerLoadoutSnapshot {
     if (!value || typeof value !== "object" || Array.isArray(value)) return EMPTY_LOADOUT;
     const candidate = value as Record<string, unknown>;
-    const classCode = typeof candidate.classCode === "string" && isAdventureClassCode(candidate.classCode) ? candidate.classCode : null;
-    const proficiencies = parseStringArray(candidate.proficiencies).filter(isAdventureCheck);
     const itemSource = Array.isArray(candidate.equippedItems)
         ? candidate.equippedItems
         : Array.isArray(candidate.equipment)
@@ -102,29 +89,31 @@ function parseLoadoutSnapshot(value: unknown): PlayerLoadoutSnapshot {
                 name: entry.name,
                 slot: typeof entry.slot === "string" ? entry.slot : "gear",
                 theme: typeof entry.theme === "string" ? entry.theme : null,
-                checkCode: typeof entry.checkCode === "string" ? entry.checkCode : typeof entry.check === "string" ? entry.check : null,
                 modifier: typeof entry.modifier === "number" && Number.isInteger(entry.modifier) ? entry.modifier : 0,
             },
         ];
     });
-    return { classCode, proficiencies, equippedItems };
+    return { equippedItems };
 }
 
 function messagesFromJson(value: unknown): string[] | undefined {
     return Array.isArray(value) && value.every(entry => typeof entry === "string") ? value : undefined;
 }
 
-function pickSpecialLoot(seed: string, userId: string, check: AdventureCheck) {
-    const matching = ADVENTURE_ITEMS.filter(item => item.bonus.check === check);
-    return pickSeeded(matching.length ? matching : ADVENTURE_ITEMS, seed, userId, "raid-loot");
+function pickSpecialLoot(seed: string, userId: string) {
+    return pickSeeded(ADVENTURE_ITEMS, seed, userId, "raid-loot");
 }
 
-function getCriticalStatus(theme: string, check: AdventureCheck) {
+function getCriticalFailureStatus(theme: string) {
     if (isAdventureThemeCode(theme)) {
         const status = getAdventureTheme(theme).criticalFailureStatus;
-        return { ...status, modifier: -1 as const };
+        return { code: status.code, label: status.label, modifier: -1 as const, affectedChecks: [] as const, durationAdventures: 1 };
     }
-    return { code: "special.rattled", label: "Rattled", modifier: -1 as const, affectedChecks: [check], durationAdventures: 1 };
+    return { code: "special.rattled", label: "Rattled", modifier: -1 as const, affectedChecks: [] as const, durationAdventures: 1 };
+}
+
+function getCriticalSuccessStatus() {
+    return { code: "special.inspired", label: "Inspired", modifier: 2 as const, affectedChecks: [] as const, durationAdventures: 1 };
 }
 
 function getApproach(scenario: StoredAdventureScenario, approachCode: string | null, checkCode: string | null) {
@@ -209,43 +198,27 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                     }
 
                     const loadouts = new Map(adventure.players.map(player => [player.id, parseLoadoutSnapshot(player.loadoutSnapshot)]));
-                    const distinctClasses = new Set(
-                        [...loadouts.values()]
-                            .map(loadout => loadout.classCode)
-                            .filter((classCode): classCode is AdventureClassCode => Boolean(classCode)),
-                    );
-                    const partyModifier = distinctClasses.size >= 3 ? 1 : 0;
                     const advancedConditionIds = new Set<number>();
 
                     const calculated: CalculatedResult[] = adventure.players.map(player => {
                         const loadout = loadouts.get(player.id) ?? EMPTY_LOADOUT;
                         const approach = getApproach(scenario, player.approachCode, player.checkCode);
                         const modifiers: ModifierEntry[] = [];
-                        if (loadout.classCode && loadout.proficiencies.includes(approach.check)) {
-                            modifiers.push({ code: `class.${loadout.classCode}`, label: loadout.classCode, source: "class", modifier: 1 });
-                        }
                         const matchingItems = loadout.equippedItems
                             .filter(
                                 item =>
                                     item.modifier > 0 &&
-                                    item.checkCode === approach.check &&
                                     (!item.theme || scenario.theme === "special" || item.theme === scenario.theme),
                             )
-                            .slice(0, 2);
+                            .sort((left, right) => right.modifier - left.modifier)
+                            .slice(0, 1);
                         modifiers.push(
                             ...matchingItems.map(item => ({ code: item.code, label: item.name, source: "item" as const, modifier: item.modifier })),
                         );
                         const profile = profileByUser.get(player.userId)!;
-                        const conditionEvaluation = evaluateAdventureConditions(
-                            conditionsByProfile.get(profile.id) ?? [],
-                            approach.check,
-                            scenario.theme,
-                        );
+                        const conditionEvaluation = evaluateAdventureConditions(conditionsByProfile.get(profile.id) ?? []);
                         for (const conditionId of conditionEvaluation.conditionIdsToAdvance) advancedConditionIds.add(conditionId);
                         if (conditionEvaluation.modifier) modifiers.push(conditionEvaluation.modifier);
-                        if (partyModifier)
-                            modifiers.push({ code: "party.diverse", label: "Diverse party", source: "party", modifier: partyModifier });
-
                         const resolution = resolveAdventureCheck({
                             adventureSeed: adventure.resolutionSeed!,
                             playerId: player.userId,
@@ -273,9 +246,14 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                             resolution.roll === 20
                                 ? isAdventureThemeCode(scenario.theme)
                                     ? selectThemeLoot(scenario.theme, adventure.resolutionSeed!, player.userId)
-                                    : pickSpecialLoot(adventure.resolutionSeed!, player.userId, approach.check)
+                                    : pickSpecialLoot(adventure.resolutionSeed!, player.userId)
                                 : undefined;
-                        const status = resolution.roll === 1 ? getCriticalStatus(scenario.theme, approach.check) : undefined;
+                        const status =
+                            resolution.roll === 20
+                                ? getCriticalSuccessStatus()
+                                : resolution.roll === 1
+                                  ? getCriticalFailureStatus(scenario.theme)
+                                  : undefined;
                         return {
                             playerId: player.id,
                             userId: player.userId,
@@ -296,7 +274,7 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                             profit: resolution.success ? grossPayout - buyin : 0,
                             streakBonus: 0,
                             streak: 0,
-                            xpAwarded: resolution.success ? 10 + (resolution.roll === 20 ? 5 : 0) : 4,
+                            xpAwarded: 0,
                             loot,
                             lootAutoEquipped: false,
                             status,
@@ -337,8 +315,6 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                             });
                         }
                         const profile = profileByUser.get(result.userId)!;
-                        await tx.adventureProfile.update({ where: { id: profile.id }, data: { xp: { increment: BigInt(result.xpAwarded) } } });
-
                         if (result.loot) {
                             const item = await tx.adventureItem.findUnique({ where: { code: result.loot.id } });
                             if (item) {
@@ -379,13 +355,14 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                     for (const result of calculated.filter(result => result.status)) {
                         const profile = profileByUser.get(result.userId)!;
                         const status = result.status!;
+                        await tx.adventureProfileCondition.deleteMany({ where: { profileId: profile.id } });
                         await tx.adventureProfileCondition.upsert({
                             where: { profileId_code: { profileId: profile.id, code: status.code } },
                             update: {
                                 name: status.label,
                                 modifier: status.modifier,
                                 checkCodes: [...status.affectedChecks],
-                                themeCodes: scenario.theme === "special" ? [] : [scenario.theme],
+                                themeCodes: [],
                                 remainingAdventures: status.durationAdventures,
                                 sourceAdventureId: adventure.id,
                             },
@@ -395,7 +372,7 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                                 name: status.label,
                                 modifier: status.modifier,
                                 checkCodes: [...status.affectedChecks],
-                                themeCodes: scenario.theme === "special" ? [] : [scenario.theme],
+                                themeCodes: [],
                                 remainingAdventures: status.durationAdventures,
                                 sourceAdventureId: adventure.id,
                             },
@@ -460,7 +437,6 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                         profit: result.profit,
                         streakBonus: result.streakBonus,
                         streak: result.streak,
-                        xpAwarded: result.xpAwarded,
                         lootName: result.loot?.name,
                         lootEquipped: result.lootAutoEquipped,
                         statusName: result.status?.label,

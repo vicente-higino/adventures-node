@@ -28,6 +28,17 @@ export interface AdventureItemDefinition {
 }
 
 export const LOOT_RARITY_WEIGHTS: Readonly<Record<AdventureItemRarity, number>> = { common: 65, uncommon: 25, rare: 8, epic: 2 };
+export const ADVENTURE_ITEM_MODIFIER_BY_RARITY: Readonly<Record<AdventureItemRarity, number>> = {
+    common: 1,
+    uncommon: 2,
+    rare: 3,
+    epic: 4,
+};
+
+/** Each modifier point is worth five percentage points before the payout cap. */
+export function getAdventureItemModifier(item: Pick<AdventureItemDefinition, "rarity">): number {
+    return ADVENTURE_ITEM_MODIFIER_BY_RARITY[item.rarity];
+}
 
 export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
     {

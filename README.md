@@ -56,19 +56,23 @@ Hono, Prisma, and Twurple.
   stats.
 - Integrate with chat platforms using webhooks or custom integrations.
 
-### Adventure RPG
+### Adventure loot and statuses
 
-- `!adv <silver> [approach]` starts or joins the persisted scenario shown in
-  chat. Each scenario offers three approaches tied to one of 12 checks.
-- Characters list the 18 class names with `!class help`, choose one with
-  `!class <name>`, inspect their profile with `!adventurer`, and manage loot
-  with `!inv loot`, `!equip`, and `!unequip`.
-- Checks use a seeded d20 against DC 11. Class, gear, status, and party bonuses
-  are bounded to -4 through +4; payout-aware success odds stay between 30% and
-  70% (a 2x adventure is capped at 55%).
-- Resolution sends one legacy-style chat message with narrative, payouts,
-  criticals, loot, statuses, and recovery bonuses. `!advlast` shows the last
-  persisted result.
+- `!adv <silver> [raid]` keeps the classic start, join, and wager flow. Join
+  confirmations show that player's current odds for the active adventure.
+- A new player starts at 50%. Only the strongest equipped item matching the
+  adventure theme applies: common loot adds 5%, uncommon 10%, and rare 15%.
+- Critical successes find and automatically equip loot and grant Inspired
+  (+10%) for the next adventure. Critical failures grant a theme-flavoured
+  -5% status for the next adventure. Only one temporary status applies.
+- Success odds are capped at 75%, with payout-aware caps down to 55% for high
+  payouts. A rare matching item plus Inspired can reach 75% on a low-payout
+  adventure, while a 2x adventure remains capped at 55%.
+- `!char` shows gear, status, and record. `!inv loot` lists adventure loot;
+  `!equip` and `!unequip` allow manual changes after automatic equipping.
+- Resolution uses the legacy-style narrative and survivor list, adding compact
+  critical, loot, status, streak, and recovery information. `!advlast` shows
+  the last persisted result without checks or XP progression.
 
 ## Scripts
 
