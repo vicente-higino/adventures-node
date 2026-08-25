@@ -112,28 +112,50 @@ function formatEntryList(entries: readonly string[], maximumVisible: number): st
     return `${visible.join(", ")}${remaining > 0 ? `, and ${remaining} other${remaining === 1 ? "" : "s"}` : ""}`;
 }
 
+function formatLootDetail(player: AdventureChatPlayerResult): string | undefined {
+    if (!player.lootName) return undefined;
+    return player.lootEquipped ? `found and equipped ${player.lootName}` : `found ${player.lootName}`;
+}
+
+function formatStatusDetail(player: AdventureChatPlayerResult): string | undefined {
+    return player.statusName ? `now ${player.statusName}` : undefined;
+}
+
 function formatRewardsMessage(input: AdventureChatResultInput): string {
     const winners = input.players.filter(player => player.success);
     const winnerRewards = winners.map(player => {
-        const streak = player.streakBonus > 0 ? `, +${formatSilver(player.streakBonus)} silver bonus, ${player.streak}-win streak` : "";
-        const lootBonus = player.lootSilverBonus ? `, +${formatSilver(player.lootSilverBonus)} silver loot bonus` : "";
-        const critical = player.criticalCode === "critical-success" ? ", critical success" : "";
-        return `@${player.displayName} (+${formatSilver(player.profit)} silver${streak}${lootBonus}${critical})`;
+        const details = [
+            `+${formatSilver(player.profit)} silver`,
+            player.streakBonus > 0 ? `+${formatSilver(player.streakBonus)} silver bonus` : undefined,
+            player.streakBonus > 0 ? `${player.streak}-win streak` : undefined,
+            player.lootSilverBonus ? `+${formatSilver(player.lootSilverBonus)} silver loot bonus` : undefined,
+            player.criticalCode === "critical-success" ? "critical success" : undefined,
+            formatLootDetail(player),
+            formatStatusDetail(player),
+        ].filter(Boolean);
+        return `@${player.displayName} (${details.join(", ")})`;
     });
     const recoveryBonuses = input.players
         .filter(player => !player.success && player.streakBonus > 0)
         .map(player => {
-            const critical = player.criticalCode === "critical-failure" ? ", critical failure" : "";
-            return `@${player.displayName} (+${formatSilver(player.streakBonus)} silver bonus, ${player.streak}-lose streak${critical})`;
+            const details = [
+                `+${formatSilver(player.streakBonus)} silver bonus`,
+                `${player.streak}-lose streak`,
+                player.criticalCode === "critical-failure" ? "critical failure" : undefined,
+                formatLootDetail(player),
+                formatStatusDetail(player),
+            ].filter(Boolean);
+            return `@${player.displayName} (${details.join(", ")})`;
         });
-    const loot = input.players
-        .filter(player => player.lootName)
-        .map(player => `@${player.displayName} found ${player.lootName}${player.lootEquipped ? " and equipped it" : ""}`);
-    const statuses = input.players
-        .filter(player => player.statusName)
+    const otherUpdates = input.players
+        .filter(player => !player.success && player.streakBonus === 0 && (player.lootName || player.statusName || player.criticalCode))
         .map(player => {
-            const critical = player.criticalCode === "critical-failure" && player.streakBonus === 0 ? " (critical failure)" : "";
-            return `@${player.displayName}${critical} is now ${player.statusName}`;
+            const details = [
+                player.criticalCode === "critical-failure" ? "critical failure" : undefined,
+                formatLootDetail(player),
+                formatStatusDetail(player),
+            ].filter(Boolean);
+            return `@${player.displayName} (${details.join(", ")})`;
         });
     const outcome = winnerRewards.length
         ? `Survivors are: ${formatEntryList(winnerRewards, winnerRewards.length)}.`
@@ -142,8 +164,7 @@ function formatRewardsMessage(input: AdventureChatResultInput): string {
         `The adventure ended with a ${input.payoutRate.toFixed(2)}x payout rate!`,
         outcome,
         recoveryBonuses.length ? `Recovery bonuses: ${formatEntryList(recoveryBonuses, recoveryBonuses.length)}.` : "",
-        loot.length ? `${formatEntryList(loot, loot.length)}.` : "",
-        statuses.length ? `${formatEntryList(statuses, statuses.length)}.` : "",
+        otherUpdates.length ? `${formatEntryList(otherUpdates, otherUpdates.length)}.` : "",
     ].filter(Boolean);
     const fullRewards = sections.join(" ");
     if (fullRewards.length <= FOSSABOT_MESSAGE_LIMIT - MIN_STORY_TARGET - 1) return fullRewards;
@@ -152,8 +173,7 @@ function formatRewardsMessage(input: AdventureChatResultInput): string {
         sections[0],
         fitAdventureChatMessage(winnerRewards.length ? `Survivors are: ${formatEntryList(winnerRewards, 12)}.` : outcome, 520),
         recoveryBonuses.length ? fitAdventureChatMessage(`Recovery bonuses: ${formatEntryList(recoveryBonuses, 6)}.`, 260) : "",
-        loot.length ? fitAdventureChatMessage(`${formatEntryList(loot, 6)}.`, 260) : "",
-        statuses.length ? fitAdventureChatMessage(`${formatEntryList(statuses, 6)}.`, 260) : "",
+        otherUpdates.length ? fitAdventureChatMessage(`${formatEntryList(otherUpdates, 6)}.`, 260) : "",
     ].filter(Boolean);
     return compactSections.join(" ");
 }

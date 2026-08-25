@@ -55,10 +55,12 @@ describe("RPG adventure chat rendering", () => {
         expect(rendered).not.toContain("20+1=21");
         expect(rendered).not.toContain("(55%)");
         expect(rendered).toContain("The adventure ended with a 1.40x payout rate!");
-        expect(rendered).toContain("Survivors are: @Player1 (+30 silver, critical success).");
-        expect(rendered).toContain("Recovery bonuses: @Player2 (+25 silver bonus, 3-lose streak, critical failure).");
-        expect(rendered).toContain("@Player1 found Tideworn Compass and equipped it.");
-        expect(rendered).toContain("@Player2 is now Cursed.");
+        expect(rendered).toContain(
+            "Survivors are: @Player1 (+30 silver, critical success, found and equipped Tideworn Compass).",
+        );
+        expect(rendered).toContain("Recovery bonuses: @Player2 (+25 silver bonus, 3-lose streak, critical failure, now Cursed).");
+        expect(rendered.match(/@Player1/g)).toHaveLength(1);
+        expect(rendered.match(/@Player2/g)).toHaveLength(1);
         expect(rendered.match(/critical success/g)).toHaveLength(1);
         expect(rendered.match(/critical failure/g)).toHaveLength(1);
         expect(rendered).not.toContain("Adventure progress");
@@ -82,6 +84,33 @@ describe("RPG adventure chat rendering", () => {
 
         expect(messages[0]).toContain("@Player1 (+30 silver, +50 silver loot bonus, critical success)");
         expect(messages[0]).not.toContain("found loot");
+    });
+
+    it("combines a player's payout, critical, loot, and status without repeating their name", () => {
+        const messages = formatAdventureChatResult({
+            title: "Primeval Crossing",
+            intro: "The party enters the forest.",
+            payoutRate: 1.4,
+            presentationMode: "individual",
+            players: [
+                player(1, {
+                    displayName: "v_cn_t",
+                    profit: 1,
+                    streakBonus: 1,
+                    streak: 7,
+                    roll: 20,
+                    criticalCode: "critical-success",
+                    lootName: "Fire Starter",
+                    lootEquipped: true,
+                    statusName: "Inspired",
+                }),
+            ],
+        });
+
+        expect(messages[0]).toContain(
+            "@v_cn_t (+1 silver, +1 silver bonus, 7-win streak, critical success, found and equipped Fire Starter, now Inspired).",
+        );
+        expect(messages[0].match(/@v_cn_t/g)).toHaveLength(1);
     });
 
     it("switches large parties to a bounded grouped summary", () => {
@@ -126,7 +155,7 @@ describe("RPG adventure chat rendering", () => {
             ],
         });
 
-        expect(messages[0]).toContain("@v_cn_t (critical failure) is now Rattled.");
+        expect(messages[0]).toContain("@v_cn_t (critical failure, now Rattled).");
         expect(messages[0].match(/critical failure/g)).toHaveLength(1);
     });
 
