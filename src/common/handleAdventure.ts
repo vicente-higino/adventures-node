@@ -437,7 +437,7 @@ export async function handleAdventureJoin(params: {
                             const currentOdds = getCurrentAdventureOdds(loadoutSnapshot, newScenario.context.theme, payoutRate, statusModifier);
                             return respond({
                                 adventureIdToSchedule: created.id,
-                                message: `@${userDisplayName} is trying to get a team together for some serious adventure business! Use "${prefix ?? "!"}adv ${adventureAmountOptions}" to join. This adventure offers a ${payoutRate.toFixed(
+                                message: `@${userDisplayName} is trying to get a team together for some serious [${created.theme}] adventure business! Use "${prefix ?? "!"}adv ${adventureAmountOptions}" to join. This adventure offers a ${payoutRate.toFixed(
                                     2,
                                 )}x payout rate! ${ADVENTURE_GAMBA_EMOTE(
                                     channelLogin,
