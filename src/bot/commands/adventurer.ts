@@ -3,30 +3,19 @@ import { findAdventureProfile, findOrCreateAdventureProfile } from "@/common/adv
 import { prisma } from "@/prisma";
 import { getUserByUsername } from "@/twitch/api";
 import { createBotCommand } from "../botCommandWithKeywords";
+import { formatAdventureBuffs, formatAdventureStatus } from "./adventurerFormat";
 
-function formatEquipment(profile: NonNullable<Awaited<ReturnType<typeof findAdventureProfile>>>): string {
+function formatBuffs(profile: NonNullable<Awaited<ReturnType<typeof findAdventureProfile>>>): string {
     const equipment = profile.inventoryItems.filter(inventory => inventory.equippedSlot && inventory.quantity > 0 && inventory.item.active);
-    if (equipment.length === 0) return "none";
-
-    return equipment
-        .map(inventory => {
+    return formatAdventureBuffs(
+        equipment.map(inventory => {
             const definition = getAdventureItem(inventory.item.code);
-            const modifier = definition ? getAdventureItemModifier(definition) : inventory.item.modifier;
-            const theme = definition?.theme ?? inventory.item.theme;
-            const bonus = theme ? ` [${theme} +${modifier * 5}%]` : "";
-            return `${inventory.equippedSlot}: ${inventory.item.name}${bonus}`;
-        })
-        .join(", ");
-}
-
-function formatConditions(profile: NonNullable<Awaited<ReturnType<typeof findAdventureProfile>>>): string {
-    if (profile.conditions.length === 0) return "none";
-    return profile.conditions
-        .map(condition => {
-            const percent = condition.modifier * 5;
-            return `${condition.name} [${percent >= 0 ? "+" : ""}${percent}%; ${condition.remainingAdventures} adv]`;
-        })
-        .join(", ");
+            return {
+                theme: definition?.theme ?? inventory.item.theme,
+                modifier: definition ? getAdventureItemModifier(definition) : inventory.item.modifier,
+            };
+        }),
+    );
 }
 
 export const adventurerCommand = createBotCommand(
@@ -64,8 +53,10 @@ export const adventurerCommand = createBotCommand(
         }
 
         const record = stats ? `${stats.gamesWon}/${stats.gamesPlayed} wins` : "0/0 wins";
+        const status = formatAdventureStatus(profile.conditions[0]);
+        const details = [`Buffs: ${formatBuffs(profile)}`, status ? `Status: ${status}` : "", record].filter(Boolean);
 
-        say(`@${target.displayName}, Gear: ${formatEquipment(profile)} | Status: ${formatConditions(profile)} | Record: ${record}`);
+        say(`@${target.displayName}, ${details.join(" | ")}`);
     },
     { aliases: ["char", "character"], ignoreCase: true },
 );
