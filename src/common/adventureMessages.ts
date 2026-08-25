@@ -163,7 +163,7 @@ function formatRewardsMessage(input: AdventureChatResultInput): string {
     const sections = [
         `The adventure ended with a ${input.payoutRate.toFixed(2)}x payout rate!`,
         outcome,
-        recoveryBonuses.length ? `Recovery bonuses: ${formatEntryList(recoveryBonuses, recoveryBonuses.length)}.` : "",
+        recoveryBonuses.length ? `${formatEntryList(recoveryBonuses, recoveryBonuses.length)}.` : "",
         otherUpdates.length ? `${formatEntryList(otherUpdates, otherUpdates.length)}.` : "",
     ].filter(Boolean);
     const fullRewards = sections.join(" ");
@@ -172,7 +172,7 @@ function formatRewardsMessage(input: AdventureChatResultInput): string {
     const compactSections = [
         sections[0],
         fitAdventureChatMessage(winnerRewards.length ? `Survivors are: ${formatEntryList(winnerRewards, 12)}.` : outcome, 520),
-        recoveryBonuses.length ? fitAdventureChatMessage(`Recovery bonuses: ${formatEntryList(recoveryBonuses, 6)}.`, 260) : "",
+        recoveryBonuses.length ? fitAdventureChatMessage(`${formatEntryList(recoveryBonuses, 6)}.`, 260) : "",
         otherUpdates.length ? fitAdventureChatMessage(`${formatEntryList(otherUpdates, 6)}.`, 260) : "",
     ].filter(Boolean);
     return compactSections.join(" ");

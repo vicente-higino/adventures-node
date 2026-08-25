@@ -148,7 +148,7 @@ async function handleLegacyAdventureEndAtomic(params: { channelLogin: string; ch
                     }
 
                     const formattedPayoutRate = adventure.payoutRate.toFixed(2);
-                    const recovery = recoveryMessages.length > 0 ? ` Recovery bonuses: ${recoveryMessages.join(", ")}.` : "";
+                    const recovery = recoveryMessages.length > 0 ? ` ${recoveryMessages.join(", ")}.` : "";
                     const base = winnerMessages.length
                         ? ` The adventure ended with a ${formattedPayoutRate}x payout rate! Survivors are: ${winnerMessages.join(", ")}.${recovery}`
                         : ` The adventure ended! No survivors. All players lost their silver.${recovery}`;

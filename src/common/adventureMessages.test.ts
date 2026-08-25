@@ -58,7 +58,7 @@ describe("RPG adventure chat rendering", () => {
         expect(rendered).toContain(
             "Survivors are: @Player1 (+30 silver, critical success, found and equipped Tideworn Compass).",
         );
-        expect(rendered).toContain("Recovery bonuses: @Player2 (+25 silver bonus, 3-lose streak, critical failure, now Cursed).");
+        expect(rendered).toContain("@Player2 (+25 silver bonus, 3-lose streak, critical failure, now Cursed).");
         expect(rendered.match(/@Player1/g)).toHaveLength(1);
         expect(rendered.match(/@Player2/g)).toHaveLength(1);
         expect(rendered.match(/critical success/g)).toHaveLength(1);
