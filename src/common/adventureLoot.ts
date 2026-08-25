@@ -1,10 +1,10 @@
 import { AdventureItemDefinition, AdventureItemRarity, getAdventureItemModifier } from "@/adventures/rpg";
 
 export const ADVENTURE_LOOT_SILVER_BY_RARITY: Readonly<Record<AdventureItemRarity, number>> = {
-    common: 50,
-    uncommon: 100,
-    rare: 250,
-    epic: 500,
+    common: 250,
+    uncommon: 500,
+    rare: 1000,
+    epic: 5000,
 };
 
 export interface OwnedAdventureLoot {

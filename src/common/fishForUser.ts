@@ -35,6 +35,13 @@ import { formatTimeToWithSeconds } from "@/utils/time";
 import { Prisma, Rarity } from "@prisma/client";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import {
+    FISH_TRASH_REWARD_TABLE,
+    FISH_TRASH_TREASURE_BASE_CHANCE,
+    FISH_TRASH_TREASURE_ROD_MULTIPLIER,
+    FISHING_ADVENTURE_LOOT_TABLE,
+} from "./fishingAdventureLoot";
+import { grantFishingAdventureLoot } from "./grantFishingAdventureLoot";
 import { friendlyCooldownMessages, motivationalQuotes, wrongPlaces } from "./phrases";
 import { ADVENTURE_TICKET_DROP_TABLE, consumeRedeemable, getAdventureTicketCode, grantRedeemable } from "./redeemables";
 dayjs.extend(relativeTime);
@@ -141,6 +148,7 @@ export async function fishForUser({
         let treasureBonus = await handleTrashReward({
             rarity: fish.rarity,
             userProviderId,
+            userLogin,
             userDisplayName,
             channelLogin,
             channelProviderId,
@@ -387,6 +395,7 @@ const FISHDEX_COMPLETION_BONUS: Record<Rarity, number> = {
 async function handleTrashReward({
     rarity,
     userProviderId,
+    userLogin,
     userDisplayName,
     channelLogin,
     channelProviderId,
@@ -394,65 +403,70 @@ async function handleTrashReward({
 }: {
     rarity: Rarity;
     userProviderId: string;
+    userLogin: string;
     userDisplayName: string;
     channelLogin: string;
     channelProviderId: string;
     rodLevel: number;
 }) {
-    const chance = 0.25 * Math.pow(1.125, rodLevel);
+    const chance = FISH_TRASH_TREASURE_BASE_CHANCE * Math.pow(FISH_TRASH_TREASURE_ROD_MULTIPLIER, rodLevel);
     const rand = Math.random();
     if (rarity !== Rarity.Trash || rand >= chance) {
         return 0;
     }
 
-    const rewards = [
-        { type: "silver", weight: 5 },
-        { type: "adventure-ticket", weight: 3 },
-        {
-            type: "redeemable",
-            code: "legendary_event_ticket",
-            message: `You found a Legendary Event Ticket hidden in the trash! Use "${getBotPrefix()}sle" to start it!`,
-            weight: 2,
-        },
-        {
-            type: "redeemable",
-            code: "legendary_bait",
-            message: `You found a Legendary bait hidden in the trash! You next fish will be a legendary!`,
-            weight: 1,
-        },
-    ] as const;
-
-    const reward = pickWeightedRandom(rewards);
+    const reward = pickWeightedRandom(FISH_TRASH_REWARD_TABLE);
+    const adventureLoot = reward.type === "adventure-loot" ? pickWeightedRandom(FISHING_ADVENTURE_LOOT_TABLE).item : undefined;
     const mult = Math.pow(1.25, rodLevel);
     const chestBonus = Math.floor(boxMullerTransform(1000 * mult, 500, 250));
-    logger.debug({ chance, rand, reward: reward.type, mult, chestBonus }, "Treasure Info");
-    setTimeout(async () => {
-        sendActionToChannel(channelLogin, `@${userDisplayName} Hold on... something's glimmering in the trash! ${PAUSE_EMOTES(channelLogin)}`);
+    logger.debug({ chance, rand, reward: reward.type, adventureLoot: adventureLoot?.id, mult, chestBonus }, "Treasure Info");
+    setTimeout(() => {
+        void (async () => {
+            sendActionToChannel(channelLogin, `@${userDisplayName} Hold on... something's glimmering in the trash! ${PAUSE_EMOTES(channelLogin)}`);
 
-        await delay(2000);
+            await delay(2000);
 
-        if (reward.type === "silver") {
-            sendActionToChannel(
-                channelLogin,
-                `@${userDisplayName} 💰 While sifting through the trash, you discovered a hidden treasure chest containing ${chestBonus} silver! ${getValueEmote(chestBonus, 1, "Normal", channelLogin)}`,
-            );
-            return;
-        }
-
-        if (reward.type === "adventure-ticket") {
-            const multiplier = pickWeightedRandom(ADVENTURE_TICKET_DROP_TABLE).multiplier;
-            await grantRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: getAdventureTicketCode(multiplier) });
-            sendActionToChannel(
-                channelLogin,
-                `@${userDisplayName} You found a ${multiplier}x Adventure Ticket hidden in the trash! Use "${getBotPrefix()}advupgrade ${multiplier}x" during an active adventure. ${CONGRATULATIONS_EMOTES(
+            if (reward.type === "silver") {
+                sendActionToChannel(
                     channelLogin,
-                )}`,
-            );
-            return;
-        }
+                    `@${userDisplayName} 💰 While sifting through the trash, you discovered a hidden treasure chest containing ${chestBonus} silver! ${getValueEmote(chestBonus, 1, "Normal", channelLogin)}`,
+                );
+                return;
+            }
 
-        await grantRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: reward.code });
-        sendActionToChannel(channelLogin, `@${userDisplayName} ${reward.message} ${CONGRATULATIONS_EMOTES(channelLogin)}`);
+            if (reward.type === "adventure-ticket") {
+                const multiplier = pickWeightedRandom(ADVENTURE_TICKET_DROP_TABLE).multiplier;
+                await grantRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: getAdventureTicketCode(multiplier) });
+                sendActionToChannel(
+                    channelLogin,
+                    `@${userDisplayName} You found a ${multiplier}x Adventure Ticket hidden in the trash! Use "${getBotPrefix()}advupgrade ${multiplier}x" during an active adventure. ${CONGRATULATIONS_EMOTES(
+                        channelLogin,
+                    )}`,
+                );
+                return;
+            }
+
+            if (reward.type === "adventure-loot") {
+                const granted = await grantFishingAdventureLoot(
+                    { channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName },
+                    adventureLoot!,
+                );
+                const message =
+                    granted.type === "item"
+                        ? `You found ${granted.item.name} hidden in the trash and equipped it!`
+                        : `You found ${granted.item.name}, but it was not an upgrade, so it became ${granted.silverBonus} silver!`;
+                sendActionToChannel(channelLogin, `@${userDisplayName} ${message} ${CONGRATULATIONS_EMOTES(channelLogin)}`);
+                return;
+            }
+
+            const redeemableCode = reward.type === "legendary-event-ticket" ? "legendary_event_ticket" : "legendary_bait";
+            await grantRedeemable({ userId: userProviderId, channelProviderId, redeemableCode });
+            const message =
+                reward.type === "legendary-event-ticket"
+                    ? `You found a Legendary Event Ticket hidden in the trash! Use "${getBotPrefix()}sle" to start it!`
+                    : "You found Legendary Bait hidden in the trash! Your next fish will be legendary!";
+            sendActionToChannel(channelLogin, `@${userDisplayName} ${message} ${CONGRATULATIONS_EMOTES(channelLogin)}`);
+        })().catch(error => logger.error({ error, reward: reward.type, userProviderId, channelProviderId }, "Failed to deliver trash reward"));
     }, 2000);
 
     if (reward.type === "silver") {
