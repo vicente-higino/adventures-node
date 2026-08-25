@@ -14,6 +14,7 @@ export interface AdventureChatPlayerResult {
     streak: number;
     lootName?: string;
     lootEquipped?: boolean;
+    lootSilverBonus?: number;
     statusName?: string;
 }
 
@@ -115,8 +116,9 @@ function formatRewardsMessage(input: AdventureChatResultInput): string {
     const winners = input.players.filter(player => player.success);
     const winnerRewards = winners.map(player => {
         const streak = player.streakBonus > 0 ? `, +${formatSilver(player.streakBonus)} silver bonus, ${player.streak}-win streak` : "";
+        const lootBonus = player.lootSilverBonus ? `, +${formatSilver(player.lootSilverBonus)} silver loot bonus` : "";
         const critical = player.criticalCode === "critical-success" ? ", critical success" : "";
-        return `@${player.displayName} (+${formatSilver(player.profit)} silver${streak}${critical})`;
+        return `@${player.displayName} (+${formatSilver(player.profit)} silver${streak}${lootBonus}${critical})`;
     });
     const recoveryBonuses = input.players
         .filter(player => !player.success && player.streakBonus > 0)

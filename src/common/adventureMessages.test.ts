@@ -26,7 +26,13 @@ describe("RPG adventure chat rendering", () => {
             payoutRate: 1.4,
             presentationMode: "individual",
             players: [
-                player(1, { roll: 20, total: 21, criticalCode: "critical-success", lootName: "Tideworn Compass", lootEquipped: true }),
+                player(1, {
+                    roll: 20,
+                    total: 21,
+                    criticalCode: "critical-success",
+                    lootName: "Tideworn Compass",
+                    lootEquipped: true,
+                }),
                 player(2, {
                     roll: 1,
                     modifier: -1,
@@ -63,6 +69,19 @@ describe("RPG adventure chat rendering", () => {
         expect(joinAdventureChatMessages(messages)).toBe(rendered);
         expect(joinAdventureChatMessages(messages)).not.toContain("$(newline)");
         expect(joinAdventureChatMessages(["First sentence.", "Second sentence."])).toBe("First sentence. Second sentence.");
+    });
+
+    it("shows converted unusable loot beside the player's existing reward info", () => {
+        const messages = formatAdventureChatResult({
+            title: "The Black Reef",
+            intro: "A storm closes in.",
+            payoutRate: 1.4,
+            presentationMode: "individual",
+            players: [player(1, { roll: 20, criticalCode: "critical-success", lootSilverBonus: 50 })],
+        });
+
+        expect(messages[0]).toContain("@Player1 (+30 silver, +50 silver loot bonus, critical success)");
+        expect(messages[0]).not.toContain("found loot");
     });
 
     it("switches large parties to a bounded grouped summary", () => {

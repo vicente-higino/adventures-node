@@ -19,6 +19,7 @@ import { calculateLoseStreakBonus, calculateWinStreakBonus } from "@/utils/misc"
 import { Prisma } from "@prisma/client";
 import Decimal from "decimal.js";
 import { evaluateAdventureConditions } from "./adventureConditions";
+import { AdventureLootConversionReason, evaluateAdventureLootEligibility } from "./adventureLoot";
 import { AdventureChatPlayerResult, formatAdventureChatResult, joinAdventureChatMessages } from "./adventureMessages";
 
 interface RpgEndParams {
@@ -62,6 +63,12 @@ interface CalculatedResult {
     xpAwarded: 0;
     loot?: (typeof ADVENTURE_ITEMS)[number];
     lootAutoEquipped: boolean;
+    lootSilverBonus: number;
+    lootConversion?: {
+        item: (typeof ADVENTURE_ITEMS)[number];
+        convertedToSilver: number;
+        reason: AdventureLootConversionReason;
+    };
     status?: { code: string; label: string; modifier: -1 | 2; affectedChecks: readonly AdventureCheck[]; durationAdventures: number };
 }
 
@@ -183,6 +190,18 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                         ),
                     );
                     const profileByUser = new Map(profiles.map(profile => [profile.userId, profile]));
+                    const inventoryItems = await tx.adventureInventoryItem.findMany({
+                        where: { profileId: { in: profiles.map(profile => profile.id) }, quantity: { gt: 0 } },
+                        include: { item: true },
+                    });
+                    const inventoryByProfile = new Map<number, typeof inventoryItems>();
+                    for (const inventory of inventoryItems) {
+                        const entries = inventoryByProfile.get(inventory.profileId) ?? [];
+                        entries.push(inventory);
+                        inventoryByProfile.set(inventory.profileId, entries);
+                    }
+                    const persistedItems = await tx.adventureItem.findMany({ where: { code: { in: ADVENTURE_ITEMS.map(item => item.id) } } });
+                    const persistedItemByCode = new Map(persistedItems.map(item => [item.code, item]));
                     const conditions = await tx.adventureProfileCondition.findMany({
                         where: {
                             profileId: { in: profiles.map(profile => profile.id) },
@@ -277,11 +296,50 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                             xpAwarded: 0,
                             loot,
                             lootAutoEquipped: false,
+                            lootSilverBonus: 0,
                             status,
                         };
                     });
 
                     for (const result of calculated) {
+                        const profile = profileByUser.get(result.userId)!;
+                        if (result.loot) {
+                            const candidate = result.loot;
+                            const item = persistedItemByCode.get(candidate.id);
+                            const ownedItems = (inventoryByProfile.get(profile.id) ?? []).map(inventory => ({
+                                code: inventory.item.code,
+                                quantity: inventory.quantity,
+                                active: inventory.item.active,
+                                equippedSlot: inventory.equippedSlot,
+                                theme: inventory.item.theme,
+                                modifier: inventory.item.modifier,
+                            }));
+                            const eligibility = evaluateAdventureLootEligibility(candidate, item?.active ?? false, ownedItems);
+                            if (!eligibility.eligible) {
+                                result.lootSilverBonus = eligibility.silverBonus;
+                                result.lootConversion = {
+                                    item: candidate,
+                                    convertedToSilver: eligibility.silverBonus,
+                                    reason: eligibility.reason,
+                                };
+                                result.loot = undefined;
+                                if (!item) {
+                                    logger.warn({ itemCode: candidate.id }, "Adventure loot catalog was not synchronized; converted loot to silver");
+                                }
+                            } else if (item) {
+                                await tx.adventureInventoryItem.updateMany({
+                                    where: { profileId: profile.id, equippedSlot: candidate.slot },
+                                    data: { equippedSlot: null },
+                                });
+                                await tx.adventureInventoryItem.upsert({
+                                    where: { profileId_itemId: { profileId: profile.id, itemId: item.id } },
+                                    update: { quantity: { increment: 1 }, equippedSlot: candidate.slot },
+                                    create: { profileId: profile.id, itemId: item.id, quantity: 1, equippedSlot: candidate.slot },
+                                });
+                                result.lootAutoEquipped = true;
+                            }
+                        }
+
                         const stats =
                             (await tx.userStats.findUnique({ where: { channelProviderId_userId: { channelProviderId, userId: result.userId } } })) ??
                             (await tx.userStats.create({ data: { channel: channelLogin, channelProviderId, userId: result.userId } }));
@@ -294,6 +352,7 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                             : calculateLoseStreakBonus(newLoseStreak, newStreakWager);
                         result.streakBonus = streakBonus;
                         result.streak = result.success ? newWinStreak : newLoseStreak;
+                        const totalReward = result.grossPayout + streakBonus + result.lootSilverBonus;
 
                         await tx.userStats.update({
                             where: { id: stats.id },
@@ -301,45 +360,17 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                                 gamesPlayed: { increment: 1 },
                                 gamesWon: result.success ? { increment: 1 } : undefined,
                                 totalWagers: { increment: BigInt(result.buyin) },
-                                totalWinnings:
-                                    result.grossPayout + streakBonus > 0 ? { increment: BigInt(result.grossPayout + streakBonus) } : undefined,
+                                totalWinnings: totalReward > 0 ? { increment: BigInt(totalReward) } : undefined,
                                 winStreak: newWinStreak,
                                 loseStreak: newLoseStreak,
                                 streakWager: Math.max(0, newStreakWager - streakBonus),
                             },
                         });
-                        if (result.grossPayout + streakBonus > 0) {
+                        if (totalReward > 0) {
                             await tx.balance.update({
                                 where: { channelProviderId_userId: { channelProviderId, userId: result.userId } },
-                                data: { value: { increment: BigInt(result.grossPayout + streakBonus) } },
+                                data: { value: { increment: BigInt(totalReward) } },
                             });
-                        }
-                        const profile = profileByUser.get(result.userId)!;
-                        if (result.loot) {
-                            const item = await tx.adventureItem.findUnique({ where: { code: result.loot.id } });
-                            if (item) {
-                                const autoEquip = item.active && result.loot.kind === "equipment" && result.loot.slot !== "none";
-                                if (autoEquip) {
-                                    await tx.adventureInventoryItem.updateMany({
-                                        where: { profileId: profile.id, equippedSlot: result.loot.slot },
-                                        data: { equippedSlot: null },
-                                    });
-                                }
-                                await tx.adventureInventoryItem.upsert({
-                                    where: { profileId_itemId: { profileId: profile.id, itemId: item.id } },
-                                    update: { quantity: { increment: 1 }, equippedSlot: autoEquip ? result.loot.slot : undefined },
-                                    create: {
-                                        profileId: profile.id,
-                                        itemId: item.id,
-                                        quantity: 1,
-                                        equippedSlot: autoEquip ? result.loot.slot : undefined,
-                                    },
-                                });
-                                result.lootAutoEquipped = autoEquip;
-                            } else {
-                                logger.warn({ itemCode: result.loot.id }, "Adventure loot catalog was not synchronized before resolution");
-                                result.loot = undefined;
-                            }
                         }
                     }
 
@@ -399,7 +430,15 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                             payout: BigInt(result.grossPayout),
                             streakBonus: BigInt(result.streakBonus),
                             xpAwarded: BigInt(result.xpAwarded),
-                            lootSnapshot: result.loot ? asJson(result.loot) : undefined,
+                            lootSnapshot: result.loot
+                                ? asJson(result.loot)
+                                : result.lootConversion
+                                  ? asJson({
+                                        item: result.lootConversion.item,
+                                        convertedToSilver: result.lootConversion.convertedToSilver,
+                                        reason: result.lootConversion.reason,
+                                    })
+                                  : undefined,
                             statusSnapshot: result.status ? asJson(result.status) : undefined,
                             narrative: result.narrative,
                         })),
@@ -439,6 +478,7 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                         streak: result.streak,
                         lootName: result.loot?.name,
                         lootEquipped: result.lootAutoEquipped,
+                        lootSilverBonus: result.lootSilverBonus,
                         statusName: result.status?.label,
                     }));
                     const messages = formatAdventureChatResult({

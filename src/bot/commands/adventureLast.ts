@@ -1,4 +1,5 @@
 import { parseStoredAdventureScenario } from "@/common/adventureScenario";
+import { getConvertedLootSilver } from "@/common/adventureLoot";
 import { formatSilver } from "@/utils/misc";
 import { prisma } from "@/prisma";
 import { createBotCommand } from "../botCommandWithKeywords";
@@ -18,10 +19,15 @@ export const adventureLastCommand = createBotCommand(
 
         const scenario = parseStoredAdventureScenario(result.adventure.scenarioContext);
         const reward = result.outcome === "SUCCESS" ? `won ${formatSilver(Number(result.payout))} silver gross` : "lost the wager";
+        const convertedLootSilver = getConvertedLootSilver(result.lootSnapshot);
         const extras = [
             result.criticalCode === "critical-success" ? "critical success" : "",
             result.criticalCode === "critical-failure" ? "critical failure" : "",
-            result.lootSnapshot ? "found loot" : "",
+            convertedLootSilver > 0
+                ? `converted unusable loot into ${formatSilver(convertedLootSilver)} silver`
+                : result.lootSnapshot
+                  ? "found loot"
+                  : "",
             result.statusSnapshot ? "gained a status" : "",
             Number(result.streakBonus) > 0 ? `received ${formatSilver(Number(result.streakBonus))} streak bonus` : "",
         ].filter(Boolean);
