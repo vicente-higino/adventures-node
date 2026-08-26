@@ -8,7 +8,7 @@ export const FISH_TRASH_REWARD_TABLE = [
     { type: "adventure-ticket", weight: 3 },
     { type: "legendary-event-ticket", weight: 2 },
     { type: "legendary-bait", weight: 1 },
-    { type: "adventure-loot", weight: 11111111 },
+    { type: "adventure-loot", weight: 0.25 },
 ] as const;
 
 export const FISHING_ADVENTURE_LOOT_TABLE = ADVENTURE_ITEMS.map(item => ({
