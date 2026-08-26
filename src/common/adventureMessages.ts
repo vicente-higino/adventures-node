@@ -121,8 +121,14 @@ function formatStatusDetail(player: AdventureChatPlayerResult): string | undefin
     return player.statusName ? `now ${player.statusName}` : undefined;
 }
 
+function totalDisplayedSilver(player: AdventureChatPlayerResult): number {
+    return player.profit + player.streakBonus + (player.lootSilverBonus ?? 0);
+}
+
 function formatRewardsMessage(input: AdventureChatResultInput): string {
-    const winners = input.players.filter(player => player.success);
+    const winners = input.players
+        .filter(player => player.success)
+        .sort((left, right) => totalDisplayedSilver(right) - totalDisplayedSilver(left));
     const winnerRewards = winners.map(player => {
         const details = [
             `+${formatSilver(player.profit)} silver`,
@@ -137,6 +143,7 @@ function formatRewardsMessage(input: AdventureChatResultInput): string {
     });
     const recoveryBonuses = input.players
         .filter(player => !player.success && player.streakBonus > 0)
+        .sort((left, right) => right.streakBonus - left.streakBonus)
         .map(player => {
             const details = [
                 `+${formatSilver(player.streakBonus)} silver bonus`,

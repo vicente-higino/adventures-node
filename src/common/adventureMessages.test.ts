@@ -113,6 +113,27 @@ describe("RPG adventure chat rendering", () => {
         expect(messages[0].match(/@v_cn_t/g)).toHaveLength(1);
     });
 
+    it("orders payouts from highest to lowest total silver reward", () => {
+        const messages = formatAdventureChatResult({
+            title: "Treasure Run",
+            intro: "The party returns.",
+            payoutRate: 1.4,
+            presentationMode: "individual",
+            players: [
+                player(1, { displayName: "Lowest", profit: 100 }),
+                player(2, { displayName: "Highest", profit: 80, streakBonus: 30, streak: 4 }),
+                player(3, { displayName: "Middle", profit: 105 }),
+                player(4, { displayName: "RecoveryLow", success: false, profit: 0, streakBonus: 10, streak: 3 }),
+                player(5, { displayName: "RecoveryHigh", success: false, profit: 0, streakBonus: 30, streak: 4 }),
+            ],
+        });
+        const rewards = messages[0].slice(messages[0].indexOf("Survivors are:"));
+
+        expect(rewards.indexOf("@Highest")).toBeLessThan(rewards.indexOf("@Middle"));
+        expect(rewards.indexOf("@Middle")).toBeLessThan(rewards.indexOf("@Lowest"));
+        expect(rewards.indexOf("@RecoveryHigh")).toBeLessThan(rewards.indexOf("@RecoveryLow"));
+    });
+
     it("switches large parties to a bounded grouped summary", () => {
         const messages = formatAdventureChatResult({
             title: "Raid Night",
