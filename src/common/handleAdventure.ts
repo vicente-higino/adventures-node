@@ -254,12 +254,11 @@ const adventureOptions = `[+/-silver(K/M/B)|%|all|to:silver|k:silver]`;
 export const adventureCommandSyntax = (prefix: string = "!") => `Usage: ${prefix}adventure | ${prefix}adv ${adventureOptions}`;
 
 function adventureCooldownResponse(
-    adventure: { resolvedAt: Date | null; cancelledAt: Date | null; updatedAt: Date; createdAt: Date },
+    adventure: { createdAt: Date },
     channelLogin: string,
     userDisplayName: string,
 ): string | undefined {
-    const lastEndedAt = adventure.resolvedAt ?? adventure.cancelledAt ?? adventure.updatedAt ?? adventure.createdAt;
-    const nextAvailable = new Date(lastEndedAt.getTime() + 1000 * 60 * coolDownMinutes(env));
+    const nextAvailable = new Date(adventure.createdAt.getTime() + 1000 * 60 * coolDownMinutes(env));
     if (nextAvailable.getTime() <= Date.now()) return undefined;
     return `@${userDisplayName}, adventure is in cooldown, please wait ${formatTimeToWithSeconds(nextAvailable)} before starting a new one. ${ADVENTURE_COOLDOWN_EMOTES(
         channelLogin,
@@ -296,7 +295,7 @@ export async function handleAdventureJoin(params: {
         if (!activeBeforeSnapshot) {
             const lastAdventure = await prisma.adventure.findFirst({
                 where: { channelProviderId, status: { in: ["RESOLVED", "CANCELLED"] } },
-                orderBy: { updatedAt: "desc" },
+                orderBy: { createdAt: "desc" },
             });
             const cooldown = lastAdventure && adventureCooldownResponse(lastAdventure, channelLogin, userDisplayName);
             if (cooldown) return cooldown;
@@ -361,7 +360,7 @@ export async function handleAdventureJoin(params: {
                         if (!adventure) {
                             const lastAdventure = await tx.adventure.findFirst({
                                 where: { channelProviderId, status: { in: ["RESOLVED", "CANCELLED"] } },
-                                orderBy: { updatedAt: "desc" },
+                                orderBy: { createdAt: "desc" },
                             });
                             const cooldown = lastAdventure && adventureCooldownResponse(lastAdventure, channelLogin, userDisplayName);
                             if (cooldown) return respond({ message: cooldown });
