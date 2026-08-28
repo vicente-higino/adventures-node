@@ -188,7 +188,7 @@ function formatRewardsMessage(input: AdventureChatResultInput): string {
 /** Produces one Fossabot-safe chat message in the legacy adventure style. */
 export function formatAdventureChatResult(input: AdventureChatResultInput): string[] {
     const rewards = formatRewardsMessage(input);
-    const story = cleanAdventureProse(`${input.title}. ${input.intro} ${formatResultMessage(input)}`);
+    const story = cleanAdventureProse(`${input.intro} ${formatResultMessage(input)}`);
     const storyBudget = Math.max(1, FOSSABOT_MESSAGE_LIMIT - rewards.length - 1);
     const fittedStory = fitAdventureChatMessage(story, storyBudget);
     return [fitAdventureChatMessage(`${fittedStory} ${rewards}`)];
