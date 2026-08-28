@@ -142,7 +142,7 @@ async function handleLegacyAdventureEndAtomic(params: { channelLogin: string; ch
                             winnerMessages.push(`@${player.user.displayName} (+${formatSilver(grossPayout - buyin)} silver${bonus})`);
                         } else if (streakBonus > 0) {
                             recoveryMessages.push(
-                                `@${player.user.displayName} (+${formatSilver(streakBonus)} silver bonus, ${stats.newStreak}-lose streak)`,
+                                `@${player.user.displayName} (+${formatSilver(streakBonus)} bonus, ${stats.newStreak}-lose streak)`,
                             );
                         }
                     }

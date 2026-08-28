@@ -132,9 +132,9 @@ function formatRewardsMessage(input: AdventureChatResultInput): string {
     const winnerRewards = winners.map(player => {
         const details = [
             `+${formatSilver(player.profit)} silver`,
-            player.streakBonus > 0 ? `+${formatSilver(player.streakBonus)} silver bonus` : undefined,
+            player.streakBonus > 0 ? `+${formatSilver(player.streakBonus)} bonus` : undefined,
             player.streakBonus > 0 ? `${player.streak}-win streak` : undefined,
-            player.lootSilverBonus ? `+${formatSilver(player.lootSilverBonus)} silver loot bonus` : undefined,
+            player.lootSilverBonus ? `+${formatSilver(player.lootSilverBonus)} bonus` : undefined,
             player.criticalCode === "critical-success" ? "critical success" : undefined,
             formatLootDetail(player),
             formatStatusDetail(player),
@@ -146,7 +146,7 @@ function formatRewardsMessage(input: AdventureChatResultInput): string {
         .sort((left, right) => right.streakBonus - left.streakBonus)
         .map(player => {
             const details = [
-                `+${formatSilver(player.streakBonus)} silver bonus`,
+                `+${formatSilver(player.streakBonus)} bonus`,
                 `${player.streak}-lose streak`,
                 player.criticalCode === "critical-failure" ? "critical failure" : undefined,
                 formatLootDetail(player),

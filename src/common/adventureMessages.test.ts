@@ -58,7 +58,7 @@ describe("RPG adventure chat rendering", () => {
         expect(rendered).toContain(
             "Survivors are: @Player1 (+30 silver, critical success, found and equipped Tideworn Compass).",
         );
-        expect(rendered).toContain("@Player2 (+25 silver bonus, 3-lose streak, critical failure, now Cursed).");
+        expect(rendered).toContain("@Player2 (+25 bonus, 3-lose streak, critical failure, now Cursed).");
         expect(rendered.match(/@Player1/g)).toHaveLength(1);
         expect(rendered.match(/@Player2/g)).toHaveLength(1);
         expect(rendered.match(/critical success/g)).toHaveLength(1);
@@ -82,7 +82,7 @@ describe("RPG adventure chat rendering", () => {
             players: [player(1, { roll: 20, criticalCode: "critical-success", lootSilverBonus: 50 })],
         });
 
-        expect(messages[0]).toContain("@Player1 (+30 silver, +50 silver loot bonus, critical success)");
+        expect(messages[0]).toContain("@Player1 (+30 silver, +50 bonus, critical success)");
         expect(messages[0]).not.toContain("found loot");
     });
 
@@ -108,7 +108,7 @@ describe("RPG adventure chat rendering", () => {
         });
 
         expect(messages[0]).toContain(
-            "@v_cn_t (+1 silver, +1 silver bonus, 7-win streak, critical success, found and equipped Fire Starter, now Inspired).",
+            "@v_cn_t (+1 silver, +1 bonus, 7-win streak, critical success, found and equipped Fire Starter, now Inspired).",
         );
         expect(messages[0].match(/@v_cn_t/g)).toHaveLength(1);
     });
