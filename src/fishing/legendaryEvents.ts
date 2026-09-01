@@ -130,10 +130,9 @@ export function manualLegendaryEventTask(
         return false;
     }
     legendaryEventState.active = true;
-    const legendaryChanceBefore = getChanceByRarity("Legendary");
     modifyRarityWeights({ Legendary: legendaryWeight, Common: w => w - legendaryWeight + 1 });
     const legendaryChanceAfter = getChanceByRarity("Legendary");
-    const chanceStr = `${roundToDecimalPlaces(legendaryChanceBefore, 2).toFixed(2)}% -> ${roundToDecimalPlaces(legendaryChanceAfter, 2).toFixed(2)}%`;
+    const chanceStr = `+${roundToDecimalPlaces(legendaryChanceAfter, 2).toFixed(2)}%`;
     const { channels } = getBotConfig();
     for (const channel of channels) {
         if (isChannelLive({ username: channel })) continue;
