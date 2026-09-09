@@ -44,6 +44,7 @@ import {
 import { grantFishingAdventureLoot } from "./grantFishingAdventureLoot";
 import { friendlyCooldownMessages, motivationalQuotes, wrongPlaces } from "./phrases";
 import { ADVENTURE_TICKET_DROP_TABLE, consumeRedeemable, getAdventureTicketCode, grantRedeemable } from "./redeemables";
+import { getAdventureItemModifier } from "@/adventures/rpg";
 dayjs.extend(relativeTime);
 
 // Rarity progression for the "fish gets eaten" gimmick
@@ -451,9 +452,11 @@ async function handleTrashReward({
                     { channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName },
                     adventureLoot!,
                 );
+                const itemBuff = getAdventureItemModifier(granted.item) * 5;
+                const itemStats = granted.type === "item" ? `(+${itemBuff}% on [${granted.item.theme}] advs)` : "";
                 const message =
                     granted.type === "item"
-                        ? `You found ${granted.item.name} hidden in the trash and equipped it!`
+                        ? `You found ${granted.item.name} hidden in the trash and equipped it! (${itemStats})`
                         : `You found ${granted.item.name}, but it was not an upgrade, so it became ${granted.silverBonus} silver!`;
                 sendActionToChannel(channelLogin, `@${userDisplayName} ${message} ${CONGRATULATIONS_EMOTES(channelLogin)}`);
                 return;
