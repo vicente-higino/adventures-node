@@ -54,15 +54,15 @@ function createWarningsUntilEnd(millisecondsUntilEnd: number): AdventureWarning[
     const warnings = [
         {
             beforeEnd: 15 * MINUTE_IN_MS,
-            message: `Ending the adventure in 15 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_GAMBA_EMOTE()}`,
+            message: `Ending the adventure in 15 minutes! Join now or update your silver with "!adv silver" to participate! ${ADVENTURE_GAMBA_EMOTE()}`,
         },
         {
             beforeEnd: 5 * MINUTE_IN_MS,
-            message: `${ADVENTURE_ENDING_EMOTE.Alarm.name} Ending the adventure in 5 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
+            message: `${ADVENTURE_ENDING_EMOTE.Alarm.name} Ending the adventure in 5 minutes! Join now or update your silver with "!adv silver" to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
         },
         {
             beforeEnd: 2 * MINUTE_IN_MS,
-            message: `${ADVENTURE_ENDING_EMOTE.Alarm.name} Ending the adventure in 2 minutes! Join now or update your silver with !adventure | !adv to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
+            message: `${ADVENTURE_ENDING_EMOTE.Alarm.name} Ending the adventure in 2 minutes! Join now or update your silver with "!adv silver" to participate! ${ADVENTURE_ENDING_EMOTE.dinkDonk.name}`,
         },
         { beforeEnd: 0, message: `!advend` },
     ];
