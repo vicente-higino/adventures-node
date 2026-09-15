@@ -9,17 +9,22 @@ import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
 import cron from "node-cron";
+import { RARITY_WEIGHTS_DEFAULT } from "./constants";
 import { getChanceByRarity, modifyRarityWeights, resetRarityWeights } from "./rarities";
 
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
 
 // Replace the three separate variables with a single state object
-const legendaryEventState: { active: boolean; timeout: NodeJS.Timeout | null; recordId: number | null } = {
-    active: false,
-    timeout: null,
-    recordId: null,
-};
+const legendaryEventState: {
+    active: boolean;
+    timeout: NodeJS.Timeout | null;
+    recordId: number | null;
+    legendaryWeight: number;
+    endsAt: number;
+    name: string;
+    recordPromise: Promise<number> | null;
+} = { active: false, timeout: null, recordId: null, legendaryWeight: 0, endsAt: 0, name: "Legendary Event", recordPromise: null };
 
 export function isLegendaryEventActive() {
     return legendaryEventState.active;
@@ -28,12 +33,19 @@ export function isLegendaryEventActive() {
 async function endLegendaryEvent(name: string) {
     if (!legendaryEventState.active) return;
     legendaryEventState.active = false;
+    legendaryEventState.legendaryWeight = 0;
+    legendaryEventState.endsAt = 0;
+    legendaryEventState.name = "Legendary Event";
     resetRarityWeights();
     if (legendaryEventState.timeout) {
         clearTimeout(legendaryEventState.timeout);
         legendaryEventState.timeout = null;
     }
     try {
+        if (legendaryEventState.recordPromise) {
+            legendaryEventState.recordId = await legendaryEventState.recordPromise;
+            legendaryEventState.recordPromise = null;
+        }
         if (legendaryEventState.recordId) {
             const ev = await prisma.legendaryEvent.findUnique({ where: { id: legendaryEventState.recordId } });
             if (ev) {
@@ -125,30 +137,77 @@ export function manualLegendaryEventTask(
     start: string = "A Legendary Fishing Event has started!",
     msg: string = "Legendary fish are much more likely",
     name: string = "Legendary Event",
+    stack = false,
 ): boolean {
-    if (legendaryEventState.active) {
+    if (legendaryEventState.active && !stack) {
         return false;
     }
+
+    const now = Date.now();
+    const endsAt = Math.max(legendaryEventState.endsAt, now + durationMs);
+    const combinedLegendaryWeight = legendaryEventState.active ? legendaryEventState.legendaryWeight + legendaryWeight : legendaryWeight;
+    const commonWeight = RARITY_WEIGHTS_DEFAULT.Common - combinedLegendaryWeight + RARITY_WEIGHTS_DEFAULT.Legendary;
+    if (commonWeight < 0) {
+        return false;
+    }
+
     legendaryEventState.active = true;
-    modifyRarityWeights({ Legendary: legendaryWeight, Common: w => w - legendaryWeight + 1 });
+    legendaryEventState.legendaryWeight = combinedLegendaryWeight;
+    legendaryEventState.endsAt = endsAt;
+    legendaryEventState.name = name;
+    modifyRarityWeights({ Legendary: combinedLegendaryWeight, Common: commonWeight });
     const legendaryChanceAfter = getChanceByRarity("Legendary");
     const chanceStr = `+${roundToDecimalPlaces(legendaryChanceAfter, 2).toFixed(2)}%`;
     const { channels } = getBotConfig();
     for (const channel of channels) {
         if (isChannelLive({ username: channel })) continue;
-        sendActionToChannel(channel, `${start} ${msg} for the next ${formatMinutes(durationMs)}! ${chanceStr} ${EVENT_STARTED_EMOTES(channel)}`);
+        if(stack)  {
+            sendActionToChannel(channel, `${start} (${chanceStr}) ${EVENT_STARTED_EMOTES(channel)}`);
+        }
+        else{
+            sendActionToChannel(channel, `${start} ${msg} for the next ${formatMinutes(durationMs)}! ${chanceStr} ${EVENT_STARTED_EMOTES(channel)}`);
+        }
     }
     // persist event to DB
-    prisma.legendaryEvent
-        .create({ data: { name, legendaryWeight, message: msg, startedAt: new Date(), endsAt: new Date(Date.now() + durationMs) } })
-        .then(rec => {
-            legendaryEventState.recordId = rec.id;
+    if (legendaryEventState.recordId) {
+        legendaryEventState.recordPromise = prisma.legendaryEvent
+            .update({ where: { id: legendaryEventState.recordId }, data: { legendaryWeight: combinedLegendaryWeight, endsAt: new Date(endsAt) } })
+            .then(rec => rec.id);
+    } else if (legendaryEventState.recordPromise) {
+        legendaryEventState.recordPromise = legendaryEventState.recordPromise.then(recordId =>
+            prisma.legendaryEvent
+                .update({
+                    where: { id: recordId },
+                    data: { legendaryWeight: legendaryEventState.legendaryWeight, endsAt: new Date(legendaryEventState.endsAt) },
+                })
+                .then(rec => rec.id),
+        );
+    } else {
+        legendaryEventState.recordPromise = prisma.legendaryEvent
+            .create({ data: { name, legendaryWeight: combinedLegendaryWeight, message: msg, startedAt: new Date(), endsAt: new Date(endsAt) } })
+            .then(rec => rec.id);
+    }
+    const persistence = legendaryEventState.recordPromise;
+    persistence
+        .then(recordId => {
+            if (legendaryEventState.recordPromise === persistence) {
+                legendaryEventState.recordId = recordId;
+                legendaryEventState.recordPromise = null;
+            }
         })
-        .catch(err => logger.error(err, "Failed to persist legendary event"));
+        .catch(err => {
+            if (legendaryEventState.recordPromise === persistence) {
+                legendaryEventState.recordPromise = null;
+            }
+            logger.error(err, "Failed to persist legendary event");
+        });
 
+    if (legendaryEventState.timeout) {
+        clearTimeout(legendaryEventState.timeout);
+    }
     legendaryEventState.timeout = setTimeout(() => {
         endLegendaryEvent(name);
-    }, durationMs);
+    }, endsAt - now);
     return true;
 }
 
@@ -161,6 +220,9 @@ export function startLegendaryTasks(): void {
             if (active) {
                 legendaryEventState.active = true;
                 legendaryEventState.recordId = active.id;
+                legendaryEventState.legendaryWeight = active.legendaryWeight;
+                legendaryEventState.endsAt = new Date(active.endsAt).getTime();
+                legendaryEventState.name = active.name;
                 // apply weights
                 modifyRarityWeights({ Legendary: active.legendaryWeight, Common: w => w - active.legendaryWeight + 1 });
                 const remaining = new Date(active.endsAt).getTime() - Date.now();

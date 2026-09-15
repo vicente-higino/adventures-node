@@ -30,6 +30,7 @@ import { getRarityWeights } from "./rarities";
 
 export {
     endLegendaryEventById,
+    isLegendaryEventActive,
     legendaryEventTaskPerChannel,
     listLegendaryEvents,
     manualLegendaryEventTask,

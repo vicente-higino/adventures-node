@@ -1,11 +1,11 @@
+import { consumeRedeemable, grantRedeemable } from "@/common/redeemables";
+import { isLegendaryEventActive, manualLegendaryEventTask } from "@/fishing";
+import { getTotalWeight } from "@/fishing/rarities";
+import { boxMullerTransform, roundToDecimalPlaces } from "@/utils/misc";
+import { Mutex } from "async-mutex";
 import { ms } from "ms";
 import { getBotPrefix } from "..";
 import { createAdminBotCommand, createBotCommand } from "../botCommandWithKeywords";
-import { manualLegendaryEventTask } from "@/fishing";
-import { consumeRedeemable, grantRedeemable } from "@/common/redeemables";
-import { boxMullerTransform } from "@/utils/misc";
-import { Mutex } from "async-mutex";
-import { isLegendaryEventActive } from "@/fishing/legendaryEvents";
 
 const mutex = new Mutex();
 export const startEventCommand = createAdminBotCommand(
@@ -35,18 +35,19 @@ export const startLegendaryEventCommand = createBotCommand(
     async (params, ctx) => {
         const { say, userId, broadcasterId, userDisplayName } = ctx;
         await mutex.runExclusive(async () => {
-            if (!isLegendaryEventActive()) {
-                const redeem = await consumeRedeemable({ userId, channelProviderId: broadcasterId, redeemableCode: "legendary_event_ticket" });
-                if (redeem) {
-                    const legendaryWeight = Math.round(boxMullerTransform(25, 10, 20));
-                    const msg = `@${userDisplayName} has started a Legendary Fishing Event!`;
-                    if (!manualLegendaryEventTask(legendaryWeight, 90 * 60 * 1000, msg)) {
-                        await grantRedeemable({ userId, channelProviderId: broadcasterId, redeemableCode: "legendary_event_ticket" });
-                        say(`@${userDisplayName}, A Legendary Fishing Event is already active. Please wait until it ends.`);
-                    }
-                } else {
-                    say(`@${userDisplayName}, you dont have a ticket to start the legendary event.`);
+            const redeem = await consumeRedeemable({ userId, channelProviderId: broadcasterId, redeemableCode: "legendary_event_ticket" });
+            if (redeem) {
+                const legendaryWeight = Math.round(boxMullerTransform(25, 10, 20));
+                const increasedPercentage = roundToDecimalPlaces((legendaryWeight / getTotalWeight()) * 100, 2);
+                const msg = isLegendaryEventActive()
+                    ? `@${userDisplayName} improved the current Legendary Fishing Event Odds! +${increasedPercentage}%`
+                    : `@${userDisplayName} has started a Legendary Fishing Event!`;
+                if (!manualLegendaryEventTask(legendaryWeight, 90 * 60 * 1000, msg, undefined, undefined, true)) {
+                    await grantRedeemable({ userId, channelProviderId: broadcasterId, redeemableCode: "legendary_event_ticket" });
+                    say(`@${userDisplayName}, the Legendary Fishing Event could not be stacked. Your ticket was returned.`);
                 }
+            } else {
+                say(`@${userDisplayName}, you dont have a ticket to start the legendary event.`);
             }
         });
     },
