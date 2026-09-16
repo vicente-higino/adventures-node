@@ -18,22 +18,23 @@ export const adventureLastCommand = createBotCommand(
         }
 
         const scenario = parseStoredAdventureScenario(result.adventure.scenarioContext);
-        const reward = result.outcome === "SUCCESS" ? `won ${formatSilver(Number(result.payout))} silver gross` : "lost the wager";
+        const reward = result.outcome === "SUCCESS" ? `+${formatSilver(Number(result.payout))} silver` : `-${formatSilver(Number(result.buyin))} silver`;
+        const roll = `Roll: ${result.roll}/20 (dc ${result.dc - result.effectiveModifier})`;
         const convertedLootSilver = getConvertedLootSilver(result.lootSnapshot);
         const extras = [
             result.criticalCode === "critical-success" ? "critical success" : "",
             result.criticalCode === "critical-failure" ? "critical failure" : "",
             convertedLootSilver > 0
-                ? `converted unusable loot into ${formatSilver(convertedLootSilver)} silver`
+                ? `+${formatSilver(convertedLootSilver)} loot bonus`
                 : result.lootSnapshot
                   ? "found loot"
                   : "",
             result.statusSnapshot ? "gained a status" : "",
-            Number(result.streakBonus) > 0 ? `received ${formatSilver(Number(result.streakBonus))} streak bonus` : "",
+            Number(result.streakBonus) > 0 ? `+${formatSilver(Number(result.streakBonus))} bonus` : "",
         ].filter(Boolean);
 
         ctx.say(
-            `@${ctx.userDisplayName} Last adventure, ${scenario?.title ?? result.adventure.scenarioId ?? "Unknown encounter"}: ${result.outcome.toLowerCase()}, ${reward}${extras.length ? `, ${extras.join(", ")}` : ""}.`,
+            `@${ctx.userDisplayName} Last adventure:$(newline)${roll}, ${reward}${extras.length ? `, ${extras.join(", ")}` : ""}.`,
         );
     },
     { aliases: ["lastadv"], ignoreCase: true },
