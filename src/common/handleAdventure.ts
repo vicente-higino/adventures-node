@@ -242,7 +242,7 @@ export const AdventureJoinParamsSchema = z.object({
             required_error: "Silver amount is required",
         })
         // Updated regex to allow optional +/- prefix, K/M/B suffixes, to:X, and k:X (case-insensitive)
-        .regex(/^([+-]?(all|\d+(\.\d+)?%|\d+(\.\d+)?[kmb]?|\d+)|to:\d+(\.\d+)?[kmb]?|k(eep)?:\d+(\.\d+)?[kmb]?)$/i, {
+        .regex(/^([+-]?(all|(?:\d+(\.\d+)?|\.\d+)%|\d+(\.\d+)?[kmb]?|\d+)|to:\d+(\.\d+)?[kmb]?|k(eep)?:\d+(\.\d+)?[kmb]?)$/i, {
             message:
                 "Amount must be a positive whole number, K/M/B (e.g., 5k), percentage (e.g., 50%), 'all', 'to:X', 'k:X', or a delta (e.g., +1k, -50%)",
         }),

@@ -248,6 +248,7 @@ describe("calculateAmount", () => {
             expect(calculateAmount("0%", available)).toBe(0);
             expect(calculateAmount("25%", available)).toBe(250);
             expect(calculateAmount("75.5%", available)).toBe(755); // floor
+            expect(calculateAmount(".1%", available)).toBe(1);
         });
 
         it("should clamp percentage result to available amount", () => {
@@ -281,6 +282,7 @@ describe("calculateAmount", () => {
         it("should handle percentage delta based on current amount", () => {
             expect(calculateAmount("+10%", available, current)).toBe(current + 50); // 550
             expect(calculateAmount("-50%", available, current)).toBe(current - 250); // 250
+            expect(calculateAmount("+.1%", available, current)).toBe(current + 1);
             expect(calculateAmount("+200%", available, current)).toBe(available); // 500 + 1000 = 1500 -> 1000
             expect(calculateAmount("-200%", available, current)).toBe(0); // 500 - 1000 = -500 -> 0
         });

@@ -20,7 +20,7 @@ export class DuelCreate extends OpenAPIRoute {
                         invalid_type_error: "Wager amount must be a number, percentage (e.g., 50%), K/M/B (e.g., 5k), or 'all'",
                         required_error: "Wager amount is required",
                     })
-                    .regex(/^(all|\d+(\.\d+)?%|\d+(\.\d+)?[kmb]?|\d+)$/i, {
+                    .regex(/^(all|(?:\d+(\.\d+)?|\.\d+)%|\d+(\.\d+)?[kmb]?|\d+)$/i, {
                         message: "Wager must be a positive whole number, K/M/B (e.g., 5k), percentage (e.g., 50%), or 'all'",
                     }),
             }),
