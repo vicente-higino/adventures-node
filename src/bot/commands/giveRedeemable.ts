@@ -62,5 +62,5 @@ export const giveRedeemableCommand = createAdminBotCommand(
 
         await say(`Granted ${quantity}x ${redeemable.name} to @${targetUser.displayName} on ${channelDisplayName} channel.`);
     },
-    { aliases: ["grantredeemable","gr"], ignoreCase: true },
+    { aliases: ["grantredeemable", "gr"], ignoreCase: true },
 );

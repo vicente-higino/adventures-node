@@ -1,9 +1,4 @@
-import {
-    ADVENTURE_ITEMS,
-    getAdventureItem,
-    getAdventureItemModifier,
-    type AdventureItemDefinition,
-} from "@/adventures/rpg";
+import { ADVENTURE_ITEMS, getAdventureItem, getAdventureItemModifier, type AdventureItemDefinition } from "@/adventures/rpg";
 import logger from "@/logger";
 import { prisma } from "@/prisma";
 import { AdventureItemRarity, AdventureItemType, Prisma } from "@prisma/client";
@@ -166,10 +161,7 @@ export async function getAdventureProfileSnapshot(identity: AdventureProfileSnap
 
     const equipment = profile.inventoryItems.map(toEquipmentSnapshot).filter((item): item is AdventureEquipmentSnapshot => item !== null);
 
-    return {
-        equippedItems: equipment,
-        capturedAt: new Date().toISOString(),
-    };
+    return { equippedItems: equipment, capturedAt: new Date().toISOString() };
 }
 
 /** Grants code-owned loot to an existing channel profile. */

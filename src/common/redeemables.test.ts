@@ -35,9 +35,7 @@ describe("adventure multiplier tickets", () => {
         const totalWeight = ADVENTURE_TICKET_DROP_TABLE.reduce((total, ticket) => total + ticket.weight, 0);
         expect(ADVENTURE_TICKET_DROP_TABLE.map(ticket => ticket.weight / totalWeight)).toEqual([0.9, 0.08, 0.016, 0.004]);
 
-        const syncedConfigs = redeemables
-            .filter(redeemable => redeemable.type === "START_ADVENTURE_MULTIPLIER")
-            .map(redeemable => redeemable.config);
+        const syncedConfigs = redeemables.filter(redeemable => redeemable.type === "START_ADVENTURE_MULTIPLIER").map(redeemable => redeemable.config);
         expect(syncedConfigs).toEqual([
             { multiplier: 2, dropWeight: 225 },
             { multiplier: 3, dropWeight: 20 },

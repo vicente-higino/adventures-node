@@ -99,10 +99,7 @@ export function calculateModifierBreakdown(entries: readonly ModifierEntry[], pa
     const rawTotal = entries.reduce((total, entry) => total + entry.modifier, 0);
     const clampedTotal = clampModifier(rawTotal);
     const payoutBaseChancePercent = payoutBaseSuccessChance(payoutRate);
-    const baseChancePercent = Math.max(
-        MIN_SUCCESS_CHANCE,
-        Math.min(MAX_SUCCESS_CHANCE, payoutBaseChancePercent + clampedTotal * 5),
-    );
+    const baseChancePercent = Math.max(MIN_SUCCESS_CHANCE, Math.min(MAX_SUCCESS_CHANCE, payoutBaseChancePercent + clampedTotal * 5));
     const payoutChanceCapPercent = payoutAwareChanceCap(payoutRate);
     const chancePercent = successChance(clampedTotal, payoutRate);
     const effectiveModifier = modifierForChance(chancePercent);

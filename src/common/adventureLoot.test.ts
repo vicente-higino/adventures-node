@@ -6,15 +6,7 @@ const commonLoot = getAdventureItem("pirate.tideworn-compass.v1")!;
 const uncommonLoot = getAdventureItem("pirate.buccaneer-cutlass.v1")!;
 
 function owned(overrides: Partial<OwnedAdventureLoot> = {}): OwnedAdventureLoot {
-    return {
-        code: "spy.hacking-kit.v1",
-        quantity: 1,
-        active: true,
-        equippedSlot: "tool",
-        theme: "spy",
-        modifier: 1,
-        ...overrides,
-    };
+    return { code: "spy.hacking-kit.v1", quantity: 1, active: true, equippedSlot: "tool", theme: "spy", modifier: 1, ...overrides };
 }
 
 describe("adventure loot eligibility", () => {

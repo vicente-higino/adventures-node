@@ -11,10 +11,7 @@ export const FISH_TRASH_REWARD_TABLE = [
     { type: "adventure-loot", weight: 0.25 },
 ] as const;
 
-export const FISHING_ADVENTURE_LOOT_TABLE = ADVENTURE_ITEMS.map(item => ({
-    item,
-    weight: LOOT_RARITY_WEIGHTS[item.rarity],
-}));
+export const FISHING_ADVENTURE_LOOT_TABLE = ADVENTURE_ITEMS.map(item => ({ item, weight: LOOT_RARITY_WEIGHTS[item.rarity] }));
 
 export function getFishingAdventureLootChancePerTrash(rodLevel: number): number {
     const treasureChance = FISH_TRASH_TREASURE_BASE_CHANCE * Math.pow(FISH_TRASH_TREASURE_ROD_MULTIPLIER, rodLevel);

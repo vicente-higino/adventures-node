@@ -16,12 +16,7 @@ describe("adventure condition lifecycle", () => {
 
     it("supports a one-adventure positive status worth ten percentage points", () => {
         expect(
-            evaluateAdventureConditions([
-                { id: 3, code: "special.inspired", name: "Inspired", modifier: 2, checkCodes: [], themeCodes: [] },
-            ]),
-        ).toEqual({
-            conditionIdsToAdvance: [3],
-            modifier: { code: "special.inspired", label: "Inspired", source: "status", modifier: 2 },
-        });
+            evaluateAdventureConditions([{ id: 3, code: "special.inspired", name: "Inspired", modifier: 2, checkCodes: [], themeCodes: [] }]),
+        ).toEqual({ conditionIdsToAdvance: [3], modifier: { code: "special.inspired", label: "Inspired", source: "status", modifier: 2 } });
     });
 });

@@ -26,13 +26,7 @@ describe("RPG adventure chat rendering", () => {
             payoutRate: 1.4,
             presentationMode: "individual",
             players: [
-                player(1, {
-                    roll: 20,
-                    total: 21,
-                    criticalCode: "critical-success",
-                    lootName: "Tideworn Compass",
-                    lootEquipped: true,
-                }),
+                player(1, { roll: 20, total: 21, criticalCode: "critical-success", lootName: "Tideworn Compass", lootEquipped: true }),
                 player(2, {
                     roll: 1,
                     modifier: -1,
@@ -55,9 +49,7 @@ describe("RPG adventure chat rendering", () => {
         expect(rendered).not.toContain("20+1=21");
         expect(rendered).not.toContain("(55%)");
         expect(rendered).toContain("The adventure ended with a 1.40x payout rate!");
-        expect(rendered).toContain(
-            "Survivors are: @Player1 (+30 silver, critical success, found and equipped Tideworn Compass).",
-        );
+        expect(rendered).toContain("Survivors are: @Player1 (+30 silver, critical success, found and equipped Tideworn Compass).");
         expect(rendered).toContain("@Player2 (+25 bonus, 3-lose streak, critical failure, now Cursed).");
         expect(rendered.match(/@Player1/g)).toHaveLength(1);
         expect(rendered.match(/@Player2/g)).toHaveLength(1);

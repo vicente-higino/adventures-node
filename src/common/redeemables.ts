@@ -3,12 +3,7 @@ import { prisma } from "@/prisma";
 
 export const ADVENTURE_TICKET_MULTIPLIERS = [2, 3, 4, 5] as const;
 export type AdventureTicketMultiplier = (typeof ADVENTURE_TICKET_MULTIPLIERS)[number];
-export const ADVENTURE_TICKET_DROP_WEIGHTS: Readonly<Record<AdventureTicketMultiplier, number>> = {
-    2: 225,
-    3: 20,
-    4: 4,
-    5: 1,
-};
+export const ADVENTURE_TICKET_DROP_WEIGHTS: Readonly<Record<AdventureTicketMultiplier, number>> = { 2: 225, 3: 20, 4: 4, 5: 1 };
 export const ADVENTURE_TICKET_DROP_TABLE = ADVENTURE_TICKET_MULTIPLIERS.map(multiplier => ({
     multiplier,
     weight: ADVENTURE_TICKET_DROP_WEIGHTS[multiplier],

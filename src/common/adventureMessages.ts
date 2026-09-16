@@ -126,9 +126,7 @@ function totalDisplayedSilver(player: AdventureChatPlayerResult): number {
 }
 
 function formatRewardsMessage(input: AdventureChatResultInput): string {
-    const winners = input.players
-        .filter(player => player.success)
-        .sort((left, right) => totalDisplayedSilver(right) - totalDisplayedSilver(left));
+    const winners = input.players.filter(player => player.success).sort((left, right) => totalDisplayedSilver(right) - totalDisplayedSilver(left));
     const winnerRewards = winners.map(player => {
         const details = [
             `+${formatSilver(player.profit)} silver`,

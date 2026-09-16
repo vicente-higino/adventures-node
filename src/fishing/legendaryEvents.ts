@@ -161,10 +161,9 @@ export function manualLegendaryEventTask(
     const { channels } = getBotConfig();
     for (const channel of channels) {
         if (isChannelLive({ username: channel })) continue;
-        if(stack)  {
+        if (stack) {
             sendActionToChannel(channel, `${start} (${chanceStr}) ${EVENT_STARTED_EMOTES(channel)}`);
-        }
-        else{
+        } else {
             sendActionToChannel(channel, `${start} ${msg} for the next ${formatMinutes(durationMs)}! ${chanceStr} ${EVENT_STARTED_EMOTES(channel)}`);
         }
     }

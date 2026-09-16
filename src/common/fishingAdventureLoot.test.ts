@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-    FISH_TRASH_REWARD_TABLE,
-    FISHING_ADVENTURE_LOOT_TABLE,
-    getFishingAdventureLootChancePerTrash,
-} from "./fishingAdventureLoot";
+import { FISH_TRASH_REWARD_TABLE, FISHING_ADVENTURE_LOOT_TABLE, getFishingAdventureLootChancePerTrash } from "./fishingAdventureLoot";
 
 describe("fishing adventure loot", () => {
     it("is substantially rarer than the five-percent adventure loot roll", () => {

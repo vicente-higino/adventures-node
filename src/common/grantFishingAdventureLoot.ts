@@ -31,25 +31,13 @@ export async function grantFishingAdventureLoot(
                         create: { providerId: identity.userProviderId, login: identity.userLogin, displayName: identity.userDisplayName },
                     });
                     const profile = await tx.adventureProfile.upsert({
-                        where: {
-                            channelProviderId_userId: {
-                                channelProviderId: identity.channelProviderId,
-                                userId: identity.userProviderId,
-                            },
-                        },
+                        where: { channelProviderId_userId: { channelProviderId: identity.channelProviderId, userId: identity.userProviderId } },
                         update: { channel: identity.channelLogin },
-                        create: {
-                            channel: identity.channelLogin,
-                            channelProviderId: identity.channelProviderId,
-                            userId: identity.userProviderId,
-                        },
+                        create: { channel: identity.channelLogin, channelProviderId: identity.channelProviderId, userId: identity.userProviderId },
                     });
                     const [item, inventory] = await Promise.all([
                         tx.adventureItem.findUnique({ where: { code: candidate.id } }),
-                        tx.adventureInventoryItem.findMany({
-                            where: { profileId: profile.id, quantity: { gt: 0 } },
-                            include: { item: true },
-                        }),
+                        tx.adventureInventoryItem.findMany({ where: { profileId: profile.id, quantity: { gt: 0 } }, include: { item: true } }),
                     ]);
                     const eligibility = evaluateAdventureLootEligibility(
                         candidate,
@@ -66,12 +54,7 @@ export async function grantFishingAdventureLoot(
 
                     if (!eligibility.eligible) {
                         await tx.balance.update({
-                            where: {
-                                channelProviderId_userId: {
-                                    channelProviderId: identity.channelProviderId,
-                                    userId: identity.userProviderId,
-                                },
-                            },
+                            where: { channelProviderId_userId: { channelProviderId: identity.channelProviderId, userId: identity.userProviderId } },
                             data: { value: { increment: BigInt(eligibility.silverBonus) } },
                         });
                         return { type: "silver", item: candidate, silverBonus: eligibility.silverBonus, reason: eligibility.reason };
