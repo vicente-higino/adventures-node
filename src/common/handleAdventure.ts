@@ -131,7 +131,7 @@ async function handleLegacyAdventureEndAtomic(params: { channelLogin: string; ch
                             didWin,
                         });
                         const streakBonus = didWin
-                            ? calculateWinStreakBonus(stats.newStreak, stats.streakWager)
+                            ? calculateWinStreakBonus(stats.newStreak, buyin)
                             : calculateLoseStreakBonus(stats.newStreak, stats.streakWager);
 
                         if (grossPayout > 0) await increaseBalanceWithChannelID(tx, channelProviderId, player.userId, grossPayout);
@@ -253,11 +253,7 @@ const adventureAmountOptions = "silver";
 const adventureOptions = `[+/-silver(K/M/B)|%|all|to:silver|k:silver]`;
 export const adventureCommandSyntax = (prefix: string = "!") => `Usage: ${prefix}adventure | ${prefix}adv ${adventureOptions}`;
 
-function adventureCooldownResponse(
-    adventure: { createdAt: Date },
-    channelLogin: string,
-    userDisplayName: string,
-): string | undefined {
+function adventureCooldownResponse(adventure: { createdAt: Date }, channelLogin: string, userDisplayName: string): string | undefined {
     const nextAvailable = new Date(adventure.createdAt.getTime() + 1000 * 60 * coolDownMinutes(env));
     if (nextAvailable.getTime() <= Date.now()) return undefined;
     return `@${userDisplayName}, adventure is in cooldown, please wait ${formatTimeToWithSeconds(nextAvailable)} before starting a new one. ${ADVENTURE_COOLDOWN_EMOTES(
@@ -521,9 +517,7 @@ export async function handleAdventureJoin(params: {
 
                         if (scenario && selectedApproach) {
                             await tx.player.update({ where: { id: player.id }, data: rpgSnapshot });
-                            return respond({
-                                message: `@${userDisplayName} already joined with ${currentBuyin} silver. Odds: ${currentOdds}%.`,
-                            });
+                            return respond({ message: `@${userDisplayName} already joined with ${currentBuyin} silver. Odds: ${currentOdds}%.` });
                         }
                         return respond({ message: `@${userDisplayName} already joined the adventure with ${currentBuyin} silver.` });
                     },

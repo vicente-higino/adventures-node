@@ -264,16 +264,14 @@ export function limitAdvMessage(base: string, advMsg: string): string {
     return advMsg;
 }
 
-export function calculateWinStreakBonus(streak: number, streakWager: number): number {
+export function calculateWinStreakBonus(streak: number, currentWager: number): number {
     if (streak <= 2) return 0;
-    const baseBonus = Math.min((streak - 2) * 100, 1000);
-    const maxStreakWager = Math.floor(streakWager * 0.15);
-    return Math.min(baseBonus, maxStreakWager);
+    return Math.floor(currentWager * 0.15 * (streak - 2));
 }
 
 export function calculateLoseStreakBonus(streak: number, streakWager: number): number {
     if (streak <= 2) return 0;
-    const baseBonus = Math.min((streak - 2) * 100, 1000);
+    const baseBonus = (streak - 2) * 100;
     const maxStreakWager = Math.floor(streakWager * 0.3);
     return Math.min(baseBonus, maxStreakWager);
 }

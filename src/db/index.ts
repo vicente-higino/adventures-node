@@ -113,14 +113,25 @@ export async function updateUserAdventureStats(
     let newWinStreak = userStats.winStreak ?? 0;
     let newLoseStreak = userStats.loseStreak ?? 0;
     let newStreakWager = userStats.streakWager ?? 0;
+    let newStreakBonusPaid = Number(userStats.streakBonusPaid ?? 0);
     if (stats.didWin) {
         newWinStreak += 1;
         newLoseStreak = 0;
-        newStreakWager = newWinStreak === 1 ? stats.wagerAmount : newStreakWager + stats.wagerAmount;
+        if (newWinStreak === 1) {
+            newStreakWager = stats.wagerAmount;
+            newStreakBonusPaid = 0;
+        } else {
+            newStreakWager += stats.wagerAmount;
+        }
     } else {
         newLoseStreak += 1;
         newWinStreak = 0;
-        newStreakWager = newLoseStreak === 1 ? stats.wagerAmount : newStreakWager + stats.wagerAmount;
+        if (newLoseStreak === 1) {
+            newStreakWager = stats.wagerAmount;
+            newStreakBonusPaid = 0;
+        } else {
+            newStreakWager += stats.wagerAmount;
+        }
     }
 
     const updatedUserStats = await db.userStats.update({
@@ -133,6 +144,7 @@ export async function updateUserAdventureStats(
             winStreak: newWinStreak,
             loseStreak: newLoseStreak,
             streakWager: newStreakWager,
+            streakBonusPaid: newStreakBonusPaid,
         },
     });
 
@@ -315,10 +327,7 @@ export async function addBonusToUserStats(
     // Find the userStats for the user in the channel
     const userStats = await findOrCreateUserStats(db, channelLogin, channelProviderId, userProviderId);
     if (userStats) {
-        await db.userStats.update({
-            where: { id: userStats.id },
-            data: { totalWinnings: { increment: bonusAmount }, streakWager: { decrement: bonusAmount } },
-        });
+        await db.userStats.update({ where: { id: userStats.id }, data: { totalWinnings: { increment: bonusAmount } } });
     }
     // Also add to balance
     await increaseBalanceWithChannelID(db, channelProviderId, userProviderId, bonusAmount);

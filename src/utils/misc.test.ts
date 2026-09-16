@@ -1,5 +1,15 @@
 import { describe, expect, it, test } from "vitest";
-import { boxMullerTransform, formatSize, formatWeight, roundToDecimalPlaces, limitMessageLength, limitAdvMessage, calculateAmount } from "./misc";
+import {
+    boxMullerTransform,
+    calculateAmount,
+    calculateLoseStreakBonus,
+    calculateWinStreakBonus,
+    formatSize,
+    formatWeight,
+    limitAdvMessage,
+    limitMessageLength,
+    roundToDecimalPlaces,
+} from "./misc";
 
 describe("formatSize", () => {
     // Metric tests
@@ -347,5 +357,22 @@ describe("calculateAmount", () => {
             expect(calculateAmount("1.234k", 2000)).toBe(1234); // round(1234)
             expect(calculateAmount("1.999k", 2000)).toBe(1999); // round(1999)
         });
+    });
+});
+
+describe("streak bonuses", () => {
+    it("scales win bonus with streak length and the current wager", () => {
+        expect(calculateWinStreakBonus(2, 100_000)).toBe(0);
+        expect(calculateWinStreakBonus(3, 100_000)).toBe(15_000);
+        expect(calculateWinStreakBonus(5, 1)).toBe(0);
+        expect(calculateWinStreakBonus(9, 1)).toBe(1);
+    });
+
+    it("keeps lose bonuses bounded by the streak wager and streak cap", () => {
+        expect(calculateLoseStreakBonus(2, 100_000)).toBe(0);
+        expect(calculateLoseStreakBonus(4, 100)).toBe(30);
+        expect(calculateLoseStreakBonus(3, 1_000)).toBe(100);
+        expect(calculateLoseStreakBonus(4, 2_000)).toBe(200);
+        expect(calculateLoseStreakBonus(20, 100_000)).toBe(1_800);
     });
 });

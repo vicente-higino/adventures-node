@@ -64,11 +64,7 @@ interface CalculatedResult {
     loot?: (typeof ADVENTURE_ITEMS)[number];
     lootAutoEquipped: boolean;
     lootSilverBonus: number;
-    lootConversion?: {
-        item: (typeof ADVENTURE_ITEMS)[number];
-        convertedToSilver: number;
-        reason: AdventureLootConversionReason;
-    };
+    lootConversion?: { item: (typeof ADVENTURE_ITEMS)[number]; convertedToSilver: number; reason: AdventureLootConversionReason };
     status?: { code: string; label: string; modifier: -1 | 2; affectedChecks: readonly AdventureCheck[]; durationAdventures: number };
 }
 
@@ -224,11 +220,7 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                         const approach = getApproach(scenario, player.approachCode, player.checkCode);
                         const modifiers: ModifierEntry[] = [];
                         const matchingItems = loadout.equippedItems
-                            .filter(
-                                item =>
-                                    item.modifier > 0 &&
-                                    (!item.theme || scenario.theme === "special" || item.theme === scenario.theme),
-                            )
+                            .filter(item => item.modifier > 0 && (!item.theme || scenario.theme === "special" || item.theme === scenario.theme))
                             .sort((left, right) => right.modifier - left.modifier)
                             .slice(0, 1);
                         modifiers.push(
@@ -317,11 +309,7 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                             const eligibility = evaluateAdventureLootEligibility(candidate, item?.active ?? false, ownedItems);
                             if (!eligibility.eligible) {
                                 result.lootSilverBonus = eligibility.silverBonus;
-                                result.lootConversion = {
-                                    item: candidate,
-                                    convertedToSilver: eligibility.silverBonus,
-                                    reason: eligibility.reason,
-                                };
+                                result.lootConversion = { item: candidate, convertedToSilver: eligibility.silverBonus, reason: eligibility.reason };
                                 result.loot = undefined;
                                 if (!item) {
                                     logger.warn({ itemCode: candidate.id }, "Adventure loot catalog was not synchronized; converted loot to silver");
@@ -347,8 +335,10 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                         const newLoseStreak = result.success ? 0 : stats.loseStreak + 1;
                         const newStreakWager =
                             (result.success ? newWinStreak : newLoseStreak) === 1 ? result.buyin : stats.streakWager + result.buyin;
+                        const streakLength = result.success ? newWinStreak : newLoseStreak;
+                        const streakBonusPaid = streakLength === 1 ? 0 : Number(stats.streakBonusPaid);
                         const streakBonus = result.success
-                            ? calculateWinStreakBonus(newWinStreak, newStreakWager)
+                            ? calculateWinStreakBonus(newWinStreak, result.buyin)
                             : calculateLoseStreakBonus(newLoseStreak, newStreakWager);
                         result.streakBonus = streakBonus;
                         result.streak = result.success ? newWinStreak : newLoseStreak;
@@ -363,7 +353,8 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                                 totalWinnings: totalReward > 0 ? { increment: BigInt(totalReward) } : undefined,
                                 winStreak: newWinStreak,
                                 loseStreak: newLoseStreak,
-                                streakWager: Math.max(0, newStreakWager - streakBonus),
+                                streakWager: newStreakWager,
+                                streakBonusPaid: streakBonusPaid,
                             },
                         });
                         if (totalReward > 0) {
