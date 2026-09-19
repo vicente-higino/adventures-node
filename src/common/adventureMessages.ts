@@ -132,7 +132,7 @@ function formatRewardsMessage(input: AdventureChatResultInput): string {
             `+${formatSilver(player.profit)} silver`,
             player.streakBonus > 0 ? `+${formatSilver(player.streakBonus)} bonus` : undefined,
             player.streakBonus > 0 ? `${player.streak}-win streak` : undefined,
-            player.lootSilverBonus ? `+${formatSilver(player.lootSilverBonus)} bonus` : undefined,
+            player.lootSilverBonus ? `+${formatSilver(player.lootSilverBonus)} loot bonus` : undefined,
             player.criticalCode === "critical-success" ? "critical success" : undefined,
             formatLootDetail(player),
             formatStatusDetail(player),
