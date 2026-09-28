@@ -38,7 +38,7 @@ export type CriticalRoll = "critical-success" | "critical-failure" | null;
 
 export interface AdventureCheckResolution {
     readonly check: AdventureCheck;
-    readonly dc: typeof ADVENTURE_DC;
+    readonly dc: number;
     readonly roll: number;
     readonly modifier: number;
     readonly total: number;
@@ -85,10 +85,6 @@ export function successChance(modifier: number, payoutRate = 1): number {
     return Math.max(MIN_SUCCESS_CHANCE, Math.min(rawChance, maximumChance));
 }
 
-function modifierForChance(chancePercent: number): number {
-    return clampModifier((chancePercent - 50) / 5);
-}
-
 export function calculateModifierBreakdown(entries: readonly ModifierEntry[], payoutRate = 1): ModifierBreakdown {
     for (const entry of entries) {
         if (!entry.code.trim() || !entry.label.trim()) throw new Error("Modifier entries require a code and label");
@@ -102,7 +98,6 @@ export function calculateModifierBreakdown(entries: readonly ModifierEntry[], pa
     const baseChancePercent = Math.max(MIN_SUCCESS_CHANCE, Math.min(MAX_SUCCESS_CHANCE, payoutBaseChancePercent + clampedTotal * 5));
     const payoutChanceCapPercent = payoutAwareChanceCap(payoutRate);
     const chancePercent = successChance(clampedTotal, payoutRate);
-    const effectiveModifier = modifierForChance(chancePercent);
     let remaining = clampModifier((chancePercent - payoutBaseChancePercent) / 5);
     const appliedEntries = entries.map(entry => {
         const desired = entry.modifier;
@@ -118,6 +113,7 @@ export function calculateModifierBreakdown(entries: readonly ModifierEntry[], pa
 
         return { ...entry, appliedModifier };
     });
+    const effectiveModifier = appliedEntries.reduce((total, entry) => total + entry.appliedModifier, 0);
 
     return {
         entries: appliedEntries,
@@ -134,17 +130,18 @@ export function calculateModifierBreakdown(entries: readonly ModifierEntry[], pa
 
 export function resolveAdventureCheck(input: ResolveAdventureCheckInput): AdventureCheckResolution {
     const modifierBreakdown = calculateModifierBreakdown(input.modifiers ?? [], input.payoutRate);
+    const dc = ADVENTURE_DC + (50 - payoutBaseSuccessChance(input.payoutRate)) / 5;
     const roll = rollPlayerD20(input.adventureSeed, input.playerId);
     const total = roll + modifierBreakdown.effectiveModifier;
 
     return {
         check: input.check,
-        dc: ADVENTURE_DC,
+        dc,
         roll,
         modifier: modifierBreakdown.effectiveModifier,
         total,
         chancePercent: modifierBreakdown.chancePercent,
-        success: total >= ADVENTURE_DC,
+        success: total >= dc,
         critical: roll === 20 ? "critical-success" : roll === 1 ? "critical-failure" : null,
         modifierBreakdown,
     };

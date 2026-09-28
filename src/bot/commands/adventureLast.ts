@@ -17,9 +17,9 @@ export const adventureLastCommand = createBotCommand(
             return;
         }
 
-        const scenario = parseStoredAdventureScenario(result.adventure.scenarioContext);
-        const reward = result.outcome === "SUCCESS" ? `+${formatSilver(Number(result.payout))} silver` : `-${formatSilver(Number(result.buyin))} silver`;
-        const roll = `Roll: ${result.roll}/20 (dc ${result.dc - result.effectiveModifier})`;
+        const reward = result.outcome === "SUCCESS" ? `+${formatSilver(Number(result.payout-result.buyin))} silver` : `-${formatSilver(Number(result.buyin))} silver`;
+        const buff = result.effectiveModifier !== 0 ? ` (${result.effectiveModifier > 0 ? "+" : ""}${result.effectiveModifier})` : "";
+        const roll = `Roll: ${result.roll}${buff}/20 vs DC ${result.dc}`;
         const convertedLootSilver = getConvertedLootSilver(result.lootSnapshot);
         const extras = [
             result.criticalCode === "critical-success" ? "critical success" : "",

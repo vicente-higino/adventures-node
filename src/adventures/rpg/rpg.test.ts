@@ -143,6 +143,22 @@ describe("seeded resolution and loot", () => {
         expect(resolveAdventureCheck(input).roll).toBeLessThanOrEqual(20);
     });
 
+    it("moves payout difficulty into the DC and keeps bonuses on the roll", () => {
+        const resolution = resolveAdventureCheck({
+            adventureSeed: "reef-seed",
+            playerId: "user-123",
+            check: "survival",
+            payoutRate: 3,
+            modifiers: [{ code: "item.compass", label: "Compass", source: "item", modifier: 2 }],
+        });
+
+        expect(resolution.dc).toBe(15);
+        expect(resolution.modifier).toBe(2);
+        expect(resolution.total).toBe(resolution.roll + 2);
+        expect(resolution.success).toBe(resolution.total >= 15);
+        expect(resolution.chancePercent).toBe(40);
+    });
+
     it("selects deterministic theme loot", () => {
         expect(selectThemeLoot("pirate", "reef-seed", "user-123")).toEqual(selectThemeLoot("pirate", "reef-seed", "user-123"));
         expect(selectThemeLoot("pirate", "reef-seed", "user-123").theme).toBe("pirate");

@@ -47,6 +47,7 @@ interface CalculatedResult {
     approachCode: string;
     check: AdventureCheck;
     roll: number;
+    dc: number;
     rawModifier: number;
     effectiveModifier: number;
     chancePercent: number;
@@ -272,6 +273,7 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                             approachCode: approach.id,
                             check: approach.check,
                             roll: resolution.roll,
+                            dc: resolution.dc,
                             rawModifier: resolution.modifierBreakdown.rawTotal,
                             effectiveModifier: resolution.modifier,
                             chancePercent: resolution.chancePercent,
@@ -409,7 +411,7 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                             approachCode: result.approachCode,
                             checkCode: result.check,
                             roll: result.roll,
-                            dc: 11,
+                            dc: result.dc,
                             rawModifier: result.rawModifier,
                             effectiveModifier: result.effectiveModifier,
                             modifierBreakdown: result.modifierBreakdown,
