@@ -92,6 +92,8 @@ describe("RPG probability rules", () => {
         expect([0, 1, 2, 3].map(modifier => successChance(modifier, 5))).toEqual([20, 25, 30, 35]);
         expect(successChance(5, 5)).toBe(35);
         expect(successChance(3, 1.75)).toBe(65);
+        expect(successChance(5, 1.54)).toBe(75);
+        expect(successChance(5, 2)).toBe(65);
     });
 
     it("keeps 2x through 5x ticket gross return at or below break-even", () => {
@@ -113,11 +115,11 @@ describe("RPG probability rules", () => {
 
         expect(breakdown.rawTotal).toBe(5);
         expect(breakdown.clampedTotal).toBe(5);
-        expect(breakdown.effectiveModifier).toBe(3);
-        expect(breakdown.chancePercent).toBe(65);
+        expect(breakdown.effectiveModifier).toBe(5);
+        expect(breakdown.chancePercent).toBe(75);
         expect(breakdown.modifierWasClamped).toBe(false);
-        expect(breakdown.payoutWasCapped).toBe(true);
-        expect(breakdown.entries.reduce((total, entry) => total + entry.appliedModifier, 0)).toBe(3);
+        expect(breakdown.payoutWasCapped).toBe(false);
+        expect(breakdown.entries.reduce((total, entry) => total + entry.appliedModifier, 0)).toBe(5);
     });
 });
 

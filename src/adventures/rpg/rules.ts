@@ -77,7 +77,13 @@ export function payoutBaseSuccessChance(payoutRate: number): number {
 }
 
 export function successChance(modifier: number, payoutRate = 1): number {
-    const rawChance = payoutBaseSuccessChance(payoutRate) + clampModifier(modifier) * 5;
+    const clampedModifier = clampModifier(modifier);
+    const rawChance = payoutBaseSuccessChance(payoutRate) + clampedModifier * 5;
+
+    if (payoutRate < 2) {
+        return Math.max(MIN_SUCCESS_CHANCE, Math.min(MAX_SUCCESS_CHANCE, rawChance));
+    }
+
     const maximumChance = Math.min(
         MAX_SUCCESS_CHANCE,
         Math.max(payoutAwareChanceCap(payoutRate), payoutBaseSuccessChance(payoutRate) + MAX_TICKET_BUFF_PERCENT),
