@@ -1,6 +1,6 @@
 import { getAdventureItem } from "@/adventures/rpg";
 import { describe, expect, it } from "vitest";
-import { evaluateAdventureLootEligibility, getConvertedLootSilver, type OwnedAdventureLoot } from "./adventureLoot";
+import { ADVENTURE_LOOT_SILVER_BY_RARITY, evaluateAdventureLootEligibility, getConvertedLootSilver, type OwnedAdventureLoot } from "./adventureLoot";
 
 const commonLoot = getAdventureItem("pirate.tideworn-compass.v1")!;
 const uncommonLoot = getAdventureItem("pirate.buccaneer-cutlass.v1")!;
@@ -10,6 +10,10 @@ function owned(overrides: Partial<OwnedAdventureLoot> = {}): OwnedAdventureLoot 
 }
 
 describe("adventure loot eligibility", () => {
+    it("converts loot to the configured silver amount for each rarity", () => {
+        expect(ADVENTURE_LOOT_SILVER_BY_RARITY).toEqual({ common: 1_000, uncommon: 5_000, rare: 10_000, epic: 50_000 });
+    });
+
     it("allows a new item that improves its theme buff regardless of gear category", () => {
         expect(evaluateAdventureLootEligibility(uncommonLoot, true, [owned({ theme: "pirate", modifier: 1 })])).toEqual({
             eligible: true,
@@ -21,7 +25,7 @@ describe("adventure loot eligibility", () => {
         expect(evaluateAdventureLootEligibility(commonLoot, true, [owned({ code: commonLoot.id })])).toEqual({
             eligible: false,
             reason: "duplicate",
-            silverBonus: 250,
+            silverBonus: 1_000,
         });
     });
 
