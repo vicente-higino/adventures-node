@@ -13,7 +13,6 @@ export interface AdventureChatPlayerResult {
     streakBonus: number;
     streak: number;
     lootName?: string;
-    lootEquipped?: boolean;
     lootSilverBonus?: number;
     statusName?: string;
 }
@@ -29,6 +28,7 @@ export interface AdventureChatResultInput {
 
 const FOSSABOT_MESSAGE_LIMIT = 1440;
 const MIN_STORY_TARGET = 60;
+const MAX_REWARD_MESSAGE_LENGTH = 1040;
 
 function splitOversizedWord(word: string, maximumCharacters: number): string[] {
     const chunks: string[] = [];
@@ -114,7 +114,7 @@ function formatEntryList(entries: readonly string[], maximumVisible: number): st
 
 function formatLootDetail(player: AdventureChatPlayerResult): string | undefined {
     if (!player.lootName) return undefined;
-    return player.lootEquipped ? `found and equipped ${player.lootName}` : `found ${player.lootName}`;
+    return `found ${player.lootName}`;
 }
 
 function formatStatusDetail(player: AdventureChatPlayerResult): string | undefined {
@@ -172,13 +172,13 @@ function formatRewardsMessage(input: AdventureChatResultInput): string {
         otherUpdates.length ? `${formatEntryList(otherUpdates, otherUpdates.length)}.` : "",
     ].filter(Boolean);
     const fullRewards = sections.join(" ");
-    if (fullRewards.length <= FOSSABOT_MESSAGE_LIMIT - MIN_STORY_TARGET - 1) return fullRewards;
+    if (fullRewards.length <= MAX_REWARD_MESSAGE_LENGTH) return fullRewards;
 
     const compactSections = [
         sections[0],
-        fitAdventureChatMessage(winnerRewards.length ? `Survivors are: ${formatEntryList(winnerRewards, 12)}.` : outcome, 520),
-        recoveryBonuses.length ? fitAdventureChatMessage(`${formatEntryList(recoveryBonuses, 6)}.`, 260) : "",
-        otherUpdates.length ? fitAdventureChatMessage(`${formatEntryList(otherUpdates, 6)}.`, 260) : "",
+        fitAdventureChatMessage(winnerRewards.length ? `Survivors are: ${formatEntryList(winnerRewards, 12)}.` : outcome, 460),
+        recoveryBonuses.length ? fitAdventureChatMessage(`${formatEntryList(recoveryBonuses, 6)}.`, 350) : "",
+        otherUpdates.length ? fitAdventureChatMessage(`${formatEntryList(otherUpdates, 6)}.`, 180) : "",
     ].filter(Boolean);
     return compactSections.join(" ");
 }
@@ -186,7 +186,7 @@ function formatRewardsMessage(input: AdventureChatResultInput): string {
 /** Produces one Fossabot-safe chat message in the legacy adventure style. */
 export function formatAdventureChatResult(input: AdventureChatResultInput): string[] {
     const rewards = formatRewardsMessage(input);
-    const story = cleanAdventureProse(`${input.intro} ${formatResultMessage(input)}`);
+    const story = cleanAdventureProse(`${input.title}. ${input.intro} ${formatResultMessage(input)}`);
     const storyBudget = Math.max(1, FOSSABOT_MESSAGE_LIMIT - rewards.length - 1);
     const fittedStory = fitAdventureChatMessage(story, storyBudget);
     return [fitAdventureChatMessage(`${fittedStory} ${rewards}`)];

@@ -186,13 +186,11 @@ model AdventureInventoryItem {
     item         AdventureItem    @relation(fields: [itemId], references: [id], onDelete: Restrict, onUpdate: Cascade)
     itemId       Int
     quantity     Int              @default(0)
-    equippedSlot String?
     metadata     Json             @default("{}")
     createdAt    DateTime         @default(now())
     updatedAt    DateTime         @updatedAt
 
     @@unique([profileId, itemId])
-    @@unique([profileId, equippedSlot])
     @@index([itemId])
 }
 

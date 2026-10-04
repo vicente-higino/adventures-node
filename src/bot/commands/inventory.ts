@@ -66,10 +66,9 @@ export const inventoryCommand = createBotCommand(
             const modifier = definition ? getAdventureItemModifier(definition) : inventory.item.modifier;
             const theme = definition?.theme ?? inventory.item.theme;
             const bonus = theme ? ` [${theme} +${modifier * 5}%]` : "";
-            const equipped = inventory.equippedSlot ? ` [equipped: ${inventory.equippedSlot}]` : "";
-            return `[${inventory.quantity}] ${inventory.item.name}${bonus}${equipped}`;
+            return `[${inventory.quantity}] ${inventory.item.name}${bonus}`;
         });
-        say(`@${userDisplayName} Adventure loot ${page}/${lootPageCount}: ${adventureItems.join(" | ")} (use ${getBotPrefix()}equip <item>)`);
+        say(`@${userDisplayName} Adventure loot ${page}/${lootPageCount}: ${adventureItems.join(" | ")}`);
     },
     { aliases: ["inv"], ignoreCase: true },
 );

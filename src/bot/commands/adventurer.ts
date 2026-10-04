@@ -6,7 +6,9 @@ import { createBotCommand } from "../botCommandWithKeywords";
 import { formatAdventureBuffs, formatAdventureStatus } from "./adventurerFormat";
 
 function formatBuffs(profile: NonNullable<Awaited<ReturnType<typeof findAdventureProfile>>>): string {
-    const equipment = profile.inventoryItems.filter(inventory => inventory.equippedSlot && inventory.quantity > 0 && inventory.item.active);
+    const equipment = profile.inventoryItems.filter(
+        inventory => inventory.quantity > 0 && inventory.item.active && inventory.item.type === "EQUIPMENT",
+    );
     return formatAdventureBuffs(
         equipment.map(inventory => {
             const definition = getAdventureItem(inventory.item.code);

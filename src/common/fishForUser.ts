@@ -456,7 +456,7 @@ async function handleTrashReward({
                 const itemStats = granted.type === "item" ? `(+${itemBuff}% on [${granted.item.theme}] advs)` : "";
                 const message =
                     granted.type === "item"
-                        ? `You found ${granted.item.name} hidden in the trash and equipped it! (${itemStats})`
+                        ? `You found ${granted.item.name} hidden in the trash! (${itemStats})`
                         : `You found ${granted.item.name}, but it was not an upgrade, so it became ${granted.silverBonus} silver!`;
                 sendActionToChannel(channelLogin, `@${userDisplayName} ${message} ${CONGRATULATIONS_EMOTES(channelLogin)}`);
                 return;

@@ -60,9 +60,9 @@ Hono, Prisma, and Twurple.
 
 - `!adv <silver> [raid]` keeps the classic start, join, and wager flow. Join
   confirmations show that player's current odds for the active adventure.
-- A new player starts at 50%. Only the strongest equipped item matching the
-  adventure theme applies: common loot adds 5%, uncommon 10%, and rare 15%.
-- Critical successes find and automatically equip loot and grant Inspired
+- A new player starts at 50%. The strongest owned item matching the adventure
+  theme applies automatically: common loot adds 5%, uncommon 10%, and rare 15%.
+- Critical successes find loot and grant Inspired
   (+10%) for the next adventure. Critical failures grant a theme-flavoured
   -5% status for the next adventure. Only one temporary status applies.
 - Success odds are capped at 75%. Multiplier adventures start at their balanced
@@ -79,7 +79,7 @@ Hono, Prisma, and Twurple.
   for 3x, 1.6% for 4x, and 0.4% for 5x. These weights are also stored in each
   redeemable's synced config.
 - `!char` shows gear, status, and record. `!inv loot` lists adventure loot;
-  `!equip` and `!unequip` allow manual changes after automatic equipping.
+  the strongest owned item for each adventure theme is applied automatically.
 - Resolution uses the legacy-style narrative and survivor list, adding compact
   critical, loot, status, streak, and recovery information. `!advlast` shows
   the last persisted result without checks or XP progression.

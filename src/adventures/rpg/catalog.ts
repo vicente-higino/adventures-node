@@ -819,7 +819,6 @@ export function validateAdventureItems(): readonly CatalogValidationIssue[] {
         else if (!getAdventureTheme(item.theme).relevantChecks.includes(item.bonus.check)) {
             issues.push({ path: `${path}.bonus.check`, message: `${item.bonus.check} is not relevant to ${item.theme}` });
         }
-        if (item.kind === "equipment" && item.slot === "none") issues.push({ path: `${path}.slot`, message: "Equipment requires a slot" });
     }
 
     return issues;

@@ -6,33 +6,32 @@ const commonLoot = getAdventureItem("pirate.tideworn-compass.v1")!;
 const uncommonLoot = getAdventureItem("pirate.buccaneer-cutlass.v1")!;
 
 function owned(overrides: Partial<OwnedAdventureLoot> = {}): OwnedAdventureLoot {
-    return { code: "spy.hacking-kit.v1", quantity: 1, active: true, equippedSlot: "tool", theme: "spy", modifier: 1, ...overrides };
+    return { code: "spy.hacking-kit.v1", quantity: 1, active: true, equipment: true, theme: "spy", modifier: 1, ...overrides };
 }
 
 describe("adventure loot eligibility", () => {
-    it("allows a new item that improves its slot and theme buff", () => {
-        expect(evaluateAdventureLootEligibility(uncommonLoot, true, [owned({ equippedSlot: "weapon", modifier: 1 })])).toEqual({
+    it("allows a new item that improves its theme buff regardless of gear category", () => {
+        expect(evaluateAdventureLootEligibility(uncommonLoot, true, [owned({ theme: "pirate", modifier: 1 })])).toEqual({
             eligible: true,
             modifier: 2,
         });
     });
 
     it("converts duplicate loot to its fixed rarity silver value", () => {
-        expect(evaluateAdventureLootEligibility(commonLoot, true, [owned({ code: commonLoot.id, equippedSlot: null })])).toEqual({
+        expect(evaluateAdventureLootEligibility(commonLoot, true, [owned({ code: commonLoot.id })])).toEqual({
             eligible: false,
             reason: "duplicate",
-            silverBonus: 50,
+            silverBonus: 250,
         });
     });
 
-    it("converts loot that cannot improve the current theme or slot", () => {
+    it("converts loot that cannot improve the current theme", () => {
         expect(evaluateAdventureLootEligibility(commonLoot, true, [owned({ theme: "pirate", modifier: 2 })])).toMatchObject({
             eligible: false,
             reason: "weaker-theme-buff",
         });
-        expect(evaluateAdventureLootEligibility(commonLoot, true, [owned({ equippedSlot: commonLoot.slot, modifier: 1 })])).toMatchObject({
-            eligible: false,
-            reason: "weaker-slot-item",
+        expect(evaluateAdventureLootEligibility(commonLoot, true, [owned({ equipment: false, theme: "pirate", modifier: 4 })])).toMatchObject({
+            eligible: true,
         });
     });
 

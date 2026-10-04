@@ -40,7 +40,6 @@ import { mailCommand, cancelMailCommand } from "./mail";
 import { rodCommand } from "./rod";
 import { inventoryCommand } from "./inventory";
 import { adventureUpgradeCommand } from "./adventureUpgrade";
-import { adventureEquipCommand, adventureUnequipCommand } from "./adventureEquip";
 import { adventurerCommand } from "./adventurer";
 import { adventureLastCommand } from "./adventureLast";
 
@@ -96,7 +95,5 @@ export const commands: BotCommand[] = [
     inventoryCommand,
     adventureUpgradeCommand,
     adventurerCommand,
-    adventureEquipCommand,
-    adventureUnequipCommand,
     adventureLastCommand,
 ];

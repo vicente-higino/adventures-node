@@ -31,13 +31,12 @@ interface RpgEndParams {
 interface SnapshotItem {
     code: string;
     name: string;
-    slot: string;
     theme: string | null;
     modifier: number;
 }
 
 interface PlayerLoadoutSnapshot {
-    equippedItems: SnapshotItem[];
+    equipment: SnapshotItem[];
 }
 
 interface CalculatedResult {
@@ -63,13 +62,12 @@ interface CalculatedResult {
     streak: number;
     xpAwarded: 0;
     loot?: (typeof ADVENTURE_ITEMS)[number];
-    lootAutoEquipped: boolean;
     lootSilverBonus: number;
     lootConversion?: { item: (typeof ADVENTURE_ITEMS)[number]; convertedToSilver: number; reason: AdventureLootConversionReason };
     status?: { code: string; label: string; modifier: -1 | 2; affectedChecks: readonly AdventureCheck[]; durationAdventures: number };
 }
 
-const EMPTY_LOADOUT: PlayerLoadoutSnapshot = { equippedItems: [] };
+const EMPTY_LOADOUT: PlayerLoadoutSnapshot = { equipment: [] };
 
 function asJson(value: unknown): Prisma.InputJsonValue {
     return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
@@ -78,12 +76,12 @@ function asJson(value: unknown): Prisma.InputJsonValue {
 function parseLoadoutSnapshot(value: unknown): PlayerLoadoutSnapshot {
     if (!value || typeof value !== "object" || Array.isArray(value)) return EMPTY_LOADOUT;
     const candidate = value as Record<string, unknown>;
-    const itemSource = Array.isArray(candidate.equippedItems)
-        ? candidate.equippedItems
-        : Array.isArray(candidate.equipment)
-          ? candidate.equipment
+    const itemSource = Array.isArray(candidate.equipment)
+        ? candidate.equipment
+        : Array.isArray(candidate.equippedItems)
+          ? candidate.equippedItems
           : [];
-    const equippedItems = itemSource.flatMap(item => {
+    const equipment = itemSource.flatMap(item => {
         if (!item || typeof item !== "object" || Array.isArray(item)) return [];
         const entry = item as Record<string, unknown>;
         if (typeof entry.code !== "string" || typeof entry.name !== "string") return [];
@@ -91,13 +89,12 @@ function parseLoadoutSnapshot(value: unknown): PlayerLoadoutSnapshot {
             {
                 code: entry.code,
                 name: entry.name,
-                slot: typeof entry.slot === "string" ? entry.slot : "gear",
                 theme: typeof entry.theme === "string" ? entry.theme : null,
                 modifier: typeof entry.modifier === "number" && Number.isInteger(entry.modifier) ? entry.modifier : 0,
             },
         ];
     });
-    return { equippedItems };
+    return { equipment };
 }
 
 function messagesFromJson(value: unknown): string[] | undefined {
@@ -220,7 +217,7 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                         const loadout = loadouts.get(player.id) ?? EMPTY_LOADOUT;
                         const approach = getApproach(scenario, player.approachCode, player.checkCode);
                         const modifiers: ModifierEntry[] = [];
-                        const matchingItems = loadout.equippedItems
+                        const matchingItems = loadout.equipment
                             .filter(item => item.modifier > 0 && (!item.theme || scenario.theme === "special" || item.theme === scenario.theme))
                             .sort((left, right) => right.modifier - left.modifier)
                             .slice(0, 1);
@@ -289,7 +286,6 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                             streak: 0,
                             xpAwarded: 0,
                             loot,
-                            lootAutoEquipped: false,
                             lootSilverBonus: 0,
                             status,
                         };
@@ -304,7 +300,7 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                                 code: inventory.item.code,
                                 quantity: inventory.quantity,
                                 active: inventory.item.active,
-                                equippedSlot: inventory.equippedSlot,
+                                equipment: inventory.item.type === "EQUIPMENT",
                                 theme: inventory.item.theme,
                                 modifier: inventory.item.modifier,
                             }));
@@ -317,16 +313,11 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                                     logger.warn({ itemCode: candidate.id }, "Adventure loot catalog was not synchronized; converted loot to silver");
                                 }
                             } else if (item) {
-                                await tx.adventureInventoryItem.updateMany({
-                                    where: { profileId: profile.id, equippedSlot: candidate.slot },
-                                    data: { equippedSlot: null },
-                                });
                                 await tx.adventureInventoryItem.upsert({
                                     where: { profileId_itemId: { profileId: profile.id, itemId: item.id } },
-                                    update: { quantity: { increment: 1 }, equippedSlot: candidate.slot },
-                                    create: { profileId: profile.id, itemId: item.id, quantity: 1, equippedSlot: candidate.slot },
+                                    update: { quantity: { increment: 1 } },
+                                    create: { profileId: profile.id, itemId: item.id, quantity: 1 },
                                 });
-                                result.lootAutoEquipped = true;
                             }
                         }
 
@@ -470,7 +461,6 @@ export async function handleRpgAdventureEnd({ channelLogin, channelProviderId, a
                         streakBonus: result.streakBonus,
                         streak: result.streak,
                         lootName: result.loot?.name,
-                        lootEquipped: result.lootAutoEquipped,
                         lootSilverBonus: result.lootSilverBonus,
                         statusName: result.status?.label,
                     }));

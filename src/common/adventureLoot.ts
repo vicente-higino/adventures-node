@@ -6,18 +6,18 @@ export interface OwnedAdventureLoot {
     code: string;
     quantity: number;
     active: boolean;
-    equippedSlot: string | null;
+    equipment: boolean;
     theme: string | null;
     modifier: number;
 }
 
-export type AdventureLootConversionReason = "duplicate" | "inactive" | "not-equipment" | "weaker-theme-buff" | "weaker-slot-item";
+export type AdventureLootConversionReason = "duplicate" | "inactive" | "not-equipment" | "weaker-theme-buff";
 
 export type AdventureLootEligibility =
     | { eligible: true; modifier: number }
     | { eligible: false; reason: AdventureLootConversionReason; silverBonus: number };
 
-/** Keeps only loot that can immediately improve the player's usable equipment. */
+/** Keeps only loot that can immediately improve the player's strongest bonus for its theme. */
 export function evaluateAdventureLootEligibility(
     candidate: AdventureItemDefinition,
     persistedItemActive: boolean,
@@ -27,13 +27,13 @@ export function evaluateAdventureLootEligibility(
     const convert = (reason: AdventureLootConversionReason): AdventureLootEligibility => ({ eligible: false, reason, silverBonus });
 
     if (!persistedItemActive) return convert("inactive");
-    if (candidate.kind !== "equipment" || candidate.slot === "none") return convert("not-equipment");
+    if (candidate.kind !== "equipment") return convert("not-equipment");
     if (ownedItems.some(item => item.quantity > 0 && item.code === candidate.id)) return convert("duplicate");
 
     const modifier = getAdventureItemModifier(candidate);
-    const equipped = ownedItems.filter(item => item.quantity > 0 && item.active && item.equippedSlot);
-    if (equipped.some(item => item.theme === candidate.theme && item.modifier >= modifier)) return convert("weaker-theme-buff");
-    if (equipped.some(item => item.equippedSlot === candidate.slot && item.modifier >= modifier)) return convert("weaker-slot-item");
+    if (ownedItems.some(item => item.quantity > 0 && item.active && item.equipment && item.theme === candidate.theme && item.modifier >= modifier)) {
+        return convert("weaker-theme-buff");
+    }
 
     return { eligible: true, modifier };
 }

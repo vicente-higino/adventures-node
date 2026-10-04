@@ -33,14 +33,13 @@ export type AdventureProfileSnapshotIdentity = Pick<AdventureProfileIdentity, "c
 export interface AdventureEquipmentSnapshot {
     readonly code: string;
     readonly name: string;
-    readonly slot: string;
     readonly theme: string;
     readonly modifier: number;
 }
 
 /** A JSON-safe record saved on Player when somebody joins an adventure. */
 export interface AdventureLoadoutSnapshot {
-    readonly equippedItems: AdventureEquipmentSnapshot[];
+    readonly equipment: AdventureEquipmentSnapshot[];
     readonly capturedAt: string;
 }
 
@@ -60,7 +59,7 @@ function itemPersistenceData(item: AdventureItemDefinition) {
         theme: item.theme,
         checkCode: null,
         modifier: getAdventureItemModifier(item),
-        config: { slot: item.slot },
+        config: {},
         active: true,
     } satisfies Prisma.AdventureItemUpdateInput;
 }
@@ -104,11 +103,7 @@ export async function findAdventureProfile(channelProviderId: string, userProvid
     return prisma.adventureProfile.findUnique({
         where: { channelProviderId_userId: { channelProviderId, userId: userProviderId } },
         include: {
-            inventoryItems: {
-                where: { quantity: { gt: 0 } },
-                include: { item: true },
-                orderBy: [{ equippedSlot: "asc" }, { item: { name: "asc" } }],
-            },
+            inventoryItems: { where: { quantity: { gt: 0 } }, include: { item: true }, orderBy: { item: { name: "asc" } } },
             conditions: {
                 where: { remainingAdventures: { gt: 0 }, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
                 orderBy: { createdAt: "asc" },
@@ -119,23 +114,15 @@ export async function findAdventureProfile(channelProviderId: string, userProvid
 }
 
 function toEquipmentSnapshot(inventoryItem: {
-    equippedSlot: string | null;
     quantity: number;
-    item: { code: string; name: string; active: boolean; modifier: number; checkCode: string | null; theme: string | null };
+    item: { code: string; name: string; active: boolean; type: AdventureItemType; modifier: number };
 }): AdventureEquipmentSnapshot | null {
-    if (!inventoryItem.equippedSlot || inventoryItem.quantity <= 0 || !inventoryItem.item.active) return null;
+    if (inventoryItem.quantity <= 0 || !inventoryItem.item.active || inventoryItem.item.type !== AdventureItemType.EQUIPMENT) return null;
 
     const definition = getAdventureItem(inventoryItem.item.code);
-    if (!definition || definition.kind !== "equipment" || definition.slot === "none") return null;
-    if (inventoryItem.equippedSlot !== definition.slot) return null;
+    if (!definition || definition.kind !== "equipment") return null;
 
-    return {
-        code: definition.id,
-        name: definition.name,
-        slot: definition.slot,
-        theme: definition.theme,
-        modifier: getAdventureItemModifier(definition),
-    };
+    return { code: definition.id, name: definition.name, theme: definition.theme, modifier: getAdventureItemModifier(definition) };
 }
 
 /** Loads a profile and freezes all player-controlled bonuses for an adventure join. */
@@ -152,16 +139,16 @@ export async function getAdventureProfileSnapshot(identity: AdventureProfileSnap
         where: { id: baseProfile.id },
         include: {
             inventoryItems: {
-                where: { equippedSlot: { not: null }, quantity: { gt: 0 }, item: { active: true } },
+                where: { quantity: { gt: 0 }, item: { active: true, type: AdventureItemType.EQUIPMENT } },
                 include: { item: true },
-                orderBy: { equippedSlot: "asc" },
+                orderBy: { item: { name: "asc" } },
             },
         },
     });
 
     const equipment = profile.inventoryItems.map(toEquipmentSnapshot).filter((item): item is AdventureEquipmentSnapshot => item !== null);
 
-    return { equippedItems: equipment, capturedAt: new Date().toISOString() };
+    return { equipment, capturedAt: new Date().toISOString() };
 }
 
 /** Grants code-owned loot to an existing channel profile. */

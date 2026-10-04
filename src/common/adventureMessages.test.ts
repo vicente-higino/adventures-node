@@ -26,7 +26,7 @@ describe("RPG adventure chat rendering", () => {
             payoutRate: 1.4,
             presentationMode: "individual",
             players: [
-                player(1, { roll: 20, total: 21, criticalCode: "critical-success", lootName: "Tideworn Compass", lootEquipped: true }),
+                player(1, { roll: 20, total: 21, criticalCode: "critical-success", lootName: "Tideworn Compass" }),
                 player(2, {
                     roll: 1,
                     modifier: -1,
@@ -49,7 +49,7 @@ describe("RPG adventure chat rendering", () => {
         expect(rendered).not.toContain("20+1=21");
         expect(rendered).not.toContain("(55%)");
         expect(rendered).toContain("The adventure ended with a 1.40x payout rate!");
-        expect(rendered).toContain("Survivors are: @Player1 (+30 silver, critical success, found and equipped Tideworn Compass).");
+        expect(rendered).toContain("Survivors are: @Player1 (+30 silver, critical success, found Tideworn Compass).");
         expect(rendered).toContain("@Player2 (+25 bonus, 3-lose streak, critical failure, now Cursed).");
         expect(rendered.match(/@Player1/g)).toHaveLength(1);
         expect(rendered.match(/@Player2/g)).toHaveLength(1);
@@ -74,7 +74,7 @@ describe("RPG adventure chat rendering", () => {
             players: [player(1, { roll: 20, criticalCode: "critical-success", lootSilverBonus: 50 })],
         });
 
-        expect(messages[0]).toContain("@Player1 (+30 silver, +50 bonus, critical success)");
+        expect(messages[0]).toContain("@Player1 (+30 silver, +50 loot bonus, critical success)");
         expect(messages[0]).not.toContain("found loot");
     });
 
@@ -93,15 +93,12 @@ describe("RPG adventure chat rendering", () => {
                     roll: 20,
                     criticalCode: "critical-success",
                     lootName: "Fire Starter",
-                    lootEquipped: true,
                     statusName: "Inspired",
                 }),
             ],
         });
 
-        expect(messages[0]).toContain(
-            "@v_cn_t (+1 silver, +1 bonus, 7-win streak, critical success, found and equipped Fire Starter, now Inspired).",
-        );
+        expect(messages[0]).toContain("@v_cn_t (+1 silver, +1 bonus, 7-win streak, critical success, found Fire Starter, now Inspired).");
         expect(messages[0].match(/@v_cn_t/g)).toHaveLength(1);
     });
 

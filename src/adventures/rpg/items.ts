@@ -8,9 +8,6 @@ export type AdventureItemRarity = (typeof ADVENTURE_ITEM_RARITIES)[number];
 export const ADVENTURE_ITEM_KINDS = ["equipment", "consumable", "material", "collectible"] as const;
 export type AdventureItemKind = (typeof ADVENTURE_ITEM_KINDS)[number];
 
-export const ADVENTURE_ITEM_SLOTS = ["weapon", "armor", "tool", "charm", "none"] as const;
-export type AdventureItemSlot = (typeof ADVENTURE_ITEM_SLOTS)[number];
-
 export interface AdventureItemBonus {
     readonly check: AdventureCheck;
     readonly modifier: 1;
@@ -23,7 +20,6 @@ export interface AdventureItemDefinition {
     readonly theme: AdventureThemeCode;
     readonly rarity: AdventureItemRarity;
     readonly kind: AdventureItemKind;
-    readonly slot: AdventureItemSlot;
     readonly bonus: AdventureItemBonus;
 }
 
@@ -43,7 +39,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "fantasy",
         rarity: "common",
         kind: "equipment",
-        slot: "weapon",
         bonus: { check: "might", modifier: 1 },
     },
     {
@@ -53,7 +48,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "fantasy",
         rarity: "uncommon",
         kind: "equipment",
-        slot: "charm",
         bonus: { check: "arcana", modifier: 1 },
     },
     {
@@ -63,7 +57,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "fantasy",
         rarity: "rare",
         kind: "equipment",
-        slot: "weapon",
         bonus: { check: "stealth", modifier: 1 },
     },
     {
@@ -73,7 +66,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "sci-fi",
         rarity: "common",
         kind: "equipment",
-        slot: "tool",
         bonus: { check: "perception", modifier: 1 },
     },
     {
@@ -83,7 +75,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "sci-fi",
         rarity: "uncommon",
         kind: "equipment",
-        slot: "charm",
         bonus: { check: "knowledge", modifier: 1 },
     },
     {
@@ -93,7 +84,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "sci-fi",
         rarity: "rare",
         kind: "equipment",
-        slot: "weapon",
         bonus: { check: "agility", modifier: 1 },
     },
     {
@@ -103,7 +93,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "cyberpunk",
         rarity: "common",
         kind: "equipment",
-        slot: "tool",
         bonus: { check: "technology", modifier: 1 },
     },
     {
@@ -113,7 +102,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "cyberpunk",
         rarity: "uncommon",
         kind: "equipment",
-        slot: "armor",
         bonus: { check: "stealth", modifier: 1 },
     },
     {
@@ -123,7 +111,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "cyberpunk",
         rarity: "rare",
         kind: "equipment",
-        slot: "charm",
         bonus: { check: "deception", modifier: 1 },
     },
     {
@@ -133,7 +120,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "mythological",
         rarity: "common",
         kind: "equipment",
-        slot: "armor",
         bonus: { check: "endurance", modifier: 1 },
     },
     {
@@ -143,7 +129,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "mythological",
         rarity: "uncommon",
         kind: "equipment",
-        slot: "tool",
         bonus: { check: "knowledge", modifier: 1 },
     },
     {
@@ -153,7 +138,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "mythological",
         rarity: "rare",
         kind: "equipment",
-        slot: "charm",
         bonus: { check: "spirit", modifier: 1 },
     },
     {
@@ -163,7 +147,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "post-apocalyptic",
         rarity: "common",
         kind: "equipment",
-        slot: "armor",
         bonus: { check: "endurance", modifier: 1 },
     },
     {
@@ -173,7 +156,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "post-apocalyptic",
         rarity: "uncommon",
         kind: "equipment",
-        slot: "tool",
         bonus: { check: "survival", modifier: 1 },
     },
     {
@@ -183,7 +165,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "post-apocalyptic",
         rarity: "rare",
         kind: "equipment",
-        slot: "tool",
         bonus: { check: "technology", modifier: 1 },
     },
     {
@@ -193,7 +174,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "pirate",
         rarity: "common",
         kind: "equipment",
-        slot: "tool",
         bonus: { check: "survival", modifier: 1 },
     },
     {
@@ -203,7 +183,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "pirate",
         rarity: "uncommon",
         kind: "equipment",
-        slot: "weapon",
         bonus: { check: "agility", modifier: 1 },
     },
     {
@@ -213,7 +192,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "pirate",
         rarity: "rare",
         kind: "equipment",
-        slot: "charm",
         bonus: { check: "presence", modifier: 1 },
     },
     {
@@ -223,7 +201,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "steampunk",
         rarity: "common",
         kind: "equipment",
-        slot: "charm",
         bonus: { check: "perception", modifier: 1 },
     },
     {
@@ -233,7 +210,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "steampunk",
         rarity: "uncommon",
         kind: "equipment",
-        slot: "tool",
         bonus: { check: "technology", modifier: 1 },
     },
     {
@@ -243,7 +219,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "steampunk",
         rarity: "rare",
         kind: "equipment",
-        slot: "armor",
         bonus: { check: "agility", modifier: 1 },
     },
     {
@@ -253,7 +228,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "superhero",
         rarity: "common",
         kind: "equipment",
-        slot: "weapon",
         bonus: { check: "might", modifier: 1 },
     },
     {
@@ -263,7 +237,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "superhero",
         rarity: "uncommon",
         kind: "equipment",
-        slot: "armor",
         bonus: { check: "agility", modifier: 1 },
     },
     {
@@ -273,7 +246,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "superhero",
         rarity: "rare",
         kind: "equipment",
-        slot: "charm",
         bonus: { check: "presence", modifier: 1 },
     },
     {
@@ -283,7 +255,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "horror",
         rarity: "common",
         kind: "equipment",
-        slot: "charm",
         bonus: { check: "spirit", modifier: 1 },
     },
     {
@@ -293,7 +264,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "horror",
         rarity: "uncommon",
         kind: "equipment",
-        slot: "tool",
         bonus: { check: "knowledge", modifier: 1 },
     },
     {
@@ -303,7 +273,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "horror",
         rarity: "rare",
         kind: "equipment",
-        slot: "tool",
         bonus: { check: "perception", modifier: 1 },
     },
     {
@@ -313,7 +282,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "western",
         rarity: "common",
         kind: "equipment",
-        slot: "weapon",
         bonus: { check: "agility", modifier: 1 },
     },
     {
@@ -323,7 +291,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "western",
         rarity: "uncommon",
         kind: "equipment",
-        slot: "charm",
         bonus: { check: "presence", modifier: 1 },
     },
     {
@@ -333,7 +300,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "western",
         rarity: "rare",
         kind: "equipment",
-        slot: "tool",
         bonus: { check: "survival", modifier: 1 },
     },
     {
@@ -343,7 +309,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "spy",
         rarity: "common",
         kind: "equipment",
-        slot: "tool",
         bonus: { check: "technology", modifier: 1 },
     },
     {
@@ -353,7 +318,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "spy",
         rarity: "uncommon",
         kind: "equipment",
-        slot: "charm",
         bonus: { check: "deception", modifier: 1 },
     },
     {
@@ -363,7 +327,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "spy",
         rarity: "rare",
         kind: "equipment",
-        slot: "tool",
         bonus: { check: "stealth", modifier: 1 },
     },
     {
@@ -373,7 +336,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "egyptian",
         rarity: "common",
         kind: "equipment",
-        slot: "charm",
         bonus: { check: "spirit", modifier: 1 },
     },
     {
@@ -383,7 +345,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "egyptian",
         rarity: "uncommon",
         kind: "equipment",
-        slot: "tool",
         bonus: { check: "knowledge", modifier: 1 },
     },
     {
@@ -393,7 +354,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "egyptian",
         rarity: "rare",
         kind: "equipment",
-        slot: "charm",
         bonus: { check: "perception", modifier: 1 },
     },
     {
@@ -403,7 +363,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "atlantis",
         rarity: "common",
         kind: "equipment",
-        slot: "weapon",
         bonus: { check: "might", modifier: 1 },
     },
     {
@@ -413,7 +372,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "atlantis",
         rarity: "uncommon",
         kind: "equipment",
-        slot: "charm",
         bonus: { check: "spirit", modifier: 1 },
     },
     {
@@ -423,7 +381,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "atlantis",
         rarity: "rare",
         kind: "equipment",
-        slot: "armor",
         bonus: { check: "endurance", modifier: 1 },
     },
     {
@@ -433,7 +390,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "dinosaur",
         rarity: "common",
         kind: "equipment",
-        slot: "weapon",
         bonus: { check: "might", modifier: 1 },
     },
     {
@@ -443,7 +399,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "dinosaur",
         rarity: "uncommon",
         kind: "equipment",
-        slot: "tool",
         bonus: { check: "survival", modifier: 1 },
     },
     {
@@ -453,7 +408,6 @@ export const ADVENTURE_ITEMS: readonly AdventureItemDefinition[] = [
         theme: "dinosaur",
         rarity: "rare",
         kind: "equipment",
-        slot: "charm",
         bonus: { check: "perception", modifier: 1 },
     },
 ] as const;

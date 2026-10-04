@@ -13,7 +13,7 @@ interface FishingAdventureLootIdentity {
 }
 
 export type FishingAdventureLootGrant =
-    | { type: "item"; item: AdventureItemDefinition; autoEquipped: true }
+    | { type: "item"; item: AdventureItemDefinition }
     | { type: "silver"; item: AdventureItemDefinition; silverBonus: number; reason: AdventureLootConversionReason };
 
 /** Grants fishing loot with the same usefulness rules as adventure settlement. */
@@ -46,7 +46,7 @@ export async function grantFishingAdventureLoot(
                             code: entry.item.code,
                             quantity: entry.quantity,
                             active: entry.item.active,
-                            equippedSlot: entry.equippedSlot,
+                            equipment: entry.item.type === "EQUIPMENT",
                             theme: entry.item.theme,
                             modifier: entry.item.modifier,
                         })),
@@ -61,16 +61,12 @@ export async function grantFishingAdventureLoot(
                     }
 
                     if (!item) throw new Error(`Adventure item ${candidate.id} disappeared while granting fishing loot`);
-                    await tx.adventureInventoryItem.updateMany({
-                        where: { profileId: profile.id, equippedSlot: candidate.slot },
-                        data: { equippedSlot: null },
-                    });
                     await tx.adventureInventoryItem.upsert({
                         where: { profileId_itemId: { profileId: profile.id, itemId: item.id } },
-                        update: { quantity: { increment: 1 }, equippedSlot: candidate.slot },
-                        create: { profileId: profile.id, itemId: item.id, quantity: 1, equippedSlot: candidate.slot },
+                        update: { quantity: { increment: 1 } },
+                        create: { profileId: profile.id, itemId: item.id, quantity: 1 },
                     });
-                    return { type: "item", item: candidate, autoEquipped: true };
+                    return { type: "item", item: candidate };
                 },
                 { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 5_000, timeout: 10_000 },
             ),

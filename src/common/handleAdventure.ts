@@ -53,7 +53,7 @@ function boundedAdventureBuyin(requested: number, available: number): number {
 }
 
 function getCurrentAdventureOdds(snapshot: AdventureLoadoutSnapshot, theme: string, payoutRate: number, statusModifier: number): number {
-    const itemModifier = snapshot.equippedItems
+    const itemModifier = snapshot.equipment
         .filter(item => item.modifier > 0 && (theme === "special" || item.theme === theme))
         .reduce((strongest, item) => Math.max(strongest, item.modifier), 0);
     return successChance(itemModifier + Math.max(-1, Math.min(2, statusModifier)), payoutRate);
