@@ -14,7 +14,10 @@ export async function handleUpdateSilver(params: {
     prefix?: string;
 }): Promise<string> {
     const { channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName, newBalance, prefix } = params;
-     const calcValue = calculateAmount(newBalance.toString(), Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
+    if (newBalance.toString().trim().startsWith("-")) {
+        return `Usage: ${prefix ?? getBotPrefix()}updatesilver <username> <new_balance> (Balance cannot be negative)`;
+    }
+    const calcValue = calculateAmount(newBalance.toString(), Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
     const parseResult = z.coerce.bigint().max(BigInt(Number.MAX_SAFE_INTEGER)).safeParse(calcValue);
     if (!parseResult.success) {
         const error = parseResult.error.errors.map(e => e.message).join(", ");

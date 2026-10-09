@@ -272,6 +272,7 @@ describe("calculateAmount", () => {
         it("should subtract negative delta from current amount", () => {
             expect(calculateAmount("-100", available, current)).toBe(current - 100); // 400
             expect(calculateAmount("-1k", available, current)).toBe(0); // 500 - 1000 -> clamped to 0
+            expect(calculateAmount("-50k", 100_000, 75_000)).toBe(25_000);
         });
 
         it("should clamp delta results between 0 and available amount", () => {

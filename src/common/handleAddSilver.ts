@@ -14,8 +14,12 @@ export async function handleAddSilver(params: {
     prefix?: string;
 }): Promise<string> {
     const { channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName, add, prefix } = params;
-    const calcValue = calculateAmount(add.toString(), Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
-    const parseResult = z.coerce.bigint().max(BigInt(Number.MAX_SAFE_INTEGER)).safeParse(calcValue);
+    const addStr = add.toString().trim();
+    const isNegative = addStr.startsWith("-");
+    const amount = addStr.replace(/^[+-]/, "");
+    const calcValue = calculateAmount(amount, Number.MAX_SAFE_INTEGER);
+    const signedValue = isNegative ? -calcValue : calcValue;
+    const parseResult = z.coerce.bigint().max(BigInt(Number.MAX_SAFE_INTEGER)).safeParse(signedValue);
     if (!parseResult.success) {
         const error = parseResult.error.errors.map(e => e.message).join(", ");
         return `Usage: ${prefix ?? getBotPrefix()}addsilver <username> <new_balance> (${error})`;
