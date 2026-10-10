@@ -103,12 +103,12 @@ export function calculateAmount(amountStr: string, availableAmount: number, curr
     let isDelta = false;
     let sign = 1;
     let amountPart = cleanedAmountStr;
-
+    const numericSuffixRegex = /^(\d*(\.\d+)?)([kmb])?$/i;
     // Handle "to:X" syntax
     if (cleanedAmountStr.startsWith("to:")) {
         // Parse the target value (support K/M/B suffixes)
         const targetStr = cleanedAmountStr.slice(3);
-        const match = targetStr.match(/^(\d+(\.\d+)?)([kmb])?$/);
+        const match = targetStr.match(numericSuffixRegex);
         if (match) {
             let target = parseFloat(match[1]);
             const suffix = match[3];
@@ -139,7 +139,7 @@ export function calculateAmount(amountStr: string, availableAmount: number, curr
     if (cleanedAmountStr.startsWith("k:") || cleanedAmountStr.startsWith("keep:")) {
         // Parse the keep value (support K/M/B suffixes)
         const keepStr = cleanedAmountStr.replace(/^k(eep)?:/, "");
-        const match = keepStr.match(/^(\d+(\.\d+)?)([kmb])?$/);
+        const match = keepStr.match(numericSuffixRegex);
         if (match) {
             let keep = parseFloat(match[1]);
             const suffix = match[3];
@@ -186,7 +186,7 @@ export function calculateAmount(amountStr: string, availableAmount: number, curr
         }
     } else {
         // Try to parse K/M/B suffixes or plain number
-        const match = amountPart.match(/^(\d+(\.\d+)?)([kmb])?$/);
+        const match = amountPart.match(numericSuffixRegex);
         if (match) {
             let num = parseFloat(match[1]);
             const suffix = match[3];
