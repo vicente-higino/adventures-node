@@ -81,8 +81,9 @@ Hono, Prisma, and Twurple.
 - `!char` shows gear, status, and record. `!inv loot` lists adventure loot;
   the strongest owned item for each adventure theme is applied automatically.
 - Resolution uses the legacy-style narrative and survivor list, adding compact
-  critical, loot, status, streak, and recovery information. `!advlast` shows
-  the last persisted result without checks or XP progression.
+  critical, loot, status, streak, and recovery information. `!advlast [username]`
+  shows the last persisted result without checks or XP progression; provide a
+  username to view another player's result.
 
 ## Scripts
 

@@ -3,6 +3,7 @@ import { getConvertedLootSilver } from "@/common/adventureLoot";
 import { ADVENTURE_ITEM_MODIFIER_BY_RARITY, ADVENTURE_ITEM_RARITIES, getAdventureTheme, isAdventureThemeCode } from "@/adventures/rpg";
 import { formatSilver } from "@/utils/misc";
 import { prisma } from "@/prisma";
+import { getUserByUsername } from "@/twitch/api";
 import { createBotCommand } from "../botCommandWithKeywords";
 import { z } from "zod";
 
@@ -49,14 +50,31 @@ function formatStatus(snapshot: unknown): string | undefined {
 
 export const adventureLastCommand = createBotCommand(
     "advlast",
-    async (_params, ctx) => {
+    async (params, ctx) => {
+        let userId = ctx.userId;
+        let userDisplayName = ctx.userDisplayName;
+        const username = params[0]?.replace(/^@/, "");
+        if (username) {
+            const user = await getUserByUsername(prisma, username);
+            if (!user) {
+                ctx.say(`@${ctx.userDisplayName} Adventurer not found: ${username}.`);
+                return;
+            }
+            userId = user.id;
+            userDisplayName = user.displayName;
+        }
+
         const result = await prisma.adventurePlayerResult.findFirst({
-            where: { userId: ctx.userId, adventure: { channelProviderId: ctx.broadcasterId } },
+            where: { userId, adventure: { channelProviderId: ctx.broadcasterId } },
             include: { adventure: true },
             orderBy: { createdAt: "desc" },
         });
         if (!result) {
-            ctx.say(`@${ctx.userDisplayName} You do not have a completed RPG adventure in this channel yet.`);
+            const message =
+                userId === ctx.userId
+                    ? "You do not have a completed adventure in this channel yet."
+                    : `${userDisplayName} does not have a completed adventure in this channel yet.`;
+            ctx.say(`@${ctx.userDisplayName} ${message}`);
             return;
         }
 
@@ -81,7 +99,7 @@ export const adventureLastCommand = createBotCommand(
         ].filter(Boolean);
 
         ctx.say(
-            `@${ctx.userDisplayName} Last adventure${theme ? ` (${formatTheme(theme)})` : ""}:$(newline)${roll}, ${reward}${extras.length ? `, ${extras.join(", ")}` : ""}.`,
+            `@${userDisplayName} Last adventure${theme ? ` (${formatTheme(theme)})` : ""}:$(newline)${roll}, ${reward}${extras.length ? `, ${extras.join(", ")}` : ""}.`,
         );
     },
     { aliases: ["lastadv"], ignoreCase: true },
