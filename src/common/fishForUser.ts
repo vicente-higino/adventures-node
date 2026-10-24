@@ -45,6 +45,7 @@ import { grantFishingAdventureLoot } from "./grantFishingAdventureLoot";
 import { friendlyCooldownMessages, motivationalQuotes, wrongPlaces } from "./phrases";
 import { ADVENTURE_TICKET_DROP_TABLE, consumeRedeemable, getAdventureTicketCode, grantRedeemable } from "./redeemables";
 import { getAdventureItemModifier } from "@/adventures/rpg";
+import { calculateRandomFishingFine, getFishingFineChance } from "./fishingFine";
 dayjs.extend(relativeTime);
 
 // Rarity progression for the "fish gets eaten" gimmick
@@ -109,9 +110,9 @@ export async function fishForUser({
         const balance = await findOrCreateBalance(prisma, channelLogin, channelProviderId, userProviderId, userLogin, userDisplayName);
         const legendaryBaitInventory = await consumeRedeemable({ userId: userProviderId, channelProviderId, redeemableCode: "legendary_bait" });
         const forceRarity = legendaryBaitInventory ? Rarity.Legendary : undefined;
-        // 1% chance to get caught
-        if (fishStats.totalSilverWorth > 0 && Math.random() < 0.01 && balance.value >= 100 && forceRarity === undefined) {
-            const fine = Math.min(100, Math.floor(boxMullerTransform(50, 25, 25)));
+        const fineChance = getFishingFineChance(fishStats.activeRodLevel);
+        if (fishStats.totalSilverWorth > 0 && Math.random() < fineChance && balance.value >= 100 && forceRarity === undefined) {
+            const fine = calculateRandomFishingFine(balance.value);
             const place = pickRandom(wrongPlaces);
             if (!balance) {
                 return `@${userDisplayName} Something went wrong finding your balance.`;

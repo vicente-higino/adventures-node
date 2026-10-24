@@ -6,6 +6,8 @@ import { fishDexCommand, fishDexGlobalCommand } from "./fishDex";
 import { fishGalleryCommand } from "./fishGallery";
 import { fishOddsCommand } from "./fishOdds";
 import { fishingQualityOddsCommand } from "./fishingQualityOdds";
+import { fishingFineRatesCommand } from "./fishingFineRates";
+import { myFishingFineRatesCommand } from "./myFishingFineRates";
 import { fishRecordsCommand } from "./fishRecords";
 import { flexFishCommand } from "./flexFish";
 import { refreshEmotesCommand, refreshEmotesAdminCommand } from "./refreshEmotesCommand";
@@ -50,6 +52,8 @@ export const commands: BotCommand[] = [
     resetRarityWeightCommand,
     fishOddsCommand,
     fishingQualityOddsCommand,
+    fishingFineRatesCommand,
+    myFishingFineRatesCommand,
     flexFishCommand,
     fishGalleryCommand,
     fishDexCommand,
