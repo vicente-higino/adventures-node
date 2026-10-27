@@ -68,7 +68,7 @@ export function getFishingFineAmountRange(silverNetWorth: number): { minimumFine
         return { minimumFine: 0, maximumFine: 0 };
     }
 
-    const minimumFine = Math.max(1, Math.ceil(baseFine * 0.5));
+    const minimumFine = Math.max(50, Math.ceil(baseFine * 0.5));
     const maximumFine = Math.max(minimumFine, Math.floor(baseFine * 1.5));
     return { minimumFine, maximumFine };
 }
